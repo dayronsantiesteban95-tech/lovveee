@@ -1,0 +1,1 @@
+ALTER TABLE public.lead_sequences ADD COLUMN manual_mode boolean NOT NULL DEFAULT false;

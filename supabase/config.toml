@@ -1,0 +1,16 @@
+project_id = "vdsknsypobnutnqcafre"
+
+[functions.send-outreach-email]
+verify_jwt = false
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.invite-user]
+verify_jwt = false
+
+[functions.enrich-leads]
+verify_jwt = false
+
+[functions.sheets-sync]
+verify_jwt = false

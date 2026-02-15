@@ -1,0 +1,1 @@
+ALTER TABLE public.lead_sequences ADD COLUMN response_status text NOT NULL DEFAULT 'no_response';

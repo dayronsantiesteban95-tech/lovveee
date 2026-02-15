@@ -1,0 +1,1 @@
+ALTER TABLE tasks ALTER COLUMN due_date TYPE timestamptz USING due_date::timestamptz;

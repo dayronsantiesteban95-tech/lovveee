@@ -1,0 +1,716 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════
+   ANIKA CONTROL OS — Premium Design System
+   Dark-first. Map-centric. Real-time animated.
+   Inspired by Linear, Stripe, Uber, Palantir.
+   ═══════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* ── Light theme (secondary) ──────────────── */
+    --background: 220 14% 96%;
+    --foreground: 224 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 30% 12%;
+
+    --primary: 222 84% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 224 30% 12%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 14% 92%;
+    --accent-foreground: 224 30% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 222 84% 48%;
+
+    --radius: 0.625rem;
+
+    /* ── Sidebar (light) ─────────────────────── */
+    --sidebar-background: 224 40% 10%;
+    --sidebar-foreground: 220 14% 90%;
+    --sidebar-primary: 222 84% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 224 30% 16%;
+    --sidebar-accent-foreground: 220 14% 95%;
+    --sidebar-border: 224 30% 18%;
+    --sidebar-ring: 222 84% 55%;
+
+    /* ── Control OS tokens ────────────────────── */
+    --cos-warning: 38 92% 50%;
+    --cos-success: 142 72% 42%;
+    --cos-danger: 0 72% 51%;
+    --cos-info: 200 98% 50%;
+    --cos-live: 142 72% 42%;
+    --cos-neutral: 220 10% 46%;
+
+    --cos-surface-0: 0 0% 100%;
+    --cos-surface-1: 220 14% 97%;
+    --cos-surface-2: 220 14% 94%;
+
+    --cos-glass-bg: 0 0% 100% / 0.75;
+    --cos-glass-border: 220 14% 80% / 0.3;
+    --cos-glass-blur: 20px;
+
+    --cos-glow-primary: 222 84% 48% / 0.15;
+    --cos-glow-success: 142 72% 42% / 0.15;
+    --cos-glow-warning: 38 92% 50% / 0.15;
+    --cos-glow-danger: 0 72% 51% / 0.15;
+  }
+
+  .dark {
+    /* ── Dark theme (primary) ─────────────────── */
+    --background: 224 40% 5%;
+    --foreground: 220 14% 92%;
+
+    --card: 224 36% 8%;
+    --card-foreground: 220 14% 92%;
+
+    --popover: 224 36% 8%;
+    --popover-foreground: 220 14% 92%;
+
+    --primary: 222 84% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 224 30% 14%;
+    --secondary-foreground: 220 14% 92%;
+
+    --muted: 224 24% 12%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 224 30% 14%;
+    --accent-foreground: 220 14% 92%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 224 24% 14%;
+    --input: 224 24% 14%;
+    --ring: 222 84% 55%;
+
+    /* ── Sidebar (dark) ──────────────────────── */
+    --sidebar-background: 224 50% 4%;
+    --sidebar-foreground: 220 14% 80%;
+    --sidebar-primary: 222 84% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 224 36% 10%;
+    --sidebar-accent-foreground: 220 14% 90%;
+    --sidebar-border: 224 30% 12%;
+    --sidebar-ring: 222 84% 55%;
+
+    /* ── Control OS tokens (dark) ─────────────── */
+    --cos-surface-0: 224 36% 8%;
+    --cos-surface-1: 224 32% 10%;
+    --cos-surface-2: 224 28% 13%;
+
+    --cos-glass-bg: 224 40% 6% / 0.82;
+    --cos-glass-border: 224 30% 22% / 0.4;
+
+    --cos-glow-primary: 222 84% 55% / 0.12;
+    --cos-glow-success: 142 72% 42% / 0.12;
+    --cos-glow-warning: 38 92% 50% / 0.10;
+    --cos-glow-danger: 0 72% 51% / 0.10;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Force dark by default */
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLASSMORPHISM — Map overlay panels
+   ═══════════════════════════════════════════════════════════ */
+@layer utilities {
+  .glass-panel {
+    background: hsl(var(--cos-glass-bg));
+    backdrop-filter: blur(var(--cos-glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--cos-glass-blur)) saturate(180%);
+    border: 1px solid hsl(var(--cos-glass-border));
+  }
+
+  .glass-card {
+    background: hsl(var(--cos-glass-bg));
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid hsl(var(--cos-glass-border));
+    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.3s ease;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 8px 40px hsl(var(--cos-glow-primary));
+    border-color: hsl(var(--ring) / 0.2);
+  }
+
+  .glass-surface {
+    background: hsl(var(--cos-surface-1));
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TYPOGRAPHY
+     ═══════════════════════════════════════════════════════════ */
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-feature-settings: 'liga', 'calt';
+  }
+
+  .text-data {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--cos-info)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .gradient-text {
+    background: linear-gradient(135deg, hsl(222 84% 65%), hsl(200 98% 60%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     STATUS SYSTEM — Semantic color badges
+     ═══════════════════════════════════════════════════════════ */
+  .status-on-time {
+    color: hsl(var(--cos-success));
+    background: hsl(var(--cos-glow-success));
+    border: 1px solid hsl(var(--cos-success) / 0.25);
+  }
+
+  .status-at-risk {
+    color: hsl(var(--cos-warning));
+    background: hsl(var(--cos-glow-warning));
+    border: 1px solid hsl(var(--cos-warning) / 0.25);
+  }
+
+  .status-late {
+    color: hsl(var(--cos-danger));
+    background: hsl(var(--cos-glow-danger));
+    border: 1px solid hsl(var(--cos-danger) / 0.25);
+  }
+
+  .status-live {
+    color: hsl(var(--cos-live));
+    background: hsl(var(--cos-glow-success));
+    border: 1px solid hsl(var(--cos-live) / 0.25);
+  }
+
+  .status-idle {
+    color: hsl(var(--cos-neutral));
+    background: hsl(var(--cos-neutral) / 0.08);
+    border: 1px solid hsl(var(--cos-neutral) / 0.15);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     GLOW EFFECTS — For at-risk items, live indicators
+     ═══════════════════════════════════════════════════════════ */
+  .glow-success {
+    box-shadow: 0 0 20px hsl(var(--cos-glow-success)),
+      0 0 60px hsl(var(--cos-success) / 0.05);
+  }
+
+  .glow-warning {
+    box-shadow: 0 0 20px hsl(var(--cos-glow-warning)),
+      0 0 60px hsl(var(--cos-warning) / 0.05);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 20px hsl(var(--cos-glow-danger)),
+      0 0 60px hsl(var(--cos-danger) / 0.05);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--cos-glow-primary)),
+      0 0 60px hsl(var(--primary) / 0.05);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     METRIC CARDS — Animated counter containers
+     ═══════════════════════════════════════════════════════════ */
+  .metric-card {
+    background: hsl(var(--cos-surface-1));
+    border: 1px solid hsl(var(--border) / 0.5);
+    border-radius: var(--radius);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--cos-info)));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .metric-card:hover::before {
+    opacity: 1;
+  }
+
+  .metric-card:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 0 4px 24px hsl(var(--cos-glow-primary));
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     COMMAND CENTER LAYOUT — Full-bleed map workspace
+     ═══════════════════════════════════════════════════════════ */
+  .cc-layout {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 4rem);
+    overflow: hidden;
+  }
+
+  .cc-map-container {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .cc-overlay-panel {
+    position: absolute;
+    z-index: 10;
+    background: hsl(var(--cos-glass-bg));
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid hsl(var(--cos-glass-border));
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: 0 8px 40px hsl(224 40% 4% / 0.3);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .cc-overlay-panel:hover {
+    box-shadow: 0 12px 48px hsl(224 40% 4% / 0.4);
+  }
+
+  .cc-metrics-bar {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 10;
+    display: flex;
+    gap: 0.75rem;
+    pointer-events: none;
+  }
+
+  .cc-metrics-bar>* {
+    pointer-events: auto;
+  }
+
+  .cc-sidebar-panel {
+    position: absolute;
+    top: 5rem;
+    right: 1rem;
+    bottom: 1rem;
+    width: 380px;
+    z-index: 10;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cc-alert-panel {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    width: 360px;
+    max-height: 280px;
+    z-index: 10;
+    overflow-y: auto;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     HOVER / INTERACTION EFFECTS
+     ═══════════════════════════════════════════════════════════ */
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px hsl(var(--cos-glow-primary));
+  }
+
+  .btn-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(222 84% 40%));
+    color: white;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+  }
+
+  .btn-gradient:hover {
+    background: linear-gradient(135deg, hsl(222 84% 58%), hsl(222 84% 45%));
+    box-shadow: 0 4px 20px hsl(var(--cos-glow-primary));
+    transform: translateY(-1px);
+  }
+
+  /* Accent gradient for special CTAs */
+  .accent-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--cos-info)));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     SCROLLBAR — Minimal, sleek
+     ═══════════════════════════════════════════════════════════ */
+  .sleek-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sleek-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sleek-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 2px;
+  }
+
+  .sleek-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.35);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     LOADING — Premium shimmer
+     ═══════════════════════════════════════════════════════════ */
+  .shimmer {
+    background: linear-gradient(90deg,
+        hsl(var(--cos-surface-1)) 0%,
+        hsl(var(--cos-surface-2)) 50%,
+        hsl(var(--cos-surface-1)) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Smooth page entrance */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Live pulse for real-time indicators */
+@keyframes livePulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.5);
+  }
+}
+
+/* Glow pulse for at-risk items */
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px hsl(var(--cos-warning) / 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 24px hsl(var(--cos-warning) / 0.35),
+      0 0 48px hsl(var(--cos-warning) / 0.1);
+  }
+}
+
+@keyframes glowPulseDanger {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px hsl(var(--cos-danger) / 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 24px hsl(var(--cos-danger) / 0.35),
+      0 0 48px hsl(var(--cos-danger) / 0.1);
+  }
+}
+
+/* Breathing glow for primary CTA */
+@keyframes breatheGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 16px 4px hsl(var(--primary) / 0.12);
+  }
+}
+
+/* Counter tick animation */
+@keyframes countTick {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  40% {
+    transform: translateY(-4px);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Subtle float */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Marker ping on map */
+@keyframes markerPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Smooth entry from bottom for panels */
+@keyframes panelSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATION UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════ */
+@layer utilities {
+  .animate-in {
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-in-right {
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-in-left {
+    animation: slideInLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-fade {
+    animation: fadeIn 0.3s ease forwards;
+  }
+
+  .animate-panel-up {
+    animation: panelSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-live-pulse {
+    animation: livePulse 2s ease-in-out infinite;
+  }
+
+  .animate-glow-warning {
+    animation: glowPulse 2.5s ease-in-out infinite;
+  }
+
+  .animate-glow-danger {
+    animation: glowPulseDanger 2s ease-in-out infinite;
+  }
+
+  .animate-breathe {
+    animation: breatheGlow 3s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-count-tick {
+    animation: countTick 0.3s ease;
+  }
+
+  .animate-marker-ping {
+    animation: markerPing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Staggered entry for lists */
+  .stagger-1 {
+    animation-delay: 50ms;
+  }
+
+  .stagger-2 {
+    animation-delay: 100ms;
+  }
+
+  .stagger-3 {
+    animation-delay: 150ms;
+  }
+
+  .stagger-4 {
+    animation-delay: 200ms;
+  }
+
+  .stagger-5 {
+    animation-delay: 250ms;
+  }
+
+  .stagger-6 {
+    animation-delay: 300ms;
+  }
+
+  /* ETA status badges */
+  .status-on-time {
+    background: hsl(140 60% 45% / 0.15);
+    color: hsl(140 60% 55%);
+  }
+
+  .status-at-risk {
+    background: hsl(40 90% 50% / 0.15);
+    color: hsl(40 90% 60%);
+  }
+
+  .status-late {
+    background: hsl(0 70% 55% / 0.15);
+    color: hsl(0 70% 60%);
+  }
+
+  .status-idle {
+    background: hsl(0 0% 50% / 0.15);
+    color: hsl(0 0% 60%);
+  }
+
+  /* Monospace data display */
+  .text-data {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    letter-spacing: -0.02em;
+  }
+}
