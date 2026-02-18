@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import ETABadge from "@/components/ETABadge";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney, todayISO, daysAgoISO } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -285,10 +286,14 @@ export default function Dashboard() {
     // Activity refresh every 30s
     const activityTimer = setInterval(fetchActivity, 30_000);
 
+    // Load refresh every 60s — keeps live ETA badges current
+    const loadRefreshTimer = setInterval(fetchLoads, 60_000);
+
     return () => {
       supabase.removeChannel(loadsChannel);
       supabase.removeChannel(eventsChannel);
       clearInterval(activityTimer);
+      clearInterval(loadRefreshTimer);
     };
   }, [fetchLoads, fetchDrivers, fetchActivity, fetchWeekStats]);
 
@@ -422,10 +427,21 @@ export default function Dashboard() {
                         )}
                       </td>
                       <td className="px-3 py-3">{statusBadge(load.status)}</td>
-                      <td className="px-3 py-3 text-xs text-muted-foreground hidden lg:table-cell">
-                        {load.estimated_delivery
-                          ? new Date(load.estimated_delivery).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-                          : "—"}
+                      <td className="px-3 py-3 text-xs hidden lg:table-cell">
+                        {load.status === "in_progress" ? (
+                          <ETABadge
+                            pickupAddress={load.pickup_address}
+                            deliveryAddress={load.delivery_address}
+                            enabled={true}
+                            compact
+                          />
+                        ) : load.estimated_delivery ? (
+                          <span className="text-muted-foreground">
+                            {new Date(load.estimated_delivery).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-3 text-xs text-right font-mono text-green-400">
                         {load.status === "delivered" ? fmtMoney(load.revenue) : <span className="text-muted-foreground">{fmtMoney(load.revenue)}</span>}

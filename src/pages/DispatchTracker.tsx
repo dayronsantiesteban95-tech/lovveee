@@ -35,7 +35,14 @@ import {
     AlertTriangle, CheckCircle, BarChart3, FileText, Copy, Timer, Package,
     Navigation, Download, History, Zap, PanelRightClose, PanelRightOpen, Layers, Radio,
     ChevronRight, Gauge, Shield, Upload, X, ChevronLeft,
+    MoreHorizontal, PlayCircle, PackageCheck, RotateCcw, RefreshCw,
 } from "lucide-react";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+    DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useLoadStatusActions } from "@/hooks/useLoadStatusActions";
+import type { LoadStatus } from "@/hooks/useLoadStatusActions";
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
 } from "recharts";
@@ -51,6 +58,7 @@ import ActivityLog from "@/components/ActivityLog";
 import { useRealtimeDriverMap } from "@/hooks/useRealtimeDriverMap";
 import LoadDetailPanel from "@/components/LoadDetailPanel";
 import type { LoadDetail } from "@/components/LoadDetailPanel";
+import ETABadge from "@/components/ETABadge";
 
 // ─── Types ──────────────────────────────────────────
 type Driver = { id: string; full_name: string; hub: string; status: string };
@@ -380,6 +388,13 @@ export default function DispatchTracker() {
     // ── Detail panel ─────────────────────────
     const [selectedLoadDetail, setSelectedLoadDetail] = useState<Load | null>(null);
 
+    // ── Auto-refresh ──────────────────────────
+    const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+    const [secondsAgo, setSecondsAgo] = useState(0);
+
+    // ── Status action hook ────────────────────
+    const { updateStatus } = useLoadStatusActions();
+
     // ── Fetch helpers ────────────────────────
     const db = supabase;
 
@@ -389,7 +404,11 @@ export default function DispatchTracker() {
             .gte("load_date", dateRangeStart)
             .lte("load_date", dateRangeEnd)
             .order("load_date", { ascending: false });
-        if (data) setLoads(data);
+        if (data) {
+            setLoads(data);
+            setLastRefreshed(new Date());
+            setSecondsAgo(0);
+        }
     }, [dateRangeStart, dateRangeEnd]);
 
     const fetchDrivers = useCallback(async () => {
@@ -440,7 +459,19 @@ export default function DispatchTracker() {
         if (!user) return;
         Promise.all([fetchLoads(), fetchDrivers(), fetchVehicles(), fetchProfiles(), fetchCompanies(), fetchRateCards(), fetchRecentAddresses()])
             .finally(() => setLoading(false));
+
+        // Auto-refresh loads every 60 s so dispatchers always see current status
+        const loadRefreshTimer = setInterval(() => fetchLoads(), 60_000);
+        return () => clearInterval(loadRefreshTimer);
     }, [user, fetchLoads, fetchDrivers, fetchVehicles, fetchProfiles, fetchCompanies, fetchRateCards, fetchRecentAddresses]);
+
+    // ── "X seconds ago" ticker — updates every 5 s ───────────────
+    useEffect(() => {
+        const ticker = setInterval(() => {
+            setSecondsAgo(Math.floor((Date.now() - lastRefreshed.getTime()) / 1000));
+        }, 5_000);
+        return () => clearInterval(ticker);
+    }, [lastRefreshed]);
 
     // ── AI driver suggestion: pick driver whose hub matches pickup city ──
     const suggestDriver = useCallback((pickupAddress: string, driverList: Driver[]) => {
@@ -742,12 +773,13 @@ export default function DispatchTracker() {
     };
 
     const handleStatusChange = async (id: string, newStatus: string) => {
-        const { error } = await db.from("daily_loads").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", id);
-        if (error) {
-            toast({ title: "Status update failed", description: error.message, variant: "destructive" });
-        } else {
-            fetchLoads();
-        }
+        const currentLoad = loads.find((l) => l.id === id);
+        await updateStatus({
+            loadId: id,
+            previousStatus: currentLoad?.status ?? "pending",
+            newStatus: newStatus as LoadStatus,
+            onSuccess: () => fetchLoads(),
+        });
     };
 
     // ── Lookups ──────────────────────────────
@@ -1003,6 +1035,15 @@ export default function DispatchTracker() {
                         <Label className="text-xs text-muted-foreground">Board Date</Label>
                         <Input type="date" className="w-40 h-9" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
                         <Badge variant="secondary">{boardLoads.length} loads</Badge>
+                        {/* Last updated indicator */}
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70 select-none">
+                            <RefreshCw className="h-2.5 w-2.5" />
+                            {secondsAgo < 10
+                                ? "Just updated"
+                                : secondsAgo < 60
+                                ? `Updated ${secondsAgo}s ago`
+                                : `Updated ${Math.floor(secondsAgo / 60)}m ago`}
+                        </span>
                         <div className="ml-auto flex items-center gap-2">
                             <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs"
                                 onClick={() => exportToCSV(boardLoads.map(l => ({
@@ -1079,39 +1120,80 @@ export default function DispatchTracker() {
                                                         ) : <span className="text-muted-foreground text-xs">—</span>}
                                                     </TableCell>
                                                     <TableCell>
-                                                        {load.eta_status && load.eta_status !== "unknown" ? (
+                                                        <ETABadge
+                                                            pickupAddress={load.pickup_address}
+                                                            deliveryAddress={load.delivery_address}
+                                                            slaDeadline={load.sla_deadline}
+                                                            enabled={load.status === "in_progress"}
+                                                            compact
+                                                        />
+                                                        {load.status !== "in_progress" && load.eta_status && load.eta_status !== "unknown" && (
                                                             <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full ${load.eta_status === "on_time" ? "status-on-time" :
                                                                 load.eta_status === "at_risk" ? "status-at-risk" :
                                                                     load.eta_status === "late" ? "status-late" : "status-idle"
                                                                 }`}>
-                                                                {load.eta_status === "late" && <AlertTriangle className="h-2.5 w-2.5" />}
-                                                                {load.eta_status === "on_time" && <CheckCircle className="h-2.5 w-2.5" />}
-                                                                {load.eta_status === "at_risk" && <Gauge className="h-2.5 w-2.5" />}
                                                                 {load.eta_status?.replace("_", " ")}
                                                             </span>
-                                                        ) : <span className="text-muted-foreground text-xs">—</span>}
+                                                        )}
+                                                        {load.status !== "in_progress" && (!load.eta_status || load.eta_status === "unknown") && (
+                                                            <span className="text-muted-foreground text-xs">—</span>
+                                                        )}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Select value={load.status} onValueChange={(v) => handleStatusChange(load.id, v)}>
-                                                            <SelectTrigger className="h-7 w-28 text-[10px]">
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <span className={`h-2 w-2 rounded-full ${si.color}`} />
-                                                                    <SelectValue />
-                                                                </div>
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {STATUSES.map((s) => (
-                                                                    <SelectItem key={s.value} value={s.value} className="text-xs">
-                                                                        <div className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${s.color}`} />{s.label}</div>
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                                    {/* ── Status cell: badge + next-action button ── */}
+                                                    <TableCell onClick={(e) => e.stopPropagation()}>
+                                                        <div className="flex flex-col gap-1 items-start">
+                                                            {/* Status badge */}
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className={`h-2 w-2 rounded-full ${si.color}`} />
+                                                                <span className="text-[10px] font-medium">{si.label}</span>
+                                                            </div>
+                                                            {/* Next-action button */}
+                                                            {load.status === "pending" && (
+                                                                <Button size="sm" variant="outline"
+                                                                    className="h-6 text-[10px] px-2 gap-1 border-blue-500/40 text-blue-600 hover:bg-blue-500/10"
+                                                                    onClick={() => handleStatusChange(load.id, "assigned")}>
+                                                                    <PlayCircle className="h-3 w-3" /> Assign
+                                                                </Button>
+                                                            )}
+                                                            {load.status === "assigned" && (
+                                                                <Button size="sm" variant="outline"
+                                                                    className="h-6 text-[10px] px-2 gap-1 border-yellow-500/40 text-yellow-600 hover:bg-yellow-500/10"
+                                                                    onClick={() => handleStatusChange(load.id, "in_progress")}>
+                                                                    <Truck className="h-3 w-3" /> Picked Up
+                                                                </Button>
+                                                            )}
+                                                            {load.status === "blasted" && (
+                                                                <Button size="sm" variant="outline"
+                                                                    className="h-6 text-[10px] px-2 gap-1 border-yellow-500/40 text-yellow-600 hover:bg-yellow-500/10"
+                                                                    onClick={() => handleStatusChange(load.id, "in_progress")}>
+                                                                    <Truck className="h-3 w-3" /> Picked Up
+                                                                </Button>
+                                                            )}
+                                                            {load.status === "in_progress" && (
+                                                                <Button size="sm" variant="outline"
+                                                                    className="h-6 text-[10px] px-2 gap-1 border-green-500/40 text-green-600 hover:bg-green-500/10"
+                                                                    onClick={() => handleStatusChange(load.id, "delivered")}>
+                                                                    <PackageCheck className="h-3 w-3" /> Delivered
+                                                                </Button>
+                                                            )}
+                                                            {(load.status === "delivered" || load.status === "completed") && (
+                                                                <Badge className="bg-green-500/15 text-green-600 border-0 text-[9px] h-5 px-1.5">
+                                                                    <CheckCircle className="h-2.5 w-2.5 mr-0.5" /> Done
+                                                                </Badge>
+                                                            )}
+                                                            {(load.status === "failed" || load.status === "cancelled") && (
+                                                                <Button size="sm" variant="outline"
+                                                                    className="h-6 text-[10px] px-2 gap-1 border-gray-400/40 text-gray-500 hover:bg-gray-500/10"
+                                                                    onClick={() => handleStatusChange(load.id, "pending")}>
+                                                                    <RotateCcw className="h-3 w-3" /> Reopen
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground">
                                                         {load.start_time && load.end_time ? `${load.start_time}–${load.end_time}` : load.start_time || "—"}
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex gap-1">
                                                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setEditLoad(load); setDialogOpen(true); }}>
                                                                 <Pencil className="h-3 w-3" />
@@ -1132,6 +1214,31 @@ export default function DispatchTracker() {
                                                                     </Button>
                                                                 </>
                                                             )}
+                                                            {/* (...) Quick status dropdown */}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" title="Change status">
+                                                                        <MoreHorizontal className="h-3 w-3" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-40">
+                                                                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                                                                        Change Status
+                                                                    </div>
+                                                                    <DropdownMenuSeparator />
+                                                                    {STATUSES.map((s) => (
+                                                                        <DropdownMenuItem
+                                                                            key={s.value}
+                                                                            className={`text-xs gap-2 ${load.status === s.value ? "bg-muted/50 font-semibold" : ""}`}
+                                                                            onClick={() => handleStatusChange(load.id, s.value)}
+                                                                        >
+                                                                            <span className={`h-2 w-2 rounded-full shrink-0 ${s.color}`} />
+                                                                            {s.label}
+                                                                            {load.status === s.value && <span className="ml-auto text-[9px] text-muted-foreground">current</span>}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(load.id); }}>
                                                                 <Trash2 className="h-3 w-3" />
                                                             </Button>

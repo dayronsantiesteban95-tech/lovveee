@@ -27,8 +27,10 @@ import {
 import {
     X, MapPin, Clock, Package, DollarSign, Truck, FileText, Route,
     AlertTriangle, CheckCircle2, Timer, Copy, ExternalLink, Navigation,
-    Building2, User, Hash, Ruler, Weight, Gauge,
+    Building2, User, Hash, Ruler, Weight, Gauge, History,
 } from "lucide-react";
+import StatusTimeline from "@/components/StatusTimeline";
+import ETASection from "@/components/ETASection";
 import { fmtMoney, fmtWait } from "@/lib/formatters";
 
 // ─── Types ──────────────────────────────────────────
@@ -335,6 +337,15 @@ export default function LoadDetailPanel({
 
                     {/* Timing */}
                     <Section title="Timing & ETA" icon={Clock} accentColor="bg-amber-500">
+                        {/* Live ETA (in_progress only) */}
+                        {load.status === "in_progress" && (
+                            <ETASection
+                                pickupAddress={load.pickup_address}
+                                deliveryAddress={load.delivery_address}
+                                slaDeadline={load.sla_deadline}
+                                enabled={load.status === "in_progress"}
+                            />
+                        )}
                         <Field label="Collection Window" value={fmtTimestamp(load.collection_time)} />
                         <Field label="Delivery Window" value={fmtTimestamp(load.delivery_time)} />
                         <Field label="SLA Deadline" value={fmtTimestamp(load.sla_deadline)} />
@@ -419,6 +430,11 @@ export default function LoadDetailPanel({
                             </p>
                         </Section>
                     )}
+
+                    {/* Status Timeline */}
+                    <Section title="Status History" icon={History} accentColor="bg-primary">
+                        <StatusTimeline loadId={load.id} />
+                    </Section>
 
                     {/* Metadata footer */}
                     <div className="pt-4 border-t border-border/20 space-y-1">
