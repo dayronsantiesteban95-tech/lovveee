@@ -5,7 +5,7 @@
 // Tab 3: Wait Time    — Analytics & detention tracking
 // Tab 4: Daily Report — Operations summary / export
 // ═══════════════════════════════════════════════════════════
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { CITY_HUBS } from "@/lib/constants";
@@ -57,7 +57,7 @@ import DispatchBlastPanel from "@/components/DispatchBlast";
 import CustomerOrderHistory from "@/components/CustomerOrderHistory";
 import ActivityLog from "@/components/ActivityLog";
 import { useRealtimeDriverMap } from "@/hooks/useRealtimeDriverMap";
-import LoadDetailPanel from "@/components/LoadDetailPanel";
+const LoadDetailPanel = lazy(() => import("@/components/LoadDetailPanel"));
 import type { LoadDetail } from "@/components/LoadDetailPanel";
 import ETABadge from "@/components/ETABadge";
 import LoadSearchFilters, {
@@ -916,7 +916,7 @@ export default function DispatchTracker() {
         const totalRevenue = dayLoads.reduce((s, l) => s + Number(l.revenue), 0);
         const totalCosts = dayLoads.reduce((s, l) => s + Number(l.driver_pay) + Number(l.fuel_cost), 0);
         const totalMiles = dayLoads.reduce((s, l) => s + Number(l.miles), 0);
-        const delivered = dayLoads.filter((l) => l.status === "delivered").length;
+        const delivered = dayLoads.filter((l) => l.status === "delivered" || l.status === "completed").length;
 
         // Per-driver breakdown
         const byDriver: Record<string, { loads: number; miles: number; revenue: number; waitTotal: number }> = {};
@@ -2537,16 +2537,18 @@ export default function DispatchTracker() {
 
             {/* Load Detail Slide-Over */}
             {selectedLoadDetail && (
-                <LoadDetailPanel
-                    load={selectedLoadDetail as LoadDetail}
-                    driverName={driverName(selectedLoadDetail.driver_id)}
-                    vehicleName={vehicleName(selectedLoadDetail.vehicle_id)}
-                    dispatcherName={dispatcherName(selectedLoadDetail.dispatcher_id)}
-                    onClose={() => setSelectedLoadDetail(null)}
-                    onStatusChange={(id, status) => { handleStatusChange(id, status); setSelectedLoadDetail(null); }}
-                    onEdit={(load) => { setEditLoad(load as Load); setDialogOpen(true); setSelectedLoadDetail(null); }}
-                    onRefresh={() => { fetchLoads(); setSelectedLoadDetail(null); }}
-                />
+                <Suspense fallback={<div className="fixed inset-y-0 right-0 w-[520px] bg-background border-l border-border/50 flex items-center justify-center"><span className="text-muted-foreground text-sm animate-pulse">Loading…</span></div>}>
+                    <LoadDetailPanel
+                        load={selectedLoadDetail as LoadDetail}
+                        driverName={driverName(selectedLoadDetail.driver_id)}
+                        vehicleName={vehicleName(selectedLoadDetail.vehicle_id)}
+                        dispatcherName={dispatcherName(selectedLoadDetail.dispatcher_id)}
+                        onClose={() => setSelectedLoadDetail(null)}
+                        onStatusChange={(id, status) => { handleStatusChange(id, status); setSelectedLoadDetail(null); }}
+                        onEdit={(load) => { setEditLoad(load as Load); setDialogOpen(true); setSelectedLoadDetail(null); }}
+                        onRefresh={() => { fetchLoads(); setSelectedLoadDetail(null); }}
+                    />
+                </Suspense>
             )}
         </div>
     );

@@ -131,11 +131,11 @@ export default function Dashboard() {
 
     const total = rows.length;
     const inTransit = rows.filter(r => r.status === "in_progress").length;
-    const delivered = rows.filter(r => r.status === "delivered").length;
+    const delivered = rows.filter(r => r.status === "delivered" || r.status === "completed").length;
     const unassigned = rows.filter(r => r.status === "pending" && !r.driver_id).length;
-    const revenue = rows.filter(r => r.status === "delivered").reduce((s, r) => s + (r.revenue ?? 0), 0);
-    // On-time: delivered and end_time <= estimated_delivery (both present)
-    const deliveredWithETA = rows.filter(r => r.status === "delivered" && r.estimated_delivery);
+    const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s, r) => s + (r.revenue ?? 0), 0);
+    // On-time: delivered/completed and end_time <= estimated_delivery (both present)
+    const deliveredWithETA = rows.filter(r => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
     const onTime = deliveredWithETA.filter(r => r.end_time && r.end_time <= r.estimated_delivery!).length;
     const onTimePct = deliveredWithETA.length > 0 ? Math.round((onTime / deliveredWithETA.length) * 100) : null;
 
@@ -225,11 +225,11 @@ export default function Dashboard() {
       .lte("load_date", today);
 
     const rows = data ?? [];
-    const revenue = rows.filter(r => r.status === "delivered").reduce((s: number, r: any) => s + (r.revenue ?? 0), 0);
+    const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s: number, r: any) => s + (r.revenue ?? 0), 0);
     const loads = rows.length;
 
     // On-time this week
-    const withETA = rows.filter((r: any) => r.status === "delivered" && r.estimated_delivery);
+    const withETA = rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
     const onTime = withETA.filter((r: any) => r.end_time && r.end_time <= r.estimated_delivery).length;
     const onTimePct = withETA.length > 0 ? Math.round((onTime / withETA.length) * 100) : null;
 
@@ -246,7 +246,7 @@ export default function Dashboard() {
     for (const d of (driverRows ?? [])) dMap[d.id] = d.full_name;
 
     const driverCounts: Record<string, number> = {};
-    for (const r of rows.filter((r: any) => r.status === "delivered" && r.driver_id)) {
+    for (const r of rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.driver_id)) {
       const id = (r as any).driver_id;
       driverCounts[id] = (driverCounts[id] ?? 0) + 1;
     }

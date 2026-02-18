@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -23,6 +24,8 @@ export default defineConfig(({ mode }) => ({
           "vendor-charts": ["recharts"],
           "vendor-supabase": ["@supabase/supabase-js"],
           "vendor-utils": ["date-fns", "clsx", "tailwind-merge"],
+          "vendor-pdf": ["jspdf", "jspdf-autotable", "html2canvas"],
+          "vendor-maps": ["@react-google-maps/api"],
         },
       },
     },
