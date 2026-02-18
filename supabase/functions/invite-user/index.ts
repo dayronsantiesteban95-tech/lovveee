@@ -108,7 +108,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      await adminClient.from("user_roles").upsert({ user_id, role: new_role }, { onConflict: "user_id" });
+      await adminClient.from("user_roles").upsert({ user_id, role: new_role }, { onConflict: "user_id,role" });
       await adminClient.from("profiles").update({ role: new_role }).eq("user_id", user_id);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -205,7 +205,7 @@ serve(async (req) => {
     }
 
     // 5. Assign role in both tables for compatibility
-    await adminClient.from("user_roles").upsert({ user_id: newUser.user.id, role }, { onConflict: "user_id" });
+    await adminClient.from("user_roles").upsert({ user_id: newUser.user.id, role }, { onConflict: "user_id,role" });
     await adminClient.from("profiles").upsert(
       { user_id: newUser.user.id, full_name, role },
       { onConflict: "user_id" }

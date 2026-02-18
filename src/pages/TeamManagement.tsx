@@ -98,6 +98,7 @@ function toDbRole(displayRole: DisplayRole): AppRole {
 /** Map DB app_role → display label */
 function toDisplayRole(dbRole: AppRole | null, fullName?: string): DisplayRole {
   if (dbRole === "owner") return "admin";
+  if (dbRole === "driver") return "driver";
   return "dispatcher";
 }
 

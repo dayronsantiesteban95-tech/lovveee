@@ -581,7 +581,9 @@ export default function RateCalculator() {
         );
     }
 
-    if (fetchError) {
+    // fetchError only blocks non-PHX/LAX hubs (PHX & LAX use hardcoded rate sheet as fallback)
+    const isHardcodedHub = hub === "phoenix" || hub === "la";
+    if (fetchError && !isHardcodedHub) {
         return (
             <div className="space-y-4 animate-in">
                 <h1 className="text-2xl font-bold gradient-text flex items-center gap-2">

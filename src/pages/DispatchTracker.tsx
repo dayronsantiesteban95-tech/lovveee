@@ -297,6 +297,7 @@ const STATUSES = [
     { value: "blasted", label: "Blasted", color: "bg-violet-500" },
     { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
     { value: "delivered", label: "Delivered", color: "bg-green-500" },
+    { value: "completed", label: "Completed", color: "bg-green-600" },
     { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
     { value: "failed", label: "Failed", color: "bg-red-500" },
 ];
@@ -480,11 +481,10 @@ export default function DispatchTracker() {
     // ── Auto-compute revenue from rate card ──────────────────
     useEffect(() => {
         if (!rateCards.length) return;
-        const svcMap: Record<string, string> = { AOG: "hotshot", Courier: "courier", Standard: "last_mile" };
-        const rateKey = svcMap[addForm.service_type] ?? "last_mile";
-        // Map UI hub values to DB hub codes (rate_cards uses PHX/LAX)
-        const hubDbMap: Record<string, string> = { phoenix: "PHX", phx: "PHX", la: "LAX", lax: "LAX", atlanta: "ATL", atl: "ATL" };
-        const dbHub = hubDbMap["phoenix"] ?? "PHX"; // default PHX hub for rate lookup
+        const svcMap: Record<string, string> = { AOG: "aog", Courier: "courier", Standard: "standard" };
+        const rateKey = svcMap[addForm.service_type] ?? "standard";
+        // Map UI hub values to DB hub codes (rate_cards uses PHX/LAX/ATL)
+        const dbHub = "PHX"; // All current clients are PHX-based
         const card = rateCards.find(
             (r) => r.hub === dbHub && r.service_type === rateKey && r.vehicle_type === addForm.vehicle_type,
         );

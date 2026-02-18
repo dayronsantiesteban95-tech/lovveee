@@ -18,7 +18,7 @@ interface DailyLoad {
   delivery_address: string | null;
   driver_id: string | null;
   status: string;
-  estimated_arrival: string | null;
+  estimated_delivery: string | null;
   revenue: number;
   end_time: string | null;
 }
@@ -34,7 +34,7 @@ interface Driver {
 
 interface ActivityEvent {
   id: string;
-  recorded_at: string;
+  created_at: string;
   new_status: string;
   driverName: string;
   loadRef: string;
@@ -121,9 +121,9 @@ export default function Dashboard() {
   const fetchLoads = useCallback(async () => {
     const { data } = await supabase
       .from("daily_loads")
-      .select("id,reference_number,client_name,pickup_address,delivery_address,driver_id,status,estimated_arrival,revenue,end_time")
+      .select("id,reference_number,client_name,pickup_address,delivery_address,driver_id,status,estimated_delivery,revenue,end_time")
       .eq("load_date", today)
-      .order("route_order", { ascending: true });
+      .order("created_at", { ascending: true });
 
     const rows = (data ?? []) as DailyLoad[];
     setLoads(rows);
@@ -133,9 +133,9 @@ export default function Dashboard() {
     const delivered = rows.filter(r => r.status === "delivered").length;
     const unassigned = rows.filter(r => r.status === "pending" && !r.driver_id).length;
     const revenue = rows.filter(r => r.status === "delivered").reduce((s, r) => s + (r.revenue ?? 0), 0);
-    // On-time: delivered and end_time <= estimated_arrival (both present)
-    const deliveredWithETA = rows.filter(r => r.status === "delivered" && r.estimated_arrival);
-    const onTime = deliveredWithETA.filter(r => r.end_time && r.end_time <= r.estimated_arrival!).length;
+    // On-time: delivered and end_time <= estimated_delivery (both present)
+    const deliveredWithETA = rows.filter(r => r.status === "delivered" && r.estimated_delivery);
+    const onTime = deliveredWithETA.filter(r => r.end_time && r.end_time <= r.estimated_delivery!).length;
     const onTimePct = deliveredWithETA.length > 0 ? Math.round((onTime / deliveredWithETA.length) * 100) : null;
 
     setKpis({ totalLoads: total, inTransit, delivered, unassigned, onTimePct, revenue });
@@ -145,7 +145,7 @@ export default function Dashboard() {
   const fetchDrivers = useCallback(async () => {
     const [driversRes, shiftsRes, locRes, loadsActiveRes] = await Promise.all([
       supabase.from("drivers").select("id,full_name,hub").order("full_name"),
-      supabase.from("driver_shifts").select("driver_id,status").gte("shift_start", today + "T00:00:00").lte("shift_start", today + "T23:59:59"),
+      supabase.from("driver_shifts").select("driver_id,status").gte("start_time", today + "T00:00:00").lte("start_time", today + "T23:59:59"),
       supabase.from("driver_locations").select("driver_id,recorded_at").order("recorded_at", { ascending: false }),
       supabase.from("daily_loads").select("driver_id,reference_number").eq("load_date", today).eq("status", "in_progress"),
     ]);
@@ -189,16 +189,27 @@ export default function Dashboard() {
   const fetchActivity = useCallback(async () => {
     const { data } = await supabase
       .from("load_status_events")
-      .select("id,recorded_at,new_status,driver_id,load_id,daily_loads(reference_number),drivers(full_name)")
-      .order("recorded_at", { ascending: false })
+      .select("id,created_at,new_status,changed_by,load_id,daily_loads(reference_number)")
+      .order("created_at", { ascending: false })
       .limit(20);
+
+    // Collect unique changed_by IDs to resolve names
+    const changedByIds = [...new Set((data ?? []).map((e: any) => e.changed_by).filter(Boolean))];
+    const driverNameMap: Record<string, string> = {};
+    if (changedByIds.length > 0) {
+      const { data: driverRows } = await supabase
+        .from("drivers")
+        .select("id,full_name")
+        .in("id", changedByIds);
+      for (const d of (driverRows ?? [])) driverNameMap[d.id] = d.full_name;
+    }
 
     const events: ActivityEvent[] = (data ?? []).map((e: any) => ({
       id: e.id,
-      recorded_at: e.recorded_at,
+      created_at: e.created_at,
       new_status: e.new_status,
-      driverName: e.drivers?.full_name ?? "Unknown",
-      loadRef: e.daily_loads?.reference_number ?? e.load_id,
+      driverName: (e.changed_by ? driverNameMap[e.changed_by] : null) ?? "System",
+      loadRef: e.daily_loads?.reference_number ?? e.load_id ?? "—",
     }));
     setActivity(events);
   }, []);
@@ -208,7 +219,7 @@ export default function Dashboard() {
     const weekAgo = daysAgoISO(6);
     const { data } = await supabase
       .from("daily_loads")
-      .select("status,revenue,client_name,driver_id,estimated_arrival,end_time")
+      .select("status,revenue,client_name,driver_id,estimated_delivery,end_time")
       .gte("load_date", weekAgo)
       .lte("load_date", today);
 
@@ -217,8 +228,8 @@ export default function Dashboard() {
     const loads = rows.length;
 
     // On-time this week
-    const withETA = rows.filter((r: any) => r.status === "delivered" && r.estimated_arrival);
-    const onTime = withETA.filter((r: any) => r.end_time && r.end_time <= r.estimated_arrival).length;
+    const withETA = rows.filter((r: any) => r.status === "delivered" && r.estimated_delivery);
+    const onTime = withETA.filter((r: any) => r.end_time && r.end_time <= r.estimated_delivery).length;
     const onTimePct = withETA.length > 0 ? Math.round((onTime / withETA.length) * 100) : null;
 
     // Top client
@@ -412,8 +423,8 @@ export default function Dashboard() {
                       </td>
                       <td className="px-3 py-3">{statusBadge(load.status)}</td>
                       <td className="px-3 py-3 text-xs text-muted-foreground hidden lg:table-cell">
-                        {load.estimated_arrival
-                          ? new Date(load.estimated_arrival).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                        {load.estimated_delivery
+                          ? new Date(load.estimated_delivery).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
                           : "—"}
                       </td>
                       <td className="px-5 py-3 text-xs text-right font-mono text-green-400">
@@ -497,7 +508,7 @@ export default function Dashboard() {
                 {activity.map((ev) => (
                   <div key={ev.id} className="flex items-start gap-3 px-5 py-2 hover:bg-muted/10">
                     <span className="text-xs text-muted-foreground/60 flex-shrink-0 mt-0.5 w-14 text-right">
-                      {timeAgo(ev.recorded_at)}
+                      {timeAgo(ev.created_at)}
                     </span>
                     <div className="flex-1 min-w-0 text-xs">
                       <span className="font-medium">{ev.driverName}</span>

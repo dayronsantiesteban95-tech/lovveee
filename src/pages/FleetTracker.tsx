@@ -184,7 +184,7 @@ export default function FleetTracker() {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         const payload = {
-            vehicle_id: fd.get("vehicle_id") as string,
+            vehicle_id: (fd.get("vehicle_id") as string) || null,
             maintenance_type: fd.get("maintenance_type") as string,
             description: fd.get("description") as string || null,
             cost: Number(fd.get("cost")) || 0,
@@ -209,7 +209,7 @@ export default function FleetTracker() {
         const fd = new FormData(e.currentTarget);
         const payload = {
             full_name: fd.get("full_name") as string,
-            phone: fd.get("phone") as string || null,
+            phone: fd.get("phone") as string || "",
             email: fd.get("email") as string || null,
             hub: fd.get("hub") as string || "phoenix",
             status: fd.get("status") as string || "active",

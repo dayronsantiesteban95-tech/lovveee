@@ -268,17 +268,25 @@ export default function QuickLoadEntry({
         }
         const timeout = setTimeout(async () => {
             try {
-                const { data } = await (supabase as any)
-                    .from("contacts")
-                    .select("email, phone, company")
-                    .ilike("company", `%${form.client_name}%`)
+                // Join companies to find contacts by client name
+                const { data: companyData } = await (supabase as any)
+                    .from("companies")
+                    .select("id, name, phone, address, city, state")
+                    .ilike("name", `%${form.client_name}%`)
                     .limit(1) as { data: any[] | null };
 
-                if (data && data.length > 0) {
+                if (companyData && companyData.length > 0) {
+                    const company = companyData[0];
+                    const { data: contactData } = await (supabase as any)
+                        .from("contacts")
+                        .select("email, phone, first_name, last_name")
+                        .eq("company_id", company.id)
+                        .limit(1) as { data: any[] | null };
+
                     setClientInfo({
-                        email: data[0].email,
-                        phone: data[0].phone,
-                        address: data[0].company,
+                        email: contactData?.[0]?.email ?? undefined,
+                        phone: contactData?.[0]?.phone ?? company.phone ?? undefined,
+                        address: [company.address, company.city, company.state].filter(Boolean).join(", ") || undefined,
                     });
                 } else {
                     setClientInfo(null);
@@ -325,29 +333,36 @@ export default function QuickLoadEntry({
             client_name: form.client_name || null,
             pickup_address: form.pickup_address || null,
             delivery_address: form.delivery_address || null,
-            customer_name: form.customer_name || null,
-            customer_phone: form.customer_phone || null,
-            customer_email: form.customer_email || null,
+            requested_by: form.requested_by || null,
             packages: form.packages || 1,
             weight_lbs: form.weight_lbs || null,
             service_type: form.service_type,
+            description: form.description || null,
             comments: [
-                form.description,
                 form.comments,
                 form.purchase_order ? `PO: ${form.purchase_order}` : "",
                 form.dim_length > 0 ? `Dims: ${form.dim_length}L × ${form.dim_width}W × ${form.dim_height}H` : "",
                 form.vehicle_type !== "car" ? `Vehicle: ${VEHICLE_TYPES.find(v => v.value === form.vehicle_type)?.label}` : "",
                 form.package_type !== "box" ? `Pkg Type: ${PACKAGE_TYPES.find(p => p.value === form.package_type)?.label}` : "",
-                form.requested_by ? `Requested by: ${form.requested_by}` : "",
             ].filter(Boolean).join(" | ") || null,
+            po_number: form.purchase_order || null,
             start_time: form.pickup_time_from || null,
             end_time: form.delivery_time_to || null,
             hub: form.hub,
             revenue: form.total_cost || 0,
             miles: form.distance_miles || 0,
+            deadhead_miles: 0,
+            wait_time_minutes: 0,
+            driver_pay: 0,
+            fuel_cost: 0,
+            detention_eligible: false,
+            detention_billed: 0,
+            shift: "day",
             status: selectedDriverId ? "assigned" : "pending",
             driver_id: selectedDriverId || null,
             created_by: user.id,
+            dispatcher_id: user.id,
+            updated_at: new Date().toISOString(),
         };
 
         const { error } = await supabase.from("daily_loads").insert(payload);

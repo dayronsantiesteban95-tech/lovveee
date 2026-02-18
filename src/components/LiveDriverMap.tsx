@@ -179,7 +179,7 @@ export default function LiveDriverMap() {
             // Fallback: query driver_locations directly and join with drivers
             const { data, error } = await (supabase as any)
                 .from("driver_locations")
-                .select("id, driver_id, latitude, longitude, recorded_at, active_load_id")
+                .select("id, driver_id, latitude, longitude, recorded_at")
                 .gte("recorded_at", cutoff)
                 .order("recorded_at", { ascending: false });
 
@@ -197,6 +197,7 @@ export default function LiveDriverMap() {
                     deduped.push({
                         ...row,
                         driver_name: null, // No join available in fallback
+                        active_load_id: null,
                     } as DriverLocation);
                 }
             }
