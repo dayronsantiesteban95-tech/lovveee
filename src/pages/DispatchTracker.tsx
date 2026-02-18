@@ -537,7 +537,7 @@ export default function DispatchTracker() {
             // Defaults
             status: "assigned",
             shift: "day",
-            hub: "phoenix",
+            hub: "PHX",
             deadhead_miles: 0,
             wait_time_minutes: 0,
             driver_pay: 0,
@@ -594,7 +594,7 @@ export default function DispatchTracker() {
             load_date: fd.get("load_date") as string || todayISO(),
             reference_number: fd.get("reference_number") as string || null,
             shift: fd.get("shift") as string || "day",
-            hub: fd.get("hub") as string || "phoenix",
+            hub: fd.get("hub") as string || "PHX",
             driver_id: fd.get("driver_id") as string || null,
             vehicle_id: (fd.get("vehicle_id") as string) || null,
             client_name: fd.get("client_name") as string || null,
@@ -1371,7 +1371,7 @@ export default function DispatchTracker() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         <div><Label>Date *</Label><Input name="load_date" type="date" defaultValue={editLoad.load_date ?? selectedDate} /></div>
                                         <div><Label>Shift</Label><Select name="shift" defaultValue={editLoad.shift ?? "day"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHIFTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
-                                        <div><Label>Hub</Label><Select name="hub" defaultValue={editLoad.hub ?? "phoenix"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{HUBS.map((h) => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}</SelectContent></Select></div>
+                                        <div><Label>Hub</Label><Select name="hub" defaultValue={editLoad.hub ?? "PHX"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{HUBS.map((h) => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}</SelectContent></Select></div>
                                         <div><Label>Reference #</Label><Input name="reference_number" defaultValue={editLoad.reference_number ?? ""} /></div>
                                         <div><Label>Driver</Label><Select name="driver_id" defaultValue={editLoad.driver_id ?? ""}><SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger><SelectContent>{drivers.map((d) => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}</SelectContent></Select></div>
                                         <div><Label>Vehicle</Label><Select name="vehicle_id" defaultValue={editLoad.vehicle_id ?? ""}><SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger><SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.vehicle_name}</SelectItem>)}</SelectContent></Select></div>
