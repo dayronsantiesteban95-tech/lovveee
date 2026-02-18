@@ -11,16 +11,11 @@ import Dashboard from "@/pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded pages — these are the largest chunks
-const Pipeline = lazy(() => import("@/pages/Pipeline"));
-const NurtureEngine = lazy(() => import("@/pages/NurtureEngine"));
 const RateCalculator = lazy(() => import("@/pages/RateCalculator"));
 const TaskBoard = lazy(() => import("@/pages/TaskBoard"));
 const CalendarView = lazy(() => import("@/pages/CalendarView"));
-const Companies = lazy(() => import("@/pages/Companies"));
-const Contacts = lazy(() => import("@/pages/Contacts"));
 const SopWiki = lazy(() => import("@/pages/SopWiki"));
 const TeamManagement = lazy(() => import("@/pages/TeamManagement"));
-const LeadFinder = lazy(() => import("@/pages/LeadFinder"));
 const DispatchTracker = lazy(() => import("@/pages/DispatchTracker"));
 const FleetTracker = lazy(() => import("@/pages/FleetTracker"));
 const PodManager = lazy(() => import("@/pages/PodManager"));
@@ -72,15 +67,10 @@ const App = () => (
             <Route path="/track/:token" element={<TrackDelivery />} />
             <Route element={<ProtectedRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/pipeline" element={<Pipeline />} />
               <Route path="/tasks" element={<TaskBoard />} />
               <Route path="/calendar" element={<CalendarView />} />
-              <Route path="/companies" element={<Companies />} />
-              <Route path="/contacts" element={<Contacts />} />
               <Route path="/sop-wiki" element={<SopWiki />} />
-              <Route path="/nurture" element={<NurtureEngine />} />
               <Route path="/team" element={<TeamManagement />} />
-              <Route path="/lead-finder" element={<LeadFinder />} />
               <Route path="/rate-calculator" element={<RateCalculator />} />
               <Route path="/command-center" element={<CommandCenter />} />
               <Route path="/dispatch" element={<DispatchTracker />} />

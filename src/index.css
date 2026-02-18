@@ -713,4 +713,14 @@
     font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     letter-spacing: -0.02em;
   }
+
+  /* Dispatch form section label */
+  .form-section-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.5rem;
+  }
 }

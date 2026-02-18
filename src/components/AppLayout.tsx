@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Outlet, useLocation } from "react-router-dom";
 
 export function AppLayout() {
@@ -17,7 +18,9 @@ export function AppLayout() {
             <SidebarTrigger />
           </div>
           <main className={`flex-1 overflow-auto ${isFullBleed ? "" : "p-6"}`}>
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </div>
       </div>

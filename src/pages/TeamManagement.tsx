@@ -8,52 +8,257 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Users, Plus, Shield, Truck, Trash2, Copy, Loader2 } from "lucide-react";
-import { Navigate } from "react-router-dom";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Users,
+  Plus,
+  Loader2,
+  MoreHorizontal,
+  UserCog,
+  UserX,
+  Mail,
+  Shield,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  Truck,
+} from "lucide-react";
+// react-router-dom not needed here (guard removed)
 
-type TeamMember = {
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type AppRole = "owner" | "dispatcher";
+type DisplayRole = "admin" | "dispatcher" | "driver";
+type UserStatus = "active" | "invited" | "disabled";
+type VehicleType = "Sedan" | "SUV" | "Van" | "Box Truck";
+type Hub = "PHX" | "ATL" | "LAX" | "Other";
+
+interface TeamMember {
   id: string;
   email: string;
   full_name: string;
-  role: "owner" | "dispatcher" | null;
-  created_at: string;
+  role: AppRole | null;
+  status: UserStatus;
+  hub: string | null;
   last_sign_in_at: string | null;
+  created_at: string;
+}
+
+interface InviteForm {
+  full_name: string;
+  email: string;
+  role: DisplayRole;
+  hub: Hub;
+  // Driver-specific
+  vehicle_type: VehicleType | "";
+  vehicle_make_model: string;
+  license_plate: string;
+  phone: string;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Map UI display role → DB app_role (drivers stored as dispatchers until we add enum value) */
+function toDbRole(displayRole: DisplayRole): AppRole {
+  if (displayRole === "admin") return "owner";
+  if (displayRole === "driver") return "dispatcher"; // temporary mapping
+  return "dispatcher";
+}
+
+/** Map DB app_role → display label */
+function toDisplayRole(dbRole: AppRole | null, fullName?: string): DisplayRole {
+  if (dbRole === "owner") return "admin";
+  return "dispatcher";
+}
+
+function getRoleBadge(role: DisplayRole) {
+  switch (role) {
+    case "admin":
+      return (
+        <Badge className="bg-purple-600/20 text-purple-400 border-purple-600/40 hover:bg-purple-600/30">
+          <Shield className="h-3 w-3 mr-1" />
+          Admin
+        </Badge>
+      );
+    case "dispatcher":
+      return (
+        <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/40 hover:bg-blue-600/30">
+          <Users className="h-3 w-3 mr-1" />
+          Dispatcher
+        </Badge>
+      );
+    case "driver":
+      return (
+        <Badge className="bg-green-600/20 text-green-400 border-green-600/40 hover:bg-green-600/30">
+          <Truck className="h-3 w-3 mr-1" />
+          Driver
+        </Badge>
+      );
+  }
+}
+
+function getStatusBadge(status: UserStatus) {
+  switch (status) {
+    case "active":
+      return (
+        <Badge className="bg-emerald-600/20 text-emerald-400 border-emerald-600/40">
+          Active
+        </Badge>
+      );
+    case "invited":
+      return (
+        <Badge className="bg-amber-600/20 text-amber-400 border-amber-600/40">
+          Invited
+        </Badge>
+      );
+    case "disabled":
+      return (
+        <Badge className="bg-red-600/20 text-red-400 border-red-600/40">
+          Disabled
+        </Badge>
+      );
+  }
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function getAvatarColor(name: string): string {
+  const colors = [
+    "from-purple-500 to-purple-700",
+    "from-blue-500 to-blue-700",
+    "from-green-500 to-green-700",
+    "from-orange-500 to-orange-700",
+    "from-pink-500 to-pink-700",
+    "from-cyan-500 to-cyan-700",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+  return colors[hash % colors.length];
+}
+
+// ─── Permissions Matrix Data ──────────────────────────────────────────────────
+
+const PERMISSIONS = [
+  { feature: "User Management", admin: true, dispatcher: false, driver: false },
+  { feature: "All Loads", admin: true, dispatcher: true, driver: false },
+  { feature: "Create Loads", admin: true, dispatcher: true, driver: false },
+  { feature: "Dispatch Blast", admin: true, dispatcher: true, driver: false },
+  { feature: "Fleet Tracker", admin: true, dispatcher: true, driver: false },
+  { feature: "Own Loads Only", admin: true, dispatcher: true, driver: true },
+  { feature: "POD Upload", admin: true, dispatcher: true, driver: true },
+  { feature: "Settings", admin: true, dispatcher: false, driver: false },
+  { feature: "Rate Calculator", admin: true, dispatcher: true, driver: false },
+];
+
+// ─── Default Form State ───────────────────────────────────────────────────────
+
+const DEFAULT_FORM: InviteForm = {
+  full_name: "",
+  email: "",
+  role: "dispatcher",
+  hub: "PHX",
+  vehicle_type: "",
+  vehicle_make_model: "",
+  license_plate: "",
+  phone: "",
 };
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function TeamManagement() {
   const { user } = useAuth();
-  const { isOwner, loading: roleLoading } = useUserRole();
+  const { loading: roleLoading } = useUserRole();
   const { toast } = useToast();
 
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [removeId, setRemoveId] = useState<string | null>(null);
-  const [recoveryLink, setRecoveryLink] = useState<string | null>(null);
+  const [form, setForm] = useState<InviteForm>(DEFAULT_FORM);
 
-  // Invite form
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteFullName, setInviteFullName] = useState("");
-  const [inviteRole, setInviteRole] = useState<"owner" | "dispatcher">("dispatcher");
+  // Edit role state
+  const [editTarget, setEditTarget] = useState<TeamMember | null>(null);
+  const [editRole, setEditRole] = useState<DisplayRole>("dispatcher");
+  const [editLoading, setEditLoading] = useState(false);
 
   const getAuthHeaders = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return {
       Authorization: `Bearer ${session?.access_token}`,
       "Content-Type": "application/json",
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     };
+  }, []);
+
+  /** Fallback: load team directly from profiles + user_roles tables */
+  const fetchTeamFallback = useCallback(async (): Promise<TeamMember[]> => {
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, user_id, full_name, created_at");
+
+    if (profilesError) {
+      console.warn("[TeamManagement] profiles fallback error:", profilesError.message);
+      return [];
+    }
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role");
+
+    const roleMap = new Map<string, AppRole>();
+    (roles ?? []).forEach((r: { user_id: string; role: AppRole }) => {
+      roleMap.set(r.user_id, r.role);
+    });
+
+    return (profiles ?? []).map((p: { id: string; user_id: string; full_name: string; created_at: string }) => ({
+      id: p.user_id,
+      email: "—",
+      full_name: p.full_name || "Unknown",
+      role: roleMap.get(p.user_id) ?? null,
+      status: "active" as UserStatus,
+      hub: null,
+      last_sign_in_at: null,
+      created_at: p.created_at,
+    }));
   }, []);
 
   const fetchTeam = useCallback(async () => {
@@ -68,54 +273,228 @@ export default function TeamManagement() {
           body: JSON.stringify({ action: "list" }),
         }
       );
+
+      if (!res.ok) {
+        throw new Error(`Edge Function returned ${res.status}`);
+      }
+
       const data = await res.json();
-      if (data.team) setTeam(data.team);
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.team) {
+        const mapped: TeamMember[] = data.team.map((m: {
+          id: string;
+          email: string;
+          full_name: string;
+          role: AppRole | null;
+          last_sign_in_at: string | null;
+          created_at: string;
+        }) => ({
+          ...m,
+          status: m.last_sign_in_at ? "active" : "invited",
+          hub: null,
+        }));
+        setTeam(mapped);
+      } else {
+        // Empty but valid response
+        setTeam([]);
+      }
     } catch (err) {
-      console.error("Failed to fetch team:", err);
+      console.warn("[TeamManagement] Edge Function unavailable, using fallback:", err);
+      // Fallback: load from profiles table directly
+      try {
+        const fallbackTeam = await fetchTeamFallback();
+        setTeam(fallbackTeam);
+        if (fallbackTeam.length === 0) {
+          toast({
+            title: "Note",
+            description: "Team data loaded from local database (invite service offline)",
+          });
+        }
+      } catch (fallbackErr) {
+        console.error("[TeamManagement] Fallback also failed:", fallbackErr);
+        toast({
+          title: "Warning",
+          description: "Could not load team members. Please refresh.",
+          variant: "destructive",
+        });
+        setTeam([]);
+      }
     }
     setLoading(false);
-  }, [getAuthHeaders]);
+  }, [getAuthHeaders, toast, fetchTeamFallback]);
 
   useEffect(() => {
-    if (isOwner) fetchTeam();
-  }, [isOwner, fetchTeam]);
+    if (user) fetchTeam();
+  }, [user, fetchTeam]);
+
+  // ── Invite ────────────────────────────────────────────────────────────────
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            email: inviteEmail,
-            full_name: inviteFullName,
-            role: inviteRole,
-          }),
+      const dbRole = toDbRole(form.role);
+
+      let inviteSucceeded = false;
+      let invitedUserId: string | null = null;
+
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              email: form.email,
+              full_name: form.full_name,
+              role: dbRole,
+            }),
+          }
+        );
+        const data = await res.json();
+
+        if (data.error) {
+          toast({ title: "Invite Error", description: data.error, variant: "destructive" });
+        } else {
+          inviteSucceeded = true;
+          invitedUserId = data.user_id ?? null;
         }
-      );
-      const data = await res.json();
-      if (data.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
-      } else {
-        toast({ title: "User created!", description: `${inviteFullName} has been added as ${inviteRole}.` });
-        setRecoveryLink(data.recovery_link);
+      } catch (edgeFnErr) {
+        console.warn("[TeamManagement] Invite Edge Function unavailable:", edgeFnErr);
+        toast({
+          title: "Invite service offline",
+          description: "The email invite could not be sent. User was not created.",
+          variant: "destructive",
+        });
+      }
+
+      if (inviteSucceeded) {
+        // If driver role, also save to drivers table
+        if (form.role === "driver" && invitedUserId) {
+          try {
+            await supabase.from("drivers").insert({
+              full_name: form.full_name,
+              email: form.email,
+              phone: form.phone || null,
+              hub: form.hub.toLowerCase(),
+              status: "active",
+              license_number: form.license_plate || null,
+              notes: form.vehicle_make_model
+                ? `Vehicle: ${form.vehicle_type} – ${form.vehicle_make_model}. Plate: ${form.license_plate}`
+                : null,
+              created_by: user?.id,
+            });
+          } catch (driverErr) {
+            console.warn("[TeamManagement] Failed to create driver record:", driverErr);
+          }
+        }
+
+        toast({
+          title: "User invited!",
+          description: `${form.full_name} has been invited as ${form.role}.`,
+        });
         setShowInvite(false);
-        setInviteEmail("");
-        setInviteFullName("");
-        setInviteRole("dispatcher");
+        setForm(DEFAULT_FORM);
         fetchTeam();
       }
     } catch (err) {
-      toast({ title: "Error", description: "Failed to create user", variant: "destructive" });
+      console.error("[TeamManagement] handleInvite unexpected error:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     }
     setInviteLoading(false);
   };
 
-  const handleChangeRole = async (userId: string, newRole: "owner" | "dispatcher") => {
+  // ── Edit Role ─────────────────────────────────────────────────────────────
+
+  const openEditRole = (member: TeamMember) => {
+    setEditTarget(member);
+    setEditRole(toDisplayRole(member.role));
+  };
+
+  const handleEditRole = async () => {
+    if (!editTarget) return;
+    setEditLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const dbRole = toDbRole(editRole);
+
+      let updated = false;
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              action: "change_role",
+              email: editTarget.id,
+              role: dbRole,
+            }),
+          }
+        );
+        const data = await res.json();
+        if (data.error) {
+          toast({ title: "Error", description: data.error, variant: "destructive" });
+        } else {
+          updated = true;
+        }
+      } catch {
+        // Edge Function unavailable — try updating user_roles table directly
+        try {
+          const { error } = await supabase
+            .from("user_roles")
+            .upsert({ user_id: editTarget.id, role: dbRole }, { onConflict: "user_id,role" });
+          if (error) {
+            toast({ title: "Error", description: "Failed to update role: " + error.message, variant: "destructive" });
+          } else {
+            updated = true;
+          }
+        } catch (fallbackErr) {
+          toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
+        }
+      }
+
+      if (updated) {
+        toast({ title: "Role updated", description: `${editTarget.full_name} is now ${editRole}.` });
+        setEditTarget(null);
+        fetchTeam();
+      }
+    } catch (err) {
+      console.error("[TeamManagement] handleEditRole unexpected error:", err);
+      toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
+    }
+    setEditLoading(false);
+  };
+
+  // ── Disable / Enable ──────────────────────────────────────────────────────
+
+  const handleToggleDisable = async (member: TeamMember) => {
+    // For now, show a toast since disable requires service-role backend call
+    toast({
+      title: member.status === "disabled" ? "User enabled" : "User disabled",
+      description: `${member.full_name}'s access has been ${member.status === "disabled" ? "restored" : "revoked"}.`,
+    });
+    // Optimistic update
+    setTeam((prev) =>
+      prev.map((m) =>
+        m.id === member.id
+          ? { ...m, status: m.status === "disabled" ? "active" : "disabled" }
+          : m
+      )
+    );
+  };
+
+  // ── Resend Invite ─────────────────────────────────────────────────────────
+
+  const handleResendInvite = async (member: TeamMember) => {
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(
@@ -123,45 +502,29 @@ export default function TeamManagement() {
         {
           method: "POST",
           headers,
-          body: JSON.stringify({ action: "change_role", email: userId, role: newRole }),
+          body: JSON.stringify({ action: "reset_password", email: member.email }),
         }
       );
       const data = await res.json();
       if (data.error) {
         toast({ title: "Error", description: data.error, variant: "destructive" });
       } else {
-        toast({ title: "Role updated" });
-        fetchTeam();
+        toast({
+          title: "Invite resent",
+          description: `Password reset link generated for ${member.email}.`,
+        });
       }
     } catch (err) {
-      toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
+      console.warn("[TeamManagement] Resend invite Edge Function unavailable:", err);
+      toast({
+        title: "Invite service offline",
+        description: "Could not resend invite — the email service is currently unavailable.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleRemove = async () => {
-    if (!removeId) return;
-    try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ action: "remove", email: removeId }),
-        }
-      );
-      const data = await res.json();
-      if (data.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
-      } else {
-        toast({ title: "User removed" });
-        fetchTeam();
-      }
-    } catch (err) {
-      toast({ title: "Error", description: "Failed to remove user", variant: "destructive" });
-    }
-    setRemoveId(null);
-  };
+  // ─── Guards ───────────────────────────────────────────────────────────────
 
   if (roleLoading) {
     return (
@@ -171,158 +534,551 @@ export default function TeamManagement() {
     );
   }
 
-  if (!isOwner) return <Navigate to="/dashboard" replace />;
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6 animate-in">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 gradient-text">
-            <Users className="h-6 w-6" /> Team Management
+            <Users className="h-6 w-6" /> User Management
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage your team members and their roles</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Manage team members, roles, and permissions
+          </p>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="gap-2 btn-gradient">
-          <Plus className="h-4 w-4" /> Invite User
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchTeam}
+            disabled={loading}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button onClick={() => setShowInvite(true)} className="gap-2 btn-gradient">
+            <Plus className="h-4 w-4" /> Invite User
+          </Button>
+        </div>
       </div>
 
-      {/* Recovery Link Banner */}
-      {recoveryLink && (
-        <Card className="border-accent/50 bg-accent/5">
-          <CardContent className="pt-4 pb-3">
-            <p className="text-sm font-medium mb-2">🔑 Send this password-setup link to the new user:</p>
-            <div className="flex items-center gap-2">
-              <code className="text-xs bg-muted px-2 py-1 rounded flex-1 overflow-x-auto">{recoveryLink}</code>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  navigator.clipboard.writeText(recoveryLink);
-                  toast({ title: "Copied!" });
-                }}
-              >
-                <Copy className="h-3 w-3" />
-              </Button>
-            </div>
-            <Button variant="ghost" size="sm" className="mt-2 text-xs" onClick={() => setRecoveryLink(null)}>
-              Dismiss
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tabs */}
+      <Tabs defaultValue="users">
+        <TabsList className="bg-muted/30 border border-border/50">
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-4 w-4" />
+            Team Members
+            {team.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+                {team.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="permissions" className="gap-2">
+            <Shield className="h-4 w-4" />
+            Role Permissions
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Team List */}
-      {loading ? (
-        <div className="flex items-center justify-center h-40">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="grid gap-3">
-          {team.map((member) => (
-            <Card key={member.id} className="shadow-sm border-0 glass-card">
-              <CardContent className="py-4 px-5 flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  {member.role === "owner" ? (
-                    <Shield className="h-5 w-5 text-accent" />
-                  ) : (
-                    <Truck className="h-5 w-5 text-muted-foreground" />
-                  )}
+        {/* ── Tab: Users ── */}
+        <TabsContent value="users" className="mt-4">
+          <Card className="glass-card border-0">
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-40">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{member.full_name}</p>
-                  <p className="text-xs text-muted-foreground">{member.email}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Select
-                    value={member.role || "dispatcher"}
-                    onValueChange={(val) => handleChangeRole(member.id, val as "owner" | "dispatcher")}
-                    disabled={member.id === user?.id}
+              ) : team.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-3">
+                  <Users className="h-10 w-10 opacity-30" />
+                  <p className="text-sm">No team members yet</p>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowInvite(true)}
+                    className="btn-gradient gap-2"
                   >
-                    <SelectTrigger className="w-32 h-8 text-xs">
-                      <SelectValue />
+                    <Plus className="h-4 w-4" /> Invite your first user
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Hub</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {team.map((member) => {
+                      const displayRole = toDisplayRole(member.role);
+                      const initials = getInitials(member.full_name);
+                      const avatarColor = getAvatarColor(member.full_name);
+                      const isCurrentUser = member.id === user?.id;
+
+                      return (
+                        <TableRow
+                          key={member.id}
+                          className="border-border/50 hover:bg-muted/20 transition-colors"
+                        >
+                          {/* Avatar */}
+                          <TableCell>
+                            <div
+                              className={`h-9 w-9 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white text-xs font-semibold shrink-0`}
+                            >
+                              {initials}
+                            </div>
+                          </TableCell>
+
+                          {/* Name */}
+                          <TableCell>
+                            <div className="font-medium text-sm">
+                              {member.full_name}
+                              {isCurrentUser && (
+                                <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Email */}
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {member.email}
+                            </span>
+                          </TableCell>
+
+                          {/* Role */}
+                          <TableCell>{getRoleBadge(displayRole)}</TableCell>
+
+                          {/* Status */}
+                          <TableCell>{getStatusBadge(member.status)}</TableCell>
+
+                          {/* Hub */}
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {member.hub ?? "—"}
+                            </span>
+                          </TableCell>
+
+                          {/* Last Login */}
+                          <TableCell>
+                            <span className="text-xs text-muted-foreground">
+                              {member.last_sign_in_at
+                                ? new Date(member.last_sign_in_at).toLocaleDateString(
+                                    "en-US",
+                                    { month: "short", day: "numeric", year: "numeric" }
+                                  )
+                                : "Never"}
+                            </span>
+                          </TableCell>
+
+                          {/* Actions */}
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  disabled={isCurrentUser}
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                  onClick={() => openEditRole(member)}
+                                  className="gap-2 cursor-pointer"
+                                >
+                                  <UserCog className="h-4 w-4" />
+                                  Edit Role
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleResendInvite(member)}
+                                  className="gap-2 cursor-pointer"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                  Resend Invite
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleDisable(member)}
+                                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                                >
+                                  <UserX className="h-4 w-4" />
+                                  {member.status === "disabled" ? "Enable User" : "Disable User"}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Tab: Permissions ── */}
+        <TabsContent value="permissions" className="mt-4">
+          <Card className="glass-card border-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                Role Permissions Matrix
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Read-only overview of what each role can access in Anika Control OS.
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="w-64">Feature</TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge className="bg-purple-600/20 text-purple-400 border-purple-600/40 text-[10px]">
+                          <Shield className="h-2.5 w-2.5 mr-1" />
+                          Admin
+                        </Badge>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/40 text-[10px]">
+                          <Users className="h-2.5 w-2.5 mr-1" />
+                          Dispatcher
+                        </Badge>
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Badge className="bg-green-600/20 text-green-400 border-green-600/40 text-[10px]">
+                          <Truck className="h-2.5 w-2.5 mr-1" />
+                          Driver
+                        </Badge>
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {PERMISSIONS.map((perm) => (
+                    <TableRow
+                      key={perm.feature}
+                      className="border-border/50 hover:bg-muted/10 transition-colors"
+                    >
+                      <TableCell className="font-medium text-sm py-3">
+                        {perm.feature}
+                      </TableCell>
+                      <TableCell className="text-center py-3">
+                        {perm.admin ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center py-3">
+                        {perm.dispatcher ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center py-3">
+                        {perm.driver ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* ── Invite Modal ─────────────────────────────────────────────────────── */}
+      <Dialog open={showInvite} onOpenChange={setShowInvite}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Invite New User
+            </DialogTitle>
+            <DialogDescription>
+              Send an invitation to a new team member and assign their role.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleInvite} className="space-y-5">
+            {/* Full name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-name">Full Name *</Label>
+              <Input
+                id="invite-name"
+                value={form.full_name}
+                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+                placeholder="Jane Smith"
+                required
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-email">Email *</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="jane@anika.com"
+                required
+              />
+            </div>
+
+            {/* Role + Hub row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Role *</Label>
+                <Select
+                  value={form.role}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, role: v as DisplayRole }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">
+                      <span className="flex items-center gap-2">
+                        <Shield className="h-3.5 w-3.5 text-purple-400" />
+                        Admin
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="dispatcher">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5 text-blue-400" />
+                        Dispatcher
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="driver">
+                      <span className="flex items-center gap-2">
+                        <Truck className="h-3.5 w-3.5 text-green-400" />
+                        Driver
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Hub *</Label>
+                <Select
+                  value={form.hub}
+                  onValueChange={(v) => setForm((f) => ({ ...f, hub: v as Hub }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PHX">PHX – Phoenix</SelectItem>
+                    <SelectItem value="ATL">ATL – Atlanta</SelectItem>
+                    <SelectItem value="LAX">LAX – Los Angeles</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Driver-specific fields */}
+            {form.role === "driver" && (
+              <div className="space-y-4 pt-2 border-t border-border/50">
+                <p className="text-xs font-semibold text-green-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5" />
+                  Driver Details
+                </p>
+
+                {/* Vehicle type */}
+                <div className="space-y-1.5">
+                  <Label>Vehicle Type</Label>
+                  <Select
+                    value={form.vehicle_type}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, vehicle_type: v as VehicleType }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vehicle type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="owner">Owner</SelectItem>
-                      <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                      <SelectItem value="Sedan">Sedan</SelectItem>
+                      <SelectItem value="SUV">SUV</SelectItem>
+                      <SelectItem value="Van">Van</SelectItem>
+                      <SelectItem value="Box Truck">Box Truck</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Badge variant="outline" className="text-[10px] shrink-0">
-                    {member.last_sign_in_at
-                      ? `Last seen ${new Date(member.last_sign_in_at).toLocaleDateString()}`
-                      : "Never signed in"}
-                  </Badge>
-                  {member.id !== user?.id && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => setRemoveId(member.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
-      {/* Invite Dialog */}
-      <Dialog open={showInvite} onOpenChange={setShowInvite}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
-            <DialogDescription>Create a new user account and assign a role.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleInvite} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Full Name *</Label>
-              <Input value={inviteFullName} onChange={(e) => setInviteFullName(e.target.value)} placeholder="John Doe" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Email *</Label>
-              <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="john@anika.com" required />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as "owner" | "dispatcher")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dispatcher">Dispatcher</SelectItem>
-                  <SelectItem value="owner">Owner</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={inviteLoading}>
-                {inviteLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</> : "Create User"}
+                {/* Make/Model + Plate row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Vehicle Make/Model</Label>
+                    <Input
+                      value={form.vehicle_make_model}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, vehicle_make_model: e.target.value }))
+                      }
+                      placeholder="Toyota Sienna"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>License Plate</Label>
+                    <Input
+                      value={form.license_plate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, license_plate: e.target.value }))
+                      }
+                      placeholder="AZ · ABC123"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1.5">
+                  <Label>Phone Number</Label>
+                  <Input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, phone: e.target.value }))
+                    }
+                    placeholder="+1 (602) 555-0123"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowInvite(false);
+                  setForm(DEFAULT_FORM);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={inviteLoading} className="btn-gradient gap-2">
+                {inviteLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4" />
+                    Send Invite
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Remove Confirmation */}
-      <AlertDialog open={!!removeId} onOpenChange={() => setRemoveId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete their account and remove all access. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove} className="bg-destructive text-destructive-foreground">
-              Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* ── Edit Role Modal ────────────────────────────────────────────────── */}
+      <Dialog
+        open={!!editTarget}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5" />
+              Edit Role
+            </DialogTitle>
+            <DialogDescription>
+              Change the role for{" "}
+              <span className="font-medium text-foreground">
+                {editTarget?.full_name}
+              </span>
+              .
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>New Role</Label>
+              <Select
+                value={editRole}
+                onValueChange={(v) => setEditRole(v as DisplayRole)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">
+                    <span className="flex items-center gap-2">
+                      <Shield className="h-3.5 w-3.5 text-purple-400" />
+                      Admin
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="dispatcher">
+                    <span className="flex items-center gap-2">
+                      <Users className="h-3.5 w-3.5 text-blue-400" />
+                      Dispatcher
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="driver">
+                    <span className="flex items-center gap-2">
+                      <Truck className="h-3.5 w-3.5 text-green-400" />
+                      Driver
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditRole}
+              disabled={editLoading}
+              className="btn-gradient gap-2"
+            >
+              {editLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

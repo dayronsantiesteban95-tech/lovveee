@@ -1,18 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
-  TrendingUp,
   CheckSquare,
   CalendarDays,
   LogOut,
-  Building2,
-  Users,
   Moon,
   Sun,
   BookOpen,
-  Zap,
   Shield,
-  Search,
   Calculator,
   ClipboardList,
   Truck,
@@ -42,17 +37,9 @@ const mainNav = [
   { title: "Command Center", url: "/command-center", icon: Crosshair },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Dispatch", url: "/dispatch", icon: ClipboardList },
-  { title: "Growth Pipeline", url: "/pipeline", icon: TrendingUp },
-  { title: "Nurture Engine", url: "/nurture", icon: Zap },
   { title: "Task Board", url: "/tasks", icon: CheckSquare },
   { title: "Calendar", url: "/calendar", icon: CalendarDays },
   { title: "Rate Calculator", url: "/rate-calculator", icon: Calculator },
-];
-
-const crmNav = [
-  { title: "Lead Finder", url: "/lead-finder", icon: Search },
-  { title: "Companies", url: "/companies", icon: Building2 },
-  { title: "Contacts", url: "/contacts", icon: Users },
 ];
 
 const resourcesNav = [
@@ -68,26 +55,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { isOwner } = useUserRole();
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
-  const [replyCount, setReplyCount] = useState(0);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
-
-  const fetchReplyCount = useCallback(async () => {
-    const { count } = await supabase
-      .from("lead_sequences")
-      .select("*", { count: "exact", head: true })
-      .in("response_status", ["replied", "interested_call"])
-      .neq("status", "completed");
-    setReplyCount(count || 0);
-  }, []);
-
-  useEffect(() => {
-    fetchReplyCount();
-    const interval = setInterval(fetchReplyCount, 60000);
-    return () => clearInterval(interval);
-  }, [fetchReplyCount]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -105,9 +76,6 @@ export function AppSidebar() {
         >
           <div className="relative">
             <item.icon className="h-4 w-4" />
-            {item.url === "/nurture" && replyCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent" />
-            )}
           </div>
           <span className="text-sm">{item.title}</span>
         </NavLink>
@@ -139,19 +107,6 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-            CRM
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {crmNav.map((item) => <NavItem key={item.title} item={item} />)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <Separator className="bg-sidebar-border/30 my-2 mx-3" />
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
             Fleet
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -174,21 +129,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isOwner && (
-          <>
-            <Separator className="bg-sidebar-border/30 my-2 mx-3" />
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-                Admin
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-0.5">
-                  <NavItem item={{ title: "Team Management", url: "/team", icon: Shield }} />
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+        <Separator className="bg-sidebar-border/30 my-2 mx-3" />
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
+            Admin
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
+              <NavItem item={{ title: "Team Management", url: "/team", icon: Shield }} />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4 space-y-1">
         <Button

@@ -99,15 +99,25 @@
 - [x] LoadDetailPanel integrated into Command Center for alert-click-to-inspect
 - [x] Wait time alert types only on Day 1 (per Q2: A)
 
-## Phase 7: Driver App (React Native Expo)
-- [ ] Project setup
-- [ ] Auth flow (driver login)
-- [ ] Blast notification → view → express interest
+## Phase 7: Driver App (React Native Expo) ✅ SCAFFOLDED — 2026-02-18
+- [x] Project setup (anika-driver-app/)
+- [x] Auth flow (driver login screen — dark premium UI)
+- [x] Tab navigation (Loads / New Jobs / POD / Profile)
+- [x] My Loads screen (real-time, status progression, GPS indicator, today stats)
+- [x] Blast screen (active blasts, countdown timer, accept/decline)
+- [x] POD screen (camera capture, Supabase Storage upload, notes)
+- [x] Profile screen (GPS toggle, driver info, sign out)
+- [x] Background GPS hook (Expo Location task, Supabase upsert)
+- [x] Auth hook (session persistence, driver lookup by user_id)
+- [x] Loads hook (real-time Supabase subscription)
+- [x] Blast hook (real-time blast feed)
+- [x] Full TypeScript types
+- [ ] Google Maps integration (needs API key)
 - [ ] Map with animated route on assignment confirmation
-- [ ] Status progression buttons
-- [ ] POD capture (photo + signature)
-- [ ] Background GPS broadcasting
+- [ ] OneSignal push notifications (needs App ID)
 - [ ] Offline-first queue + sync
+- [ ] EAS build config (eas.json)
+- [ ] App Store / Play Store submission
 
 ## Phase 8: Intelligence Layer
 - [ ] GPS-to-route comparison
@@ -135,4 +145,16 @@
 | 2026-02-14 13:25 | Phase 5 build | TypeScript 0 errors, Vite 8.11s ✅ |
 | 2026-02-14 13:28 | Phase 6 build | TypeScript 0 errors, Vite 7.77s ✅ |
 
-## Current Status: Phase 6 complete. Next: Phase 7 (Driver App) or run Supabase migration
+## Current Status: Phase 7 scaffolded ✅ — Needs: Supabase migration run + Google Maps key + OneSignal App ID
+
+## Dayron's Tasks (Day 1 — 1hr)
+1. Run `lovveee/supabase/migrations/20260218_create_rpc_functions.sql` in Supabase SQL Editor
+2. Get Google Maps API key → send to Jarvis
+3. Get Supabase anon key → send to Jarvis (for driver app .env)
+
+## Jarvis's Next (autonomous)
+1. Web app polish pass (design consistency, broken components audit)
+2. Google Maps integration (CommandCenter) — blocked on API key
+3. OneSignal push notification setup
+4. Driver app map screen (animated route)
+5. EAS build config for App Store submission

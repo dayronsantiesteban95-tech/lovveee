@@ -5,7 +5,7 @@
 // Tab 3: Wait Time    — Analytics & detention tracking
 // Tab 4: Daily Report — Operations summary / export
 // ═══════════════════════════════════════════════════════════
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { CITY_HUBS } from "@/lib/constants";
@@ -32,7 +32,7 @@ import {
     Truck, Clock, DollarSign, Plus, Pencil, Trash2, MapPin,
     AlertTriangle, CheckCircle, BarChart3, FileText, Copy, Timer, Package,
     Navigation, Download, History, Zap, PanelRightClose, PanelRightOpen, Layers, Radio,
-    ChevronRight, Gauge, Shield,
+    ChevronRight, Gauge, Shield, Upload, X, ChevronLeft,
 } from "lucide-react";
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
@@ -90,6 +90,124 @@ type Load = {
 };
 type Profile = { user_id: string; full_name: string };
 
+// ─── Add Load Form Type ─────────────────────────────
+type AddLoadForm = {
+    // Step 1: Load Info
+    reference_number: string;
+    consol_number: string;
+    client_name: string;
+    client_id: string;
+    service_type: string;
+    revenue: string;
+    sla_deadline: string;
+    po_number: string;
+    vehicle_type: string;
+    distance_miles: string;
+    // Step 2: Pickup
+    pickup_company: string;
+    pickup_address: string;
+    pickup_open_hours: string;
+    pickup_contact_name: string;
+    pickup_contact_phone: string;
+    pickup_time_from: string;
+    pickup_time_to: string;
+    // Step 2: Delivery
+    delivery_company: string;
+    delivery_address: string;
+    delivery_contact_name: string;
+    delivery_contact_phone: string;
+    // Step 3: Cargo
+    packages: string;
+    package_type: string;
+    weight_kg: string;
+    dim_l: string;
+    dim_w: string;
+    dim_h: string;
+    dimensions_text: string;
+    description: string;
+    // Step 3: Driver
+    driver_id: string;
+    // BOL
+    bol_url: string;
+};
+
+type Company = {
+    id: string;
+    name: string;
+    address: string | null;
+    city: string | null;
+    state: string | null;
+    phone: string | null;
+};
+
+type CompanyContact = {
+    id: string;
+    first_name: string;
+    last_name: string;
+    phone: string | null;
+    email: string | null;
+    job_title: string | null;
+    company_id: string | null;
+};
+
+type RateCard = {
+    hub: string;
+    service_type: string;
+    vehicle_type: string;
+    base_rate: number;
+    per_mile_rate: number;
+    per_lb_rate: number;
+    min_charge: number;
+    fuel_surcharge_pct: number;
+};
+
+const EMPTY_ADD_FORM: AddLoadForm = {
+    reference_number: "",
+    consol_number: "",
+    client_name: "",
+    client_id: "",
+    service_type: "AOG",
+    revenue: "",
+    sla_deadline: "",
+    po_number: "",
+    vehicle_type: "cargo_van",
+    distance_miles: "",
+    pickup_company: "",
+    pickup_address: "",
+    pickup_open_hours: "",
+    pickup_contact_name: "",
+    pickup_contact_phone: "",
+    pickup_time_from: "",
+    pickup_time_to: "",
+    delivery_company: "",
+    delivery_address: "",
+    delivery_contact_name: "",
+    delivery_contact_phone: "",
+    packages: "1",
+    package_type: "BOX",
+    weight_kg: "",
+    dim_l: "",
+    dim_w: "",
+    dim_h: "",
+    dimensions_text: "",
+    description: "",
+    driver_id: "",
+    bol_url: "",
+};
+
+const AOG_SERVICE_TYPES = [
+    { value: "AOG",      label: "✈️ AOG",      hub_key: "hotshot" },
+    { value: "Courier",  label: "⚡ Courier",   hub_key: "courier" },
+    { value: "Standard", label: "📦 Standard",  hub_key: "last_mile" },
+];
+const PKG_TYPES = ["PLT", "CTN", "BOX", "OTHER"];
+const VEHICLE_TYPES_DISPATCH = [
+    { value: "car_suv",    label: "Sedan / SUV" },
+    { value: "cargo_van",  label: "Cargo Van" },
+    { value: "sprinter",   label: "Sprinter Van" },
+    { value: "box_truck",  label: "Box Truck" },
+];
+
 // ─── Constants ──────────────────────────────────────
 const SHIFTS = [{ value: "day", label: "Día" }, { value: "night", label: "Noche" }];
 const STATUSES = [
@@ -137,6 +255,38 @@ export default function DispatchTracker() {
     // ── Dialog ───────────────────────────────
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLoad, setEditLoad] = useState<Load | null>(null);
+
+    // ── Add Load multi-step form state ───────
+    const [addStep, setAddStep] = useState(1); // 1=Load Info, 2=Pickup/Delivery, 3=Cargo+Driver
+    const [addForm, setAddForm] = useState<AddLoadForm>(EMPTY_ADD_FORM);
+    const [bolFile, setBolFile] = useState<File | null>(null);
+    const [bolUploading, setBolUploading] = useState(false);
+    const [suggestedDriverId, setSuggestedDriverId] = useState<string | null>(null);
+    const bolInputRef = useRef<HTMLInputElement>(null);
+
+    // ── CRM & rate card data ─────────────────
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [companyContacts, setCompanyContacts] = useState<CompanyContact[]>([]);
+    const [rateCards, setRateCards] = useState<RateCard[]>([]);
+    const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
+    const [clientSearch, setClientSearch] = useState("");
+    const [pickupSearch, setPickupSearch] = useState("");
+    const [deliverySearch, setDeliverySearch] = useState("");
+    const [showClientDropdown, setShowClientDropdown] = useState(false);
+    const [showPickupDropdown, setShowPickupDropdown] = useState(false);
+    const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
+
+    // ── New-client inline form ───────────────
+    const [showNewClient, setShowNewClient] = useState(false);
+    const [newClientName, setNewClientName] = useState("");
+    const [newClientPhone, setNewClientPhone] = useState("");
+    const [newClientAddress, setNewClientAddress] = useState("");
+    const [newClientCity, setNewClientCity] = useState("");
+    const [newClientState, setNewClientState] = useState("");
+    const [savingNewClient, setSavingNewClient] = useState(false);
+
+    // ── Computed revenue from rate card ──────
+    const [computedRevenue, setComputedRevenue] = useState<number | null>(null);
     // ── Tools sidebar ───────────────────────
     const [toolsOpen, setToolsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState<"quick" | "import" | "history" | "log" | "blast" | null>("quick");
@@ -173,11 +323,264 @@ export default function DispatchTracker() {
         if (data) setProfiles(data as Profile[]);
     }, []);
 
+    const fetchCompanies = useCallback(async () => {
+        const { data } = await supabase
+            .from("companies")
+            .select("id, name, address, city, state, phone")
+            .order("name");
+        if (data) setCompanies(data as Company[]);
+    }, []);
+
+    const fetchRateCards = useCallback(async () => {
+        const { data } = await supabase.from("rate_cards").select("*");
+        if (data) setRateCards(data as RateCard[]);
+    }, []);
+
+    const fetchRecentAddresses = useCallback(async () => {
+        const { data } = await supabase
+            .from("daily_loads")
+            .select("pickup_address, delivery_address, pickup_company, delivery_company")
+            .not("pickup_address", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(60);
+        if (data) {
+            const addrs = [...new Set([
+                ...data.map((d: any) => d.pickup_address),
+                ...data.map((d: any) => d.delivery_address),
+            ].filter(Boolean))].slice(0, 20);
+            setRecentAddresses(addrs);
+        }
+    }, []);
+
     useEffect(() => {
         if (!user) return;
-        Promise.all([fetchLoads(), fetchDrivers(), fetchVehicles(), fetchProfiles()])
+        Promise.all([fetchLoads(), fetchDrivers(), fetchVehicles(), fetchProfiles(), fetchCompanies(), fetchRateCards(), fetchRecentAddresses()])
             .finally(() => setLoading(false));
-    }, [user, fetchLoads, fetchDrivers, fetchVehicles, fetchProfiles]);
+    }, [user, fetchLoads, fetchDrivers, fetchVehicles, fetchProfiles, fetchCompanies, fetchRateCards, fetchRecentAddresses]);
+
+    // ── AI driver suggestion: pick driver whose hub matches pickup city ──
+    const suggestDriver = useCallback((pickupAddress: string, driverList: Driver[]) => {
+        if (!pickupAddress || driverList.length === 0) return;
+        const addr = pickupAddress.toLowerCase();
+        const cityHubMap: Record<string, string> = {
+            phoenix: "phoenix", phx: "phoenix",
+            tucson: "tucson", tus: "tucson",
+            scottsdale: "phoenix", tempe: "phoenix", mesa: "phoenix",
+            chandler: "phoenix", gilbert: "phoenix", peoria: "phoenix",
+            flagstaff: "flagstaff",
+            los: "la", angeles: "la", "los angeles": "la",
+            atlanta: "atlanta", atl: "atlanta",
+        };
+        const matchedHub = Object.entries(cityHubMap).find(([city]) => addr.includes(city))?.[1];
+        if (!matchedHub) return;
+        const match = driverList.find((d) => d.hub === matchedHub && d.status === "active");
+        if (match) setSuggestedDriverId(match.id);
+    }, []);
+
+    // ── When pickup address changes, run AI suggestion ──────
+    useEffect(() => {
+        if (addForm.pickup_address && drivers.length > 0) {
+            suggestDriver(addForm.pickup_address, drivers);
+        }
+    }, [addForm.pickup_address, drivers, suggestDriver]);
+
+    // ── Fetch contacts when client company changes ───────────
+    useEffect(() => {
+        if (!addForm.client_id) { setCompanyContacts([]); return; }
+        supabase
+            .from("contacts")
+            .select("id, first_name, last_name, phone, email, job_title, company_id")
+            .eq("company_id", addForm.client_id)
+            .then(({ data }) => { if (data) setCompanyContacts(data as CompanyContact[]); });
+    }, [addForm.client_id]);
+
+    // ── Auto-compute revenue from rate card ──────────────────
+    useEffect(() => {
+        if (!rateCards.length) return;
+        const svcMap: Record<string, string> = { AOG: "hotshot", Courier: "courier", Standard: "last_mile" };
+        const rateKey = svcMap[addForm.service_type] ?? "last_mile";
+        const card = rateCards.find(
+            (r) => r.hub === "phoenix" && r.service_type === rateKey && r.vehicle_type === addForm.vehicle_type,
+        );
+        if (!card) { setComputedRevenue(null); return; }
+        const miles = parseFloat(addForm.distance_miles) || 0;
+        const wKg = parseFloat(addForm.weight_kg) || 0;
+        const wLbs = wKg * 2.205;
+        const base = card.base_rate + miles * card.per_mile_rate + wLbs * card.per_lb_rate;
+        const withFuel = base * (1 + card.fuel_surcharge_pct / 100);
+        setComputedRevenue(Math.max(withFuel, card.min_charge));
+    }, [addForm.service_type, addForm.vehicle_type, addForm.distance_miles, addForm.weight_kg, rateCards]);
+
+    // ── Auto-update dimensions_text when L/W/H change ───────
+    useEffect(() => {
+        const { dim_l, dim_w, dim_h } = addForm;
+        if (dim_l && dim_w && dim_h) {
+            setAddForm((f) => ({ ...f, dimensions_text: `${dim_l} x ${dim_w} x ${dim_h} CM` }));
+        }
+    }, [addForm.dim_l, addForm.dim_w, addForm.dim_h]);
+
+    // ── Save new client company inline ──────────────────────
+    const saveNewClient = async () => {
+        if (!newClientName.trim() || !user) return;
+        setSavingNewClient(true);
+        const { data, error } = await supabase
+            .from("companies")
+            .insert({
+                name: newClientName.trim(),
+                phone: newClientPhone || null,
+                address: newClientAddress || null,
+                city: newClientCity || null,
+                state: newClientState || null,
+                created_by: user.id,
+            })
+            .select("id, name, address, city, state, phone")
+            .single();
+        setSavingNewClient(false);
+        if (error) {
+            toast({ title: "Failed to save client", description: error.message, variant: "destructive" });
+        } else if (data) {
+            setCompanies((prev) => [...prev, data as Company].sort((a, b) => a.name.localeCompare(b.name)));
+            setAddForm((f) => ({ ...f, client_id: data.id, client_name: data.name }));
+            setClientSearch(data.name);
+            setShowNewClient(false);
+            setNewClientName(""); setNewClientPhone(""); setNewClientAddress(""); setNewClientCity(""); setNewClientState("");
+            toast({ title: "✅ Client saved", description: `${data.name} added to company database` });
+        }
+    };
+
+    // ── Upload BOL to Supabase Storage ─────────────────────
+    const uploadBol = async (file: File): Promise<string | null> => {
+        setBolUploading(true);
+        try {
+            const ext = file.name.split(".").pop();
+            const path = `bol/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+            const { error } = await supabase.storage.from("documents").upload(path, file, { upsert: true });
+            if (error) throw error;
+            const { data } = supabase.storage.from("documents").getPublicUrl(path);
+            return data.publicUrl;
+        } catch (err: any) {
+            toast({ title: "BOL upload failed", description: err.message, variant: "destructive" });
+            return null;
+        } finally {
+            setBolUploading(false);
+        }
+    };
+
+    // ── Submit new Add Load form ────────────────────────────
+    const handleAddLoad = async () => {
+        if (!user) return;
+
+        // Validate required fields
+        if (!addForm.reference_number.trim()) {
+            toast({ title: "Reference number required", variant: "destructive" }); return;
+        }
+        if (!addForm.client_name.trim()) {
+            toast({ title: "Client name required", variant: "destructive" }); return;
+        }
+        if (!addForm.driver_id) {
+            toast({ title: "Driver assignment required", variant: "destructive" }); return;
+        }
+        if (!addForm.pickup_address.trim()) {
+            toast({ title: "Pickup address required", variant: "destructive" }); return;
+        }
+        if (!addForm.delivery_address.trim()) {
+            toast({ title: "Delivery address required", variant: "destructive" }); return;
+        }
+
+        // Upload BOL if provided
+        let bolUrl = addForm.bol_url || null;
+        if (bolFile) {
+            bolUrl = await uploadBol(bolFile);
+        }
+
+        // Revenue: use manual if entered, else computed from rate card
+        const finalRevenue = addForm.revenue
+            ? parseFloat(addForm.revenue)
+            : (computedRevenue ?? 0);
+
+        const payload: Record<string, any> = {
+            load_date: todayISO(),
+            reference_number: addForm.reference_number || null,
+            consol_number: addForm.consol_number || null,
+            client_name: addForm.client_name || null,
+            service_type: addForm.service_type || "AOG",
+            revenue: finalRevenue,
+            sla_deadline: addForm.sla_deadline || null,
+            po_number: addForm.po_number || null,
+            vehicle_required: addForm.vehicle_type || null,
+            // Pickup
+            pickup_company: addForm.pickup_company || null,
+            pickup_address: addForm.pickup_address || null,
+            pickup_open_hours: addForm.pickup_open_hours || null,
+            pickup_contact_name: addForm.pickup_contact_name || null,
+            pickup_contact_phone: addForm.pickup_contact_phone || null,
+            collection_time: addForm.pickup_time_from || null,
+            // Delivery
+            delivery_company: addForm.delivery_company || null,
+            delivery_address: addForm.delivery_address || null,
+            delivery_contact_name: addForm.delivery_contact_name || null,
+            delivery_contact_phone: addForm.delivery_contact_phone || null,
+            // Cargo
+            packages: parseInt(addForm.packages) || 1,
+            package_type: addForm.package_type || "BOX",
+            weight_kg: parseFloat(addForm.weight_kg) || null,
+            dimensions_text: addForm.dimensions_text || null,
+            description: addForm.description || null,
+            // Driver & distance
+            driver_id: addForm.driver_id || null,
+            miles: parseFloat(addForm.distance_miles) || 0,
+            // BOL
+            bol_url: bolUrl,
+            // Defaults
+            status: "assigned",
+            shift: "day",
+            hub: "phoenix",
+            deadhead_miles: 0,
+            wait_time_minutes: 0,
+            driver_pay: 0,
+            fuel_cost: 0,
+            detention_eligible: false,
+            detention_billed: 0,
+            dispatcher_id: user.id,
+            created_by: user.id,
+            updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase.from("daily_loads").insert(payload);
+
+        if (error) {
+            toast({ title: "Failed to create load", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: "✅ Load created!", description: `${addForm.reference_number} added to the board` });
+            setDialogOpen(false);
+            setAddForm(EMPTY_ADD_FORM);
+            setAddStep(1);
+            setBolFile(null);
+            setSuggestedDriverId(null);
+            setClientSearch("");
+            setPickupSearch("");
+            setDeliverySearch("");
+            setComputedRevenue(null);
+            setCompanyContacts([]);
+            fetchLoads();
+        }
+    };
+
+    // ── Reset add form when dialog closes ──────────────────
+    const openAddDialog = useCallback(() => {
+        setEditLoad(null);
+        setAddForm(EMPTY_ADD_FORM);
+        setAddStep(1);
+        setBolFile(null);
+        setSuggestedDriverId(null);
+        setClientSearch("");
+        setPickupSearch("");
+        setDeliverySearch("");
+        setShowNewClient(false);
+        setComputedRevenue(null);
+        setCompanyContacts([]);
+        setDialogOpen(true);
+    }, []);
 
     // ── CRUD ─────────────────────────────────
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -384,7 +787,7 @@ export default function DispatchTracker() {
                     <h1 className="text-2xl font-bold tracking-tight gradient-text">Dispatch Tracker</h1>
                     <p className="text-muted-foreground text-sm mt-1">Daily load tracking, wait time analytics & operations reports</p>
                 </div>
-                <Button className="btn-gradient gap-2" onClick={() => { setEditLoad(null); setDialogOpen(true); }}>
+                <Button className="btn-gradient gap-2" onClick={openAddDialog}>
                     <Plus className="h-4 w-4" /> New Load
                 </Button>
             </div>
@@ -946,146 +1349,668 @@ export default function DispatchTracker() {
             </Tabs>
 
             {/* ═══ ADD / EDIT LOAD DIALOG ═══ */}
-            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditLoad(null); }}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>{editLoad ? "Edit Load" : "New Load"}</DialogTitle>
-                        <DialogDescription>Fill in the load details. Fields marked with * are recommended.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Section: Logistics */}
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Logistics
-                            </p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div><Label>Date *</Label><Input name="load_date" type="date" defaultValue={editLoad?.load_date ?? selectedDate} /></div>
-                                <div>
-                                    <Label>Shift</Label>
-                                    <Select name="shift" defaultValue={editLoad?.shift ?? "day"}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>{SHIFTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Hub</Label>
-                                    <Select name="hub" defaultValue={editLoad?.hub ?? "phoenix"}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>{HUBS.map((h) => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div><Label>Reference # *</Label><Input name="reference_number" defaultValue={editLoad?.reference_number ?? ""} placeholder="e.g. ANK-260213-A1B2" /></div>
-                                <div>
-                                    <Label>Driver *</Label>
-                                    <Select name="driver_id" defaultValue={editLoad?.driver_id ?? ""}>
-                                        <SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger>
-                                        <SelectContent>{drivers.map((d) => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Vehicle</Label>
-                                    <Select name="vehicle_id" defaultValue={editLoad?.vehicle_id ?? ""}>
-                                        <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                                        <SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.vehicle_name}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                                <div><Label>Client Name</Label><Input name="client_name" defaultValue={editLoad?.client_name ?? ""} placeholder="e.g. Amazon" /></div>
-                                <div>
-                                    <Label>Service Type</Label>
-                                    <Select name="service_type" defaultValue={editLoad?.service_type ?? "standard"}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="standard">Standard</SelectItem>
-                                            <SelectItem value="same_day">Same Day</SelectItem>
-                                            <SelectItem value="rush">Rush</SelectItem>
-                                            <SelectItem value="scheduled">Scheduled</SelectItem>
-                                            <SelectItem value="round_trip">Round Trip</SelectItem>
-                                            <SelectItem value="white_glove">White Glove</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Status</Label>
-                                    <Select name="status" defaultValue={editLoad?.status ?? "assigned"}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>{STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </div>
+            <Dialog open={dialogOpen} onOpenChange={(o) => {
+                setDialogOpen(o);
+                if (!o) { setEditLoad(null); setAddStep(1); }
+            }}>
+                <DialogContent className={editLoad ? "max-w-2xl max-h-[90vh] overflow-y-auto" : "max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0"}>
 
-                        {/* Section: Addresses */}
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Addresses
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div><Label>Pickup Address</Label><Input name="pickup_address" defaultValue={editLoad?.pickup_address ?? ""} placeholder="123 Main St, Phoenix, AZ" /></div>
-                                <div><Label>Delivery Address</Label><Input name="delivery_address" defaultValue={editLoad?.delivery_address ?? ""} placeholder="456 Oak Ave, Scottsdale, AZ" /></div>
-                            </div>
-                        </div>
+                    {/* ── EDIT MODE: existing compact form ── */}
+                    {editLoad && (
+                        <>
+                            <DialogHeader className="px-6 pt-6">
+                                <DialogTitle>Edit Load</DialogTitle>
+                                <DialogDescription>Update load details below.</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 overflow-y-auto">
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Logistics</p>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        <div><Label>Date *</Label><Input name="load_date" type="date" defaultValue={editLoad.load_date ?? selectedDate} /></div>
+                                        <div><Label>Shift</Label><Select name="shift" defaultValue={editLoad.shift ?? "day"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHIFTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
+                                        <div><Label>Hub</Label><Select name="hub" defaultValue={editLoad.hub ?? "phoenix"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{HUBS.map((h) => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}</SelectContent></Select></div>
+                                        <div><Label>Reference #</Label><Input name="reference_number" defaultValue={editLoad.reference_number ?? ""} /></div>
+                                        <div><Label>Driver</Label><Select name="driver_id" defaultValue={editLoad.driver_id ?? ""}><SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger><SelectContent>{drivers.map((d) => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}</SelectContent></Select></div>
+                                        <div><Label>Vehicle</Label><Select name="vehicle_id" defaultValue={editLoad.vehicle_id ?? ""}><SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger><SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.vehicle_name}</SelectItem>)}</SelectContent></Select></div>
+                                        <div><Label>Client Name</Label><Input name="client_name" defaultValue={editLoad.client_name ?? ""} /></div>
+                                        <div><Label>Service Type</Label><Select name="service_type" defaultValue={editLoad.service_type ?? "standard"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="AOG">AOG</SelectItem><SelectItem value="Courier">Courier</SelectItem><SelectItem value="Standard">Standard</SelectItem><SelectItem value="standard">Standard (legacy)</SelectItem><SelectItem value="same_day">Same Day</SelectItem><SelectItem value="rush">Rush</SelectItem></SelectContent></Select></div>
+                                        <div><Label>Status</Label><Select name="status" defaultValue={editLoad.status ?? "assigned"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div><Label>Pickup Address</Label><Input name="pickup_address" defaultValue={editLoad.pickup_address ?? ""} /></div>
+                                    <div><Label>Delivery Address</Label><Input name="delivery_address" defaultValue={editLoad.delivery_address ?? ""} /></div>
+                                    <div><Label>Pickup Company</Label><Input name="pickup_company" defaultValue={editLoad.pickup_company ?? ""} /></div>
+                                    <div><Label>Delivery Company</Label><Input name="delivery_company" defaultValue={editLoad.delivery_company ?? ""} /></div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div><Label>Miles</Label><Input name="miles" type="number" step="0.1" defaultValue={editLoad.miles ?? ""} /></div>
+                                    <div><Label>Packages</Label><Input name="packages" type="number" defaultValue={editLoad.packages ?? 1} /></div>
+                                    <div><Label>Revenue ($)</Label><Input name="revenue" type="number" step="0.01" defaultValue={editLoad.revenue ?? ""} /></div>
+                                    <div><Label>Driver Pay ($)</Label><Input name="driver_pay" type="number" step="0.01" defaultValue={editLoad.driver_pay ?? ""} /></div>
+                                    <div><Label>Fuel Cost ($)</Label><Input name="fuel_cost" type="number" step="0.01" defaultValue={editLoad.fuel_cost ?? ""} /></div>
+                                    <div><Label>Wait (min)</Label><Input name="wait_time_minutes" type="number" defaultValue={editLoad.wait_time_minutes ?? ""} /></div>
+                                    <div><Label>Start Time</Label><Input name="start_time" type="time" defaultValue={editLoad.start_time ?? ""} /></div>
+                                    <div><Label>End Time</Label><Input name="end_time" type="time" defaultValue={editLoad.end_time ?? ""} /></div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div><Label>PO Number</Label><Input name="po_number" defaultValue={editLoad.po_number ?? ""} /></div>
+                                    <div><Label>Description</Label><Input name="description" defaultValue={editLoad.description ?? ""} /></div>
+                                    <div><Label>Dimensions</Label><Input name="dimensions_text" defaultValue={editLoad.dimensions_text ?? ""} /></div>
+                                    <div><Label>SLA Deadline</Label><Input name="sla_deadline" type="datetime-local" defaultValue={editLoad.sla_deadline?.slice(0, 16) ?? ""} /></div>
+                                    <div><Label>Inbound Tracking</Label><Input name="inbound_tracking" defaultValue={editLoad.inbound_tracking ?? ""} /></div>
+                                    <div><Label>Outbound Tracking</Label><Input name="outbound_tracking" defaultValue={editLoad.outbound_tracking ?? ""} /></div>
+                                </div>
+                                <div><Label>Comments</Label><Textarea name="comments" defaultValue={editLoad.comments ?? ""} rows={2} /></div>
+                                {/* hidden fields needed by handleSubmit */}
+                                <input type="hidden" name="deadhead_miles" value={editLoad.deadhead_miles ?? 0} />
+                                <input type="hidden" name="detention_billed" value={editLoad.detention_billed ?? 0} />
+                                <input type="hidden" name="shipper_name" value={editLoad.shipper_name ?? ""} />
+                                <input type="hidden" name="requested_by" value={editLoad.requested_by ?? ""} />
+                                <input type="hidden" name="vehicle_required" value={editLoad.vehicle_required ?? ""} />
+                                <input type="hidden" name="inbound_tracking" value={editLoad.inbound_tracking ?? ""} />
+                                <input type="hidden" name="outbound_tracking" value={editLoad.outbound_tracking ?? ""} />
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); setEditLoad(null); }}>Cancel</Button>
+                                    <Button type="submit" className="btn-gradient">Save Changes</Button>
+                                </DialogFooter>
+                            </form>
+                        </>
+                    )}
 
-                        {/* Section: Timing & Distance */}
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Timing & Distance
-                            </p>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div><Label>Start Time</Label><Input name="start_time" type="time" defaultValue={editLoad?.start_time ?? ""} /></div>
-                                <div><Label>End Time</Label><Input name="end_time" type="time" defaultValue={editLoad?.end_time ?? ""} /></div>
-                                <div><Label>Miles *</Label><Input name="miles" type="number" step="0.1" defaultValue={editLoad?.miles ?? ""} placeholder="31" /></div>
-                                <div><Label>Deadhead Miles</Label><Input name="deadhead_miles" type="number" step="0.1" defaultValue={editLoad?.deadhead_miles ?? ""} placeholder="0" /></div>
-                                <div><Label>Wait Time (min)</Label><Input name="wait_time_minutes" type="number" defaultValue={editLoad?.wait_time_minutes ?? ""} placeholder="0" /></div>
-                                <div><Label>Packages</Label><Input name="packages" type="number" defaultValue={editLoad?.packages ?? 1} /></div>
-                            </div>
-                        </div>
+                    {/* ── ADD MODE: full multi-step form ── */}
+                    {!editLoad && (() => {
+                        // ── helpers scoped to render ──
+                        const af = addForm;
+                        const setAf = (patch: Partial<AddLoadForm>) => setAddForm((f) => ({ ...f, ...patch }));
 
-                        {/* Section: Revenue */}
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Revenue & Costs
-                            </p>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div><Label>Revenue ($)</Label><Input name="revenue" type="number" step="0.01" defaultValue={editLoad?.revenue ?? ""} placeholder="0" /></div>
-                                <div><Label>Driver Pay ($)</Label><Input name="driver_pay" type="number" step="0.01" defaultValue={editLoad?.driver_pay ?? ""} placeholder="0" /></div>
-                                <div><Label>Fuel Cost ($)</Label><Input name="fuel_cost" type="number" step="0.01" defaultValue={editLoad?.fuel_cost ?? ""} placeholder="0" /></div>
-                                <div><Label>Detention Billed ($)</Label><Input name="detention_billed" type="number" step="0.01" defaultValue={editLoad?.detention_billed ?? ""} placeholder="0" /></div>
-                            </div>
-                        </div>
-                        <div><Label>Comments</Label><Textarea name="comments" defaultValue={editLoad?.comments ?? ""} placeholder="Optional notes..." rows={2} /></div>
+                        // Filtered company list for client search
+                        const filteredCompanies = clientSearch.length >= 1
+                            ? companies.filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase())).slice(0, 8)
+                            : companies.slice(0, 6);
 
-                        {/* Section: Shipper & Cargo (OnTime parity) */}
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> Shipper & Cargo Details
-                            </p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div><Label>Shipper Name</Label><Input name="shipper_name" defaultValue={editLoad?.shipper_name ?? ""} placeholder="e.g. UNICAL AVIATION" /></div>
-                                <div><Label>Requested By</Label><Input name="requested_by" defaultValue={editLoad?.requested_by ?? ""} placeholder="Contact name" /></div>
-                                <div><Label>Description</Label><Input name="description" defaultValue={editLoad?.description ?? ""} placeholder="e.g. CIVIL AIRCRAFT PART" /></div>
-                                <div><Label>Dimensions</Label><Input name="dimensions_text" defaultValue={editLoad?.dimensions_text ?? ""} placeholder="12 x 8 x 59 (L×W×H)" /></div>
-                                <div><Label>Vehicle Required</Label><Input name="vehicle_required" defaultValue={editLoad?.vehicle_required ?? ""} placeholder="e.g. Sprinter, Box Truck" /></div>
-                                <div><Label>Pickup Company</Label><Input name="pickup_company" defaultValue={editLoad?.pickup_company ?? ""} placeholder="Facility name" /></div>
-                                <div><Label>Delivery Company</Label><Input name="delivery_company" defaultValue={editLoad?.delivery_company ?? ""} placeholder="Facility name" /></div>
-                            </div>
-                        </div>
+                        // Address suggestions: companies + recent addresses
+                        const companyAddresses = companies
+                            .filter((c) => c.address)
+                            .map((c) => ({ label: c.name, addr: [c.address, c.city, c.state].filter(Boolean).join(", "), id: c.id }));
 
-                        {/* Section: Tracking Numbers */}
-                        <div>
-                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" /> Tracking Numbers
-                            </p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <div><Label>PO Number</Label><Input name="po_number" defaultValue={editLoad?.po_number ?? ""} placeholder="Purchase Order" /></div>
-                                <div><Label>Inbound Tracking</Label><Input name="inbound_tracking" defaultValue={editLoad?.inbound_tracking ?? ""} placeholder="AWB / Tracking #" /></div>
-                                <div><Label>Outbound Tracking</Label><Input name="outbound_tracking" defaultValue={editLoad?.outbound_tracking ?? ""} placeholder="AWB / Tracking #" /></div>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); setEditLoad(null); }}>Cancel</Button>
-                            <Button type="submit" className="btn-gradient">{editLoad ? "Save Changes" : "Add Load"}</Button>
-                        </DialogFooter>
-                    </form>
+                        const pickupSuggestions = pickupSearch.length >= 1
+                            ? companyAddresses.filter((ca) =>
+                                ca.label.toLowerCase().includes(pickupSearch.toLowerCase()) ||
+                                ca.addr.toLowerCase().includes(pickupSearch.toLowerCase())
+                            ).slice(0, 6)
+                            : companyAddresses.slice(0, 3);
+
+                        const deliverySuggestions = deliverySearch.length >= 1
+                            ? companyAddresses.filter((ca) =>
+                                ca.label.toLowerCase().includes(deliverySearch.toLowerCase()) ||
+                                ca.addr.toLowerCase().includes(deliverySearch.toLowerCase())
+                            ).slice(0, 6)
+                            : companyAddresses.slice(0, 3);
+
+                        // Cubic volume
+                        const l = parseFloat(af.dim_l) || 0;
+                        const w = parseFloat(af.dim_w) || 0;
+                        const h = parseFloat(af.dim_h) || 0;
+                        const cubic = l * w * h;
+
+                        // Step progress
+                        const STEPS = ["Load Info", "Pickup & Delivery", "Cargo & Driver"];
+                        const canGoNext1 = af.reference_number.trim() && af.client_name.trim();
+                        const canGoNext2 = af.pickup_address.trim() && af.delivery_address.trim();
+                        const canSubmit = canGoNext1 && canGoNext2 && af.driver_id;
+
+                        return (
+                            <>
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b shrink-0">
+                                    <div>
+                                        <h2 className="text-lg font-bold tracking-tight">New Load</h2>
+                                        <p className="text-xs text-muted-foreground mt-0.5">AOG / Courier Dispatch</p>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => setDialogOpen(false)}><X className="h-4 w-4" /></Button>
+                                </div>
+
+                                {/* Step indicator */}
+                                <div className="flex items-center gap-0 px-6 py-3 border-b shrink-0 bg-muted/20">
+                                    {STEPS.map((label, i) => {
+                                        const step = i + 1;
+                                        const active = addStep === step;
+                                        const done = addStep > step;
+                                        return (
+                                            <div key={step} className="flex items-center gap-0 flex-1">
+                                                <button
+                                                    className="flex items-center gap-2 group"
+                                                    onClick={() => { if (done || (step === 2 && canGoNext1) || (step === 3 && canGoNext1 && canGoNext2)) setAddStep(step); }}
+                                                >
+                                                    <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                                        done ? "bg-green-500 text-white" :
+                                                        active ? "bg-primary text-primary-foreground" :
+                                                        "bg-muted text-muted-foreground"
+                                                    }`}>
+                                                        {done ? "✓" : step}
+                                                    </div>
+                                                    <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+                                                </button>
+                                                {i < STEPS.length - 1 && (
+                                                    <div className={`h-px flex-1 mx-3 ${done ? "bg-green-500" : "bg-border"}`} />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Form body */}
+                                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+                                    {/* ═══ STEP 1: LOAD INFO ═══ */}
+                                    {addStep === 1 && (
+                                        <div className="space-y-5">
+                                            {/* Reference & Consol */}
+                                            <div>
+                                                <p className="form-section-label">📋 Load Reference</p>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <Label className="text-xs">Reference Number <span className="text-red-500">*</span></Label>
+                                                        <Input value={af.reference_number} onChange={(e) => setAf({ reference_number: e.target.value })} placeholder="S01480980" className="mt-1" />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs">Consol / Manifest #</Label>
+                                                        <Input value={af.consol_number} onChange={(e) => setAf({ consol_number: e.target.value })} placeholder="Optional" className="mt-1" />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs">Purchase Order #</Label>
+                                                        <Input value={af.po_number} onChange={(e) => setAf({ po_number: e.target.value })} placeholder="PO-12345" className="mt-1" />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs">SLA Deadline <span className="text-red-500">*</span></Label>
+                                                        <Input type="datetime-local" value={af.sla_deadline} onChange={(e) => setAf({ sla_deadline: e.target.value })} className="mt-1" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Client */}
+                                            <div>
+                                                <p className="form-section-label">🏢 Client</p>
+                                                <div className="relative">
+                                                    <Label className="text-xs">Client / Account <span className="text-red-500">*</span></Label>
+                                                    <div className="relative mt-1">
+                                                        <Input
+                                                            value={clientSearch}
+                                                            onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true); setAf({ client_name: e.target.value, client_id: "" }); }}
+                                                            onFocus={() => setShowClientDropdown(true)}
+                                                            placeholder="Search companies..."
+                                                            className="pr-8"
+                                                        />
+                                                        {clientSearch && (
+                                                            <button className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                                                                onClick={() => { setClientSearch(""); setAf({ client_name: "", client_id: "" }); setShowClientDropdown(false); }}>
+                                                                <X className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {showClientDropdown && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
+                                                            <div className="max-h-52 overflow-y-auto">
+                                                                {filteredCompanies.map((c) => (
+                                                                    <button key={c.id} className="w-full text-left px-3 py-2.5 hover:bg-muted/50 flex items-start gap-3 border-b border-border/50 last:border-0"
+                                                                        onClick={() => {
+                                                                            setAf({ client_id: c.id, client_name: c.name });
+                                                                            setClientSearch(c.name);
+                                                                            setShowClientDropdown(false);
+                                                                        }}>
+                                                                        <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                                                                            <span className="text-xs font-bold text-primary">{c.name[0]}</span>
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-sm font-medium truncate">{c.name}</p>
+                                                                            {(c.city || c.address) && (
+                                                                                <p className="text-xs text-muted-foreground truncate">{[c.city, c.state].filter(Boolean).join(", ") || c.address}</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            {/* + New Client */}
+                                                            <button className="w-full text-left px-3 py-2.5 text-sm text-primary font-medium hover:bg-primary/5 flex items-center gap-2 border-t"
+                                                                onClick={() => { setShowNewClient(true); setShowClientDropdown(false); }}>
+                                                                <Plus className="h-3.5 w-3.5" /> New Client
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Selected client chip */}
+                                                {af.client_id && (
+                                                    <div className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
+                                                        <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                                                        <span className="text-sm font-medium flex-1">{af.client_name}</span>
+                                                        {companyContacts.length > 0 && (
+                                                            <Badge variant="secondary" className="text-[10px]">{companyContacts.length} contact{companyContacts.length > 1 ? "s" : ""}</Badge>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* New client inline form */}
+                                                {showNewClient && (
+                                                    <div className="mt-3 p-4 border rounded-xl bg-muted/20 space-y-3">
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New Client</p>
+                                                            <button onClick={() => setShowNewClient(false)}><X className="h-3.5 w-3.5 text-muted-foreground" /></button>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div className="col-span-2">
+                                                                <Label className="text-xs">Company Name *</Label>
+                                                                <Input value={newClientName} onChange={(e) => setNewClientName(e.target.value)} placeholder="UNICAL AVIATION" className="mt-1 h-8 text-sm" />
+                                                            </div>
+                                                            <div>
+                                                                <Label className="text-xs">Phone</Label>
+                                                                <Input value={newClientPhone} onChange={(e) => setNewClientPhone(e.target.value)} placeholder="602-555-0100" className="mt-1 h-8 text-sm" />
+                                                            </div>
+                                                            <div>
+                                                                <Label className="text-xs">Address</Label>
+                                                                <Input value={newClientAddress} onChange={(e) => setNewClientAddress(e.target.value)} placeholder="123 Airport Blvd" className="mt-1 h-8 text-sm" />
+                                                            </div>
+                                                            <div>
+                                                                <Label className="text-xs">City</Label>
+                                                                <Input value={newClientCity} onChange={(e) => setNewClientCity(e.target.value)} placeholder="Phoenix" className="mt-1 h-8 text-sm" />
+                                                            </div>
+                                                            <div>
+                                                                <Label className="text-xs">State</Label>
+                                                                <Input value={newClientState} onChange={(e) => setNewClientState(e.target.value)} placeholder="AZ" className="mt-1 h-8 text-sm" />
+                                                            </div>
+                                                        </div>
+                                                        <Button size="sm" className="w-full" onClick={saveNewClient} disabled={savingNewClient || !newClientName.trim()}>
+                                                            {savingNewClient ? "Saving..." : "Save Client"}
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Service type */}
+                                            <div>
+                                                <p className="form-section-label">⚡ Service</p>
+                                                <div className="grid grid-cols-3 gap-2 mt-1">
+                                                    {AOG_SERVICE_TYPES.map((s) => (
+                                                        <button key={s.value} type="button"
+                                                            onClick={() => setAf({ service_type: s.value })}
+                                                            className={`p-3 rounded-xl border text-left transition-all ${af.service_type === s.value ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border hover:border-muted-foreground/40 hover:bg-muted/30"}`}>
+                                                            <p className="text-sm font-semibold">{s.label}</p>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Vehicle & Distance */}
+                                            <div>
+                                                <p className="form-section-label">🚐 Vehicle & Distance</p>
+                                                <div className="grid grid-cols-2 gap-3 mt-1">
+                                                    <div>
+                                                        <Label className="text-xs">Vehicle Type</Label>
+                                                        <Select value={af.vehicle_type} onValueChange={(v) => setAf({ vehicle_type: v })}>
+                                                            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                                            <SelectContent>{VEHICLE_TYPES_DISPATCH.map((v) => <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs">Distance (miles)</Label>
+                                                        <Input type="number" step="0.1" value={af.distance_miles} onChange={(e) => setAf({ distance_miles: e.target.value })} placeholder="31" className="mt-1" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Revenue */}
+                                            <div>
+                                                <p className="form-section-label">💵 Revenue</p>
+                                                <div className="mt-1">
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
+                                                        <Input type="number" step="0.01" value={af.revenue}
+                                                            onChange={(e) => setAf({ revenue: e.target.value })}
+                                                            placeholder={computedRevenue ? computedRevenue.toFixed(2) : "0.00"}
+                                                            className="pl-7" />
+                                                    </div>
+                                                    {computedRevenue !== null && !af.revenue && (
+                                                        <div className="mt-2 flex items-center gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                                            <Zap className="h-4 w-4 text-emerald-600 shrink-0" />
+                                                            <div className="flex-1">
+                                                                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                                                                    Rate card estimate: <strong>${computedRevenue.toFixed(2)}</strong>
+                                                                </p>
+                                                                <p className="text-[10px] text-muted-foreground">{af.service_type} · {VEHICLE_TYPES_DISPATCH.find(v => v.value === af.vehicle_type)?.label} · {af.distance_miles || 0} mi</p>
+                                                            </div>
+                                                            <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
+                                                                onClick={() => setAf({ revenue: computedRevenue.toFixed(2) })}>
+                                                                Use
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* ═══ STEP 2: PICKUP & DELIVERY ═══ */}
+                                    {addStep === 2 && (
+                                        <div className="space-y-5">
+                                            {/* PICKUP */}
+                                            <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/5">
+                                                <p className="form-section-label text-green-700 dark:text-green-400">📍 Pickup Location</p>
+
+                                                {/* Address search */}
+                                                <div className="relative mt-2">
+                                                    <Label className="text-xs">Company / Facility *</Label>
+                                                    <div className="relative mt-1">
+                                                        <Input value={pickupSearch}
+                                                            onChange={(e) => { setPickupSearch(e.target.value); setShowPickupDropdown(true); setAf({ pickup_company: e.target.value }); }}
+                                                            onFocus={() => setShowPickupDropdown(true)}
+                                                            placeholder="Search or enter company name…"
+                                                        />
+                                                    </div>
+                                                    {showPickupDropdown && (pickupSuggestions.length > 0 || recentAddresses.length > 0) && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
+                                                            <div className="max-h-44 overflow-y-auto">
+                                                                {recentAddresses.slice(0, 3).map((addr, i) => (
+                                                                    <button key={`r${i}`} className="w-full text-left px-3 py-2 hover:bg-muted/50 flex items-center gap-2 text-xs border-b border-border/40"
+                                                                        onClick={() => { setPickupSearch(addr); setAf({ pickup_address: addr }); setShowPickupDropdown(false); }}>
+                                                                        <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                                        <span className="truncate text-muted-foreground">{addr}</span>
+                                                                    </button>
+                                                                ))}
+                                                                {pickupSuggestions.map((s) => (
+                                                                    <button key={s.id} className="w-full text-left px-3 py-2.5 hover:bg-muted/50 flex items-start gap-2 border-b border-border/40 last:border-0"
+                                                                        onClick={() => {
+                                                                            const co = companies.find(c => c.id === s.id);
+                                                                            setPickupSearch(s.label);
+                                                                            setAf({
+                                                                                pickup_company: s.label,
+                                                                                pickup_address: s.addr,
+                                                                                pickup_contact_name: companyContacts.find(c => c.company_id === s.id) ? `${companyContacts.find(c => c.company_id === s.id)!.first_name} ${companyContacts.find(c => c.company_id === s.id)!.last_name}` : af.pickup_contact_name,
+                                                                                pickup_contact_phone: companyContacts.find(c => c.company_id === s.id)?.phone ?? af.pickup_contact_phone,
+                                                                            });
+                                                                            setShowPickupDropdown(false);
+                                                                        }}>
+                                                                        <MapPin className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <p className="text-sm font-medium">{s.label}</p>
+                                                                            <p className="text-xs text-muted-foreground">{s.addr}</p>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 gap-3 mt-3">
+                                                    <div>
+                                                        <Label className="text-xs">Street Address *</Label>
+                                                        <Input value={af.pickup_address} onChange={(e) => setAf({ pickup_address: e.target.value })} placeholder="123 Airport Cargo Rd, Phoenix, AZ 85034" className="mt-1" />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <Label className="text-xs">Open Hours</Label>
+                                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00–17:00 Mon–Fri" className="mt-1" />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <Label className="text-xs">Arrival From</Label>
+                                                                <Input type="time" value={af.pickup_time_from} onChange={(e) => setAf({ pickup_time_from: e.target.value })} className="mt-1" />
+                                                            </div>
+                                                            <div>
+                                                                <Label className="text-xs">Arrival To</Label>
+                                                                <Input type="time" value={af.pickup_time_to} onChange={(e) => setAf({ pickup_time_to: e.target.value })} className="mt-1" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <Label className="text-xs">Contact Name</Label>
+                                                            <Input value={af.pickup_contact_name} onChange={(e) => setAf({ pickup_contact_name: e.target.value })} placeholder="Jane Smith" className="mt-1" />
+                                                        </div>
+                                                        <div>
+                                                            <Label className="text-xs">Contact Phone</Label>
+                                                            <Input value={af.pickup_contact_phone} onChange={(e) => setAf({ pickup_contact_phone: e.target.value })} placeholder="602-555-0100" className="mt-1" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* DELIVERY */}
+                                            <div className="p-4 rounded-xl border border-orange-500/30 bg-orange-500/5">
+                                                <p className="form-section-label text-orange-700 dark:text-orange-400">🏁 Delivery Location</p>
+
+                                                <div className="relative mt-2">
+                                                    <Label className="text-xs">Company / Facility *</Label>
+                                                    <div className="relative mt-1">
+                                                        <Input value={deliverySearch}
+                                                            onChange={(e) => { setDeliverySearch(e.target.value); setShowDeliveryDropdown(true); setAf({ delivery_company: e.target.value }); }}
+                                                            onFocus={() => setShowDeliveryDropdown(true)}
+                                                            placeholder="Search or enter company name…"
+                                                        />
+                                                    </div>
+                                                    {showDeliveryDropdown && (deliverySuggestions.length > 0 || recentAddresses.length > 0) && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
+                                                            <div className="max-h-44 overflow-y-auto">
+                                                                {recentAddresses.slice(0, 3).map((addr, i) => (
+                                                                    <button key={`r${i}`} className="w-full text-left px-3 py-2 hover:bg-muted/50 flex items-center gap-2 text-xs border-b border-border/40"
+                                                                        onClick={() => { setDeliverySearch(addr); setAf({ delivery_address: addr }); setShowDeliveryDropdown(false); }}>
+                                                                        <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                                        <span className="truncate text-muted-foreground">{addr}</span>
+                                                                    </button>
+                                                                ))}
+                                                                {deliverySuggestions.map((s) => (
+                                                                    <button key={s.id} className="w-full text-left px-3 py-2.5 hover:bg-muted/50 flex items-start gap-2 border-b border-border/40 last:border-0"
+                                                                        onClick={() => {
+                                                                            setDeliverySearch(s.label);
+                                                                            setAf({
+                                                                                delivery_company: s.label,
+                                                                                delivery_address: s.addr,
+                                                                                delivery_contact_name: companyContacts.find(c => c.company_id === s.id) ? `${companyContacts.find(c => c.company_id === s.id)!.first_name} ${companyContacts.find(c => c.company_id === s.id)!.last_name}` : af.delivery_contact_name,
+                                                                                delivery_contact_phone: companyContacts.find(c => c.company_id === s.id)?.phone ?? af.delivery_contact_phone,
+                                                                            });
+                                                                            setShowDeliveryDropdown(false);
+                                                                        }}>
+                                                                        <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <p className="text-sm font-medium">{s.label}</p>
+                                                                            <p className="text-xs text-muted-foreground">{s.addr}</p>
+                                                                        </div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 gap-3 mt-3">
+                                                    <div>
+                                                        <Label className="text-xs">Street Address *</Label>
+                                                        <Input value={af.delivery_address} onChange={(e) => setAf({ delivery_address: e.target.value })} placeholder="456 Cargo Way, Scottsdale, AZ 85257" className="mt-1" />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <Label className="text-xs">Contact Name</Label>
+                                                            <Input value={af.delivery_contact_name} onChange={(e) => setAf({ delivery_contact_name: e.target.value })} placeholder="John Doe" className="mt-1" />
+                                                        </div>
+                                                        <div>
+                                                            <Label className="text-xs">Contact Phone</Label>
+                                                            <Input value={af.delivery_contact_phone} onChange={(e) => setAf({ delivery_contact_phone: e.target.value })} placeholder="480-555-0200" className="mt-1" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* ═══ STEP 3: CARGO & DRIVER ═══ */}
+                                    {addStep === 3 && (
+                                        <div className="space-y-5">
+                                            {/* Cargo */}
+                                            <div>
+                                                <p className="form-section-label">📦 Cargo Details</p>
+                                                <div className="grid grid-cols-3 gap-3 mt-1">
+                                                    <div>
+                                                        <Label className="text-xs">Packages *</Label>
+                                                        <Input type="number" min="1" value={af.packages} onChange={(e) => setAf({ packages: e.target.value })} className="mt-1" />
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs">Package Type</Label>
+                                                        <Select value={af.package_type} onValueChange={(v) => setAf({ package_type: v })}>
+                                                            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                                            <SelectContent>{PKG_TYPES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-xs">Weight (kg) *</Label>
+                                                        <Input type="number" step="0.1" value={af.weight_kg} onChange={(e) => setAf({ weight_kg: e.target.value })} placeholder="0.0" className="mt-1" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Dimensions */}
+                                                <div className="mt-3">
+                                                    <Label className="text-xs">Dimensions (CM)</Label>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <Input type="number" value={af.dim_l} onChange={(e) => setAf({ dim_l: e.target.value })} placeholder="L" className="text-center" />
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
+                                                        <Input type="number" value={af.dim_w} onChange={(e) => setAf({ dim_w: e.target.value })} placeholder="W" className="text-center" />
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
+                                                        <Input type="number" value={af.dim_h} onChange={(e) => setAf({ dim_h: e.target.value })} placeholder="H" className="text-center" />
+                                                    </div>
+                                                    {cubic > 0 && (
+                                                        <p className="text-xs text-muted-foreground mt-1.5">
+                                                            Cubic: <strong>{cubic.toLocaleString()} cm³</strong>
+                                                            {af.weight_kg && <> · Dim wt: <strong>{(cubic / 5000).toFixed(1)} kg</strong></>}
+                                                            {af.dimensions_text && <> · <span className="font-mono">{af.dimensions_text}</span></>}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div className="mt-3">
+                                                    <Label className="text-xs">Cargo Description</Label>
+                                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART — LH ENGINE SEAL" className="mt-1" />
+                                                </div>
+                                            </div>
+
+                                            {/* Driver Assignment */}
+                                            <div>
+                                                <p className="form-section-label">🚗 Driver Assignment <span className="text-red-500">*</span></p>
+                                                <div className="space-y-2 mt-1">
+                                                    {drivers.length === 0 && (
+                                                        <p className="text-sm text-muted-foreground">No active drivers found.</p>
+                                                    )}
+                                                    {drivers.map((d) => {
+                                                        const isSelected = af.driver_id === d.id;
+                                                        const isSuggested = suggestedDriverId === d.id;
+                                                        return (
+                                                            <button key={d.id} type="button"
+                                                                onClick={() => setAf({ driver_id: d.id })}
+                                                                className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+                                                                    isSelected
+                                                                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                                                                        : "border-border hover:border-muted-foreground/40 hover:bg-muted/30"
+                                                                }`}>
+                                                                <div className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isSelected ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                                                                    {d.full_name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="text-sm font-medium">{d.full_name}</p>
+                                                                        {isSuggested && (
+                                                                            <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-0 text-[10px] gap-1 px-1.5">
+                                                                                <Zap className="h-2.5 w-2.5" /> AI Suggested
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-xs text-muted-foreground capitalize">{d.hub} hub · {d.status}</p>
+                                                                </div>
+                                                                {isSelected && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {suggestedDriverId && !af.driver_id && (
+                                                    <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                                                        <Zap className="h-3 w-3" /> AI matched a driver based on pickup location. Review and confirm above.
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* BOL Upload */}
+                                            <div>
+                                                <p className="form-section-label">📄 BOL Document</p>
+                                                <div className="mt-1">
+                                                    <input ref={bolInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+                                                        onChange={(e) => { const f = e.target.files?.[0]; if (f) setBolFile(f); }} />
+                                                    {!bolFile ? (
+                                                        <button type="button" onClick={() => bolInputRef.current?.click()}
+                                                            className="w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all flex flex-col items-center gap-2 text-muted-foreground">
+                                                            <Upload className="h-5 w-5" />
+                                                            <p className="text-sm">Click to upload BOL (PDF / image)</p>
+                                                            <p className="text-xs">Optional — can be added later</p>
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex items-center gap-3 p-3 rounded-xl border bg-muted/20">
+                                                            <FileText className="h-5 w-5 text-primary shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium truncate">{bolFile.name}</p>
+                                                                <p className="text-xs text-muted-foreground">{(bolFile.size / 1024).toFixed(0)} KB</p>
+                                                            </div>
+                                                            {bolUploading && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
+                                                            <button onClick={() => { setBolFile(null); setAf({ bol_url: "" }); }}>
+                                                                <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Summary */}
+                                            <div className="p-4 rounded-xl bg-muted/30 border space-y-2 text-sm">
+                                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Summary</p>
+                                                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "—"}</span>
+                                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "—"}</span>
+                                                    <span className="text-muted-foreground">Service</span><span>{af.service_type}</span>
+                                                    <span className="text-muted-foreground">Revenue</span>
+                                                    <span className="font-semibold text-green-600">
+                                                        ${af.revenue ? parseFloat(af.revenue).toFixed(2) : computedRevenue ? computedRevenue.toFixed(2) : "0.00"}
+                                                    </span>
+                                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "—"}</span>
+                                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "—"}</span>
+                                                    <span className="text-muted-foreground">Driver</span><span>{drivers.find(d => d.id === af.driver_id)?.full_name || <span className="text-red-500">Not assigned</span>}</span>
+                                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "—"}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer nav */}
+                                <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/10 shrink-0">
+                                    <Button variant="outline" size="sm" className="gap-1.5"
+                                        onClick={() => addStep > 1 ? setAddStep(addStep - 1) : setDialogOpen(false)}>
+                                        <ChevronLeft className="h-4 w-4" />
+                                        {addStep > 1 ? "Back" : "Cancel"}
+                                    </Button>
+
+                                    <div className="flex items-center gap-2">
+                                        {addStep < 3 ? (
+                                            <Button className="btn-gradient gap-1.5"
+                                                disabled={addStep === 1 ? !canGoNext1 : !canGoNext2}
+                                                onClick={() => setAddStep(addStep + 1)}>
+                                                Next <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        ) : (
+                                            <Button className="btn-gradient gap-1.5" disabled={!canSubmit || bolUploading} onClick={handleAddLoad}>
+                                                {bolUploading ? "Uploading…" : <><Plus className="h-4 w-4" /> Create Load</>}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
 

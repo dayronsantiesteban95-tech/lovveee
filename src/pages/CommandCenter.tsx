@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import LoadDetailPanel from "@/components/LoadDetailPanel";
 import type { LoadDetail } from "@/components/LoadDetailPanel";
+import LiveDriverMap from "@/components/LiveDriverMap";
 
 // ═══════════════════════════════════════════
 // Types
@@ -504,10 +505,7 @@ export default function CommandCenter() {
         <div className="cc-layout">
             {/* ────── MAP ────── */}
             <div className="cc-map-container">
-                <MapPlaceholder
-                    driverCount={metrics.activeDrivers}
-                    loadCount={metrics.inProgress}
-                />
+                <LiveDriverMap />
             </div>
 
             {/* ────── METRICS BAR (top) ────── */}

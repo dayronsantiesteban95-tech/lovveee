@@ -24,7 +24,7 @@ import {
 import {
     Calculator, Truck, MapPin, Copy, Save, Loader2, ClipboardCheck,
     Navigation, ArrowRight, Mail, Package, Send, Percent,
-    CheckCircle2, XCircle, AlertTriangle, Car, Ruler,
+    CheckCircle2, XCircle, AlertTriangle, Car, Ruler, Clock,
 } from "lucide-react";
 import MarketComparison from "@/components/MarketComparison";
 
@@ -182,6 +182,9 @@ export default function RateCalculator() {
     const [waitTimeBlocks, setWaitTimeBlocks] = useState(0);
     const [deadheadMiles, setDeadheadMiles] = useState(0);
 
+    // Pickup datetime (for after-hours / weekend auto-detection)
+    const [pickupDatetime, setPickupDatetime] = useState("");
+
     // Quote history
     const [history, setHistory] = useState<SavedQuote[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
@@ -200,6 +203,24 @@ export default function RateCalculator() {
     // ─── Toggle accessorial ──────────────────────────
     const toggleAccessorial = (key: string) => {
         setEnabledAccessorials((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    // ─── Auto-detect after-hours / weekend from pickup datetime ──────────
+    const handlePickupDatetimeChange = (value: string) => {
+        setPickupDatetime(value);
+        if (!value) return;
+        const dt = new Date(value);
+        const hours = dt.getHours(); // local hours
+        const day = dt.getDay();     // 0=Sun, 6=Sat
+        // After hours: 20:00–07:59
+        const isAfterHours = hours >= 20 || hours < 8;
+        // Weekend: Saturday (6) or Sunday (0)
+        const isWeekend = day === 0 || day === 6;
+        setEnabledAccessorials((prev) => ({
+            ...prev,
+            after_hours: isAfterHours,
+            weekend: isWeekend,
+        }));
     };
 
     // ─── Fetch ─────────────────────────────────────
@@ -659,6 +680,32 @@ export default function RateCalculator() {
                                     className="w-24 text-center" />
                                 <span className="text-xs text-muted-foreground">miles</span>
                                 {deadheadMiles > 0 && activeCard && <span className="text-xs text-accent font-mono">+${(deadheadMiles * activeCard.per_mile_rate).toFixed(2)}</span>}
+                            </div>
+
+                            {/* Pickup Date & Time */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" /> Pickup Date & Time
+                                    <span className="text-[10px] opacity-70">(auto-detects after hours & weekend)</span>
+                                </Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="datetime-local"
+                                        value={pickupDatetime}
+                                        onChange={(e) => handlePickupDatetimeChange(e.target.value)}
+                                        className="flex-1"
+                                    />
+                                    {pickupDatetime && (
+                                        <div className="flex gap-1">
+                                            {enabledAccessorials["after_hours"] && (
+                                                <Badge variant="outline" className="text-[10px] text-yellow-500 border-yellow-500/50">After Hours</Badge>
+                                            )}
+                                            {enabledAccessorials["weekend"] && (
+                                                <Badge variant="outline" className="text-[10px] text-orange-500 border-orange-500/50">Weekend</Badge>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Cargo Details */}

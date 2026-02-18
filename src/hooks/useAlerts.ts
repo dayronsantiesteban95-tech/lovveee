@@ -79,6 +79,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
 
     // ── Fetch alerts from route_alerts table ──
     const fetchAlerts = useCallback(async () => {
+        try {
         const { data, error } = await (supabase as any)
             .from("route_alerts")
             .select("*")
@@ -87,7 +88,9 @@ export function useAlerts(options: UseAlertsOptions = {}) {
             .order("created_at", { ascending: false });
 
         if (error) {
-            console.error("[useAlerts] fetch error:", error.message);
+            // Table may not exist yet — log silently and continue with empty state
+            console.warn("[useAlerts] fetch error (table may not exist yet):", error.message);
+            setLoading(false);
             return;
         }
 
@@ -113,6 +116,11 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         setRawAlerts(alerts);
         setLastFetched(new Date());
         setLoading(false);
+        } catch (err) {
+            // Never crash — network or other unexpected error
+            console.warn("[useAlerts] unexpected error in fetchAlerts:", err);
+            setLoading(false);
+        }
     }, [today, toast]);
 
     // ── Initial fetch ──

@@ -12,15 +12,30 @@ export function useUserRole() {
     if (authLoading) return;
 
     if (!user) { setRole(null); setLoading(false); return; }
-    
+
     setLoading(true);
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        setRole((data?.role as "owner" | "dispatcher") ?? null);
+      .then(({ data, error }) => {
+        if (error) {
+          // Log but don't crash — default to dispatcher
+          console.warn("[useUserRole] Error fetching role:", error.message);
+          setRole("dispatcher");
+        } else if (!data || !data.role) {
+          // No role row yet (new user) — default to dispatcher
+          setRole("dispatcher");
+        } else {
+          setRole((data.role as "owner" | "dispatcher") ?? "dispatcher");
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        // Unexpected error — never crash, default gracefully
+        console.warn("[useUserRole] Unexpected error:", err);
+        setRole("dispatcher");
         setLoading(false);
       });
   }, [user, authLoading]);
