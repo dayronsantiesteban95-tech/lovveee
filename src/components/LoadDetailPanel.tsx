@@ -105,6 +105,7 @@ const STATUSES = [
     { value: "blasted", label: "Blasted", color: "bg-violet-500" },
     { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
     { value: "delivered", label: "Delivered", color: "bg-green-500" },
+    { value: "completed", label: "Completed", color: "bg-green-600" },
     { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
     { value: "failed", label: "Failed", color: "bg-red-500" },
 ];
