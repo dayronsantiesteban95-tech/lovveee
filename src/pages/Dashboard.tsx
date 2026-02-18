@@ -444,7 +444,7 @@ export default function Dashboard() {
                         )}
                       </td>
                       <td className="px-5 py-3 text-xs text-right font-mono text-green-400">
-                        {load.status === "delivered" ? fmtMoney(load.revenue) : <span className="text-muted-foreground">{fmtMoney(load.revenue)}</span>}
+                        {(load.status === "delivered" || load.status === "completed") ? fmtMoney(load.revenue) : <span className="text-muted-foreground">{fmtMoney(load.revenue)}</span>}
                       </td>
                     </tr>
                   ))}
