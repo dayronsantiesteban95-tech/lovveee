@@ -27,8 +27,9 @@ import {
 import {
     X, MapPin, Clock, Package, DollarSign, Truck, FileText, Route,
     AlertTriangle, CheckCircle2, Timer, Copy, ExternalLink, Navigation,
-    Building2, User, Hash, Ruler, Weight, Gauge, History,
+    Building2, User, Hash, Ruler, Weight, Gauge, History, ReceiptText,
 } from "lucide-react";
+import { generateInvoice } from "@/lib/generateInvoice";
 import StatusTimeline from "@/components/StatusTimeline";
 import ETASection from "@/components/ETASection";
 import { fmtMoney, fmtWait } from "@/lib/formatters";
@@ -208,6 +209,35 @@ export default function LoadDetailPanel({
     const margin = Number(load.revenue) > 0 ? (profit / Number(load.revenue) * 100) : 0;
     const statusCfg = STATUSES.find(s => s.value === load.status) ?? STATUSES[0];
 
+    const isCompleted = load.status === "completed" || load.status === "delivered";
+
+    const handleGenerateInvoice = () => {
+        generateInvoice(
+            {
+                id: load.id,
+                reference_number: load.reference_number,
+                client_name: load.client_name,
+                pickup_address: load.pickup_address,
+                delivery_address: load.delivery_address,
+                pickup_company: load.pickup_company ?? null,
+                delivery_company: load.delivery_company ?? null,
+                revenue: Number(load.revenue),
+                packages: load.packages,
+                weight_kg: (load as any).weight_kg ?? null,
+                weight_lbs: load.weight_lbs ?? null,
+                package_type: (load as any).package_type ?? null,
+                service_type: load.service_type,
+                actual_pickup: load.actual_pickup ?? null,
+                actual_delivery: load.actual_delivery ?? null,
+                load_date: load.load_date,
+                miles: Number(load.miles),
+                hub: load.hub,
+            },
+            driverName,
+        );
+        toast({ title: "📄 Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+    };
+
     const copyRef = () => {
         const ref = load.reference_number || load.id.slice(0, 8);
         navigator.clipboard.writeText(ref);
@@ -308,10 +338,19 @@ export default function LoadDetailPanel({
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap">
                         <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 flex-1" onClick={() => onEdit(load)}>
                             <FileText className="h-3 w-3" /> Edit Full Record
                         </Button>
+                        {isCompleted && (
+                            <Button
+                                size="sm"
+                                className="h-7 text-[10px] gap-1 flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={handleGenerateInvoice}
+                            >
+                                <ReceiptText className="h-3 w-3" /> Generate Invoice
+                            </Button>
+                        )}
                     </div>
                 </div>
 

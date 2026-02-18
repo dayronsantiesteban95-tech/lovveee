@@ -59,6 +59,10 @@ import { useRealtimeDriverMap } from "@/hooks/useRealtimeDriverMap";
 import LoadDetailPanel from "@/components/LoadDetailPanel";
 import type { LoadDetail } from "@/components/LoadDetailPanel";
 import ETABadge from "@/components/ETABadge";
+import LoadSearchFilters, {
+    EMPTY_LOAD_FILTERS,
+    type LoadFilters,
+} from "@/components/LoadSearchFilters";
 
 // ─── Types ──────────────────────────────────────────
 type Driver = { id: string; full_name: string; hub: string; status: string };
@@ -341,6 +345,9 @@ export default function DispatchTracker() {
     const [selectedDate, setSelectedDate] = useState(todayISO());
     const [dateRangeStart, setDateRangeStart] = useState(daysAgoISO(7));
     const [dateRangeEnd, setDateRangeEnd] = useState(todayISO());
+
+    // ── Load Board Search + Filters ───────────
+    const [loadFilters, setLoadFilters] = useState<LoadFilters>(EMPTY_LOAD_FILTERS);
 
     // ── Dialog ───────────────────────────────
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -797,10 +804,75 @@ export default function DispatchTracker() {
         avgWait: todayLoads.length ? Math.round(todayLoads.reduce((s, l) => s + Number(l.wait_time_minutes), 0) / todayLoads.length) : 0,
     }), [todayLoads]);
 
-    const boardLoads = useMemo(
+    // All loads for the selected board date (before search/filter)
+    const rawBoardLoads = useMemo(
         () => loads.filter((l) => l.load_date === selectedDate),
         [loads, selectedDate],
     );
+
+    // ── Helper: date range from loadFilters.dateRange ──────
+    const filterDateMatches = useCallback((loadDate: string, dateRange: LoadFilters["dateRange"]) => {
+        if (!dateRange) return true;
+        const today = todayISO();
+        const yesterday = daysAgoISO(1);
+        const weekAgo = daysAgoISO(6);
+        if (dateRange === "today") return loadDate === today;
+        if (dateRange === "yesterday") return loadDate === yesterday;
+        if (dateRange === "this_week") return loadDate >= weekAgo && loadDate <= today;
+        return true;
+    }, []);
+
+    // ── Filtered + sorted board loads ─────────────────────
+    const boardLoads = useMemo(() => {
+        let result = rawBoardLoads;
+        const { search, status, driverId, serviceType, dateRange, sort } = loadFilters;
+
+        // Text search (reference_number, client_name, pickup_address, delivery_address)
+        if (search.trim()) {
+            const q = search.trim().toLowerCase();
+            result = result.filter((l) => {
+                return (
+                    (l.reference_number?.toLowerCase().includes(q) ?? false) ||
+                    (l.client_name?.toLowerCase().includes(q) ?? false) ||
+                    (l.pickup_address?.toLowerCase().includes(q) ?? false) ||
+                    (l.delivery_address?.toLowerCase().includes(q) ?? false) ||
+                    (l.pickup_company?.toLowerCase().includes(q) ?? false) ||
+                    (l.delivery_company?.toLowerCase().includes(q) ?? false)
+                );
+            });
+        }
+
+        // Status filter
+        if (status) {
+            result = result.filter((l) => l.status === status);
+        }
+
+        // Driver filter
+        if (driverId) {
+            result = result.filter((l) => l.driver_id === driverId);
+        }
+
+        // Service type filter
+        if (serviceType) {
+            result = result.filter((l) => l.service_type === serviceType);
+        }
+
+        // Date range filter (applies on top of selectedDate — narrows further)
+        if (dateRange) {
+            result = result.filter((l) => filterDateMatches(l.load_date, dateRange));
+        }
+
+        // Sort
+        result = [...result].sort((a, b) => {
+            if (sort === "oldest") return a.created_at.localeCompare(b.created_at);
+            if (sort === "revenue_desc") return Number(b.revenue) - Number(a.revenue);
+            if (sort === "status") return a.status.localeCompare(b.status);
+            // default: newest
+            return b.created_at.localeCompare(a.created_at);
+        });
+
+        return result;
+    }, [rawBoardLoads, loadFilters, filterDateMatches]);
 
     // Wait time analytics
     const waitAnalytics = useMemo(() => {
@@ -1034,7 +1106,7 @@ export default function DispatchTracker() {
                     <div className="flex items-center gap-3 mb-3">
                         <Label className="text-xs text-muted-foreground">Board Date</Label>
                         <Input type="date" className="w-40 h-9" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                        <Badge variant="secondary">{boardLoads.length} loads</Badge>
+                        <Badge variant="secondary">{rawBoardLoads.length} loads</Badge>
                         {/* Last updated indicator */}
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70 select-none">
                             <RefreshCw className="h-2.5 w-2.5" />
@@ -1075,6 +1147,15 @@ export default function DispatchTracker() {
                         </div>
                     </div>
 
+                    {/* ── Search + Filter Bar ── */}
+                    <LoadSearchFilters
+                        filters={loadFilters}
+                        onFiltersChange={setLoadFilters}
+                        totalCount={rawBoardLoads.length}
+                        filteredCount={boardLoads.length}
+                        drivers={drivers.filter((d) => d.status === "active").map((d) => ({ id: d.id, full_name: d.full_name }))}
+                    />
+
                     <div className={`grid gap-4 ${toolsOpen ? "grid-cols-1 lg:grid-cols-3" : "grid-cols-1"}`}>
                         {/* Load Table */}
                         <div className={toolsOpen ? "lg:col-span-2" : ""}>
@@ -1098,7 +1179,26 @@ export default function DispatchTracker() {
                                     </TableHeader>
                                     <TableBody>
                                         {boardLoads.length === 0 && (
-                                            <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-12">No loads for {selectedDate}. Click "New Load" to add one.</TableCell></TableRow>
+                                            <TableRow>
+                                                <TableCell colSpan={12} className="text-center text-muted-foreground py-12">
+                                                    {rawBoardLoads.length > 0 ? (
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <p className="text-base">No loads match your search</p>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => setLoadFilters(EMPTY_LOAD_FILTERS)}
+                                                                className="gap-1.5"
+                                                            >
+                                                                <X className="h-3.5 w-3.5" />
+                                                                Clear filters
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        `No loads for ${selectedDate}. Click "New Load" to add one.`
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
                                         )}
                                         {boardLoads.map((load) => {
                                             const si = statusInfo(load.status);
