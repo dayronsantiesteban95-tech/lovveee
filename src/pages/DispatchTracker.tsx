@@ -24,6 +24,8 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -161,6 +163,85 @@ type RateCard = {
     fuel_surcharge_pct: number;
 };
 
+// ─── Anika Rate Calculator ──────────────────────────────
+// Hardcoded Anika rate sheet — do NOT pull from DB
+const ANIKA_RATES = {
+    cargo_van: { base: 105, perMile: 2.0, deadheadPerMile: 2.0, weightThreshold: 100, weightRate: 0.10 },
+    box_truck:  { base: 170, perMile: 2.5, deadheadPerMile: 2.5, weightThreshold: 600, weightRate: 0.15 },
+} as const;
+
+type AnikaVehicle = keyof typeof ANIKA_RATES;
+type AnikaModifiers = {
+    afterHours: boolean;
+    weekend: boolean;
+    holiday: boolean;
+    tenderingFee: boolean;
+    attemptCharge: boolean;
+    additionalStops: number;
+    extraPieces: number;
+    specialHandling: boolean;
+    documents: boolean;
+    holding: number;
+    waitTime: number;
+    secondPerson: boolean;
+    whiteGlove: boolean;
+    hazmat: boolean;
+};
+
+const EMPTY_ANIKA_MODIFIERS: AnikaModifiers = {
+    afterHours: false, weekend: false, holiday: false, tenderingFee: false, attemptCharge: false,
+    additionalStops: 0, extraPieces: 0, specialHandling: false, documents: false,
+    holding: 0, waitTime: 0, secondPerson: false, whiteGlove: false, hazmat: false,
+};
+
+type AnikaBreakdown = {
+    baseRate: number;
+    mileageCharge: number;
+    fuelSurcharge: number;
+    subtotal: number;
+    weightSurcharge: number;
+    modifiersTotal: number;
+    finalQuote: number;
+};
+
+function calculateRate(
+    vehicleType: string,
+    miles: number,
+    weightLbs: number,
+    modifiers: AnikaModifiers,
+): AnikaBreakdown {
+    const vt = (vehicleType === "box_truck" ? "box_truck" : "cargo_van") as AnikaVehicle;
+    const rates = ANIKA_RATES[vt];
+
+    const baseRate = rates.base;
+    const mileageCharge = miles > 20 ? (miles - 20) * rates.perMile : 0;
+    const fuelSurcharge = (baseRate + mileageCharge) * 0.25;
+    const subtotal = baseRate + mileageCharge + fuelSurcharge;
+
+    const weightOver = Math.max(0, weightLbs - rates.weightThreshold);
+    const weightSurcharge = weightOver * rates.weightRate;
+
+    let modifiersTotal = 0;
+    if (modifiers.afterHours)    modifiersTotal += 25;
+    if (modifiers.weekend)       modifiersTotal += 25;
+    if (modifiers.holiday)       modifiersTotal += 50;
+    if (modifiers.tenderingFee)  modifiersTotal += 15;
+    if (modifiers.attemptCharge) modifiersTotal += baseRate;
+    modifiersTotal += modifiers.additionalStops * 50;
+    modifiersTotal += modifiers.extraPieces * 15;
+    if (modifiers.specialHandling) modifiersTotal += 20;
+    if (modifiers.documents)       modifiersTotal += 20;
+    modifiersTotal += modifiers.holding * 50;
+    modifiersTotal += modifiers.waitTime * 30;
+    if (modifiers.secondPerson) modifiersTotal += 100;
+    if (modifiers.whiteGlove)   modifiersTotal += 50;
+    if (modifiers.hazmat)       modifiersTotal += 50;
+
+    const finalQuote = subtotal + weightSurcharge + modifiersTotal;
+
+    return { baseRate, mileageCharge, fuelSurcharge, subtotal, weightSurcharge, modifiersTotal, finalQuote };
+}
+
 const EMPTY_ADD_FORM: AddLoadForm = {
     reference_number: "",
     consol_number: "",
@@ -287,6 +368,8 @@ export default function DispatchTracker() {
 
     // ── Computed revenue from rate card ──────
     const [computedRevenue, setComputedRevenue] = useState<number | null>(null);
+    // ── Anika rate calculator state ──────────
+    const [anikaModifiers, setAnikaModifiers] = useState<AnikaModifiers>(EMPTY_ANIKA_MODIFIERS);
     // ── Tools sidebar ───────────────────────
     const [toolsOpen, setToolsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState<"quick" | "import" | "history" | "log" | "blast" | null>("quick");
@@ -565,6 +648,7 @@ export default function DispatchTracker() {
             setDeliverySearch("");
             setComputedRevenue(null);
             setCompanyContacts([]);
+            setAnikaModifiers(EMPTY_ANIKA_MODIFIERS);
             fetchLoads();
         }
     };
@@ -582,6 +666,7 @@ export default function DispatchTracker() {
         setShowNewClient(false);
         setComputedRevenue(null);
         setCompanyContacts([]);
+        setAnikaModifiers(EMPTY_ANIKA_MODIFIERS);
         setDialogOpen(true);
     }, []);
 
@@ -1662,6 +1747,52 @@ export default function DispatchTracker() {
                                                 </div>
                                             </div>
 
+                                            {/* ── Anika Live Rate Card ── */}
+                                            {(() => {
+                                                const miles = parseFloat(af.distance_miles) || 0;
+                                                const wKg = parseFloat(af.weight_kg) || 0;
+                                                const wLbs = wKg * 2.205;
+                                                const vt = af.vehicle_type;
+                                                const showCard = vt === "cargo_van" || vt === "box_truck";
+                                                if (!showCard) return null;
+                                                const bd = calculateRate(vt, miles, wLbs, anikaModifiers);
+                                                return (
+                                                    <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                                                                <DollarSign className="h-3.5 w-3.5" /> Live Rate Estimate
+                                                            </p>
+                                                            <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-0 text-[10px]">Anika Rate Sheet</Badge>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                                            <div className="flex justify-between items-center py-1.5 px-2 rounded-lg bg-background/60">
+                                                                <span className="text-muted-foreground">Base Rate</span>
+                                                                <span className="font-mono font-semibold">${bd.baseRate.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center py-1.5 px-2 rounded-lg bg-background/60">
+                                                                <span className="text-muted-foreground">Mileage Charge</span>
+                                                                <span className="font-mono font-semibold">${bd.mileageCharge.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center py-1.5 px-2 rounded-lg bg-background/60">
+                                                                <span className="text-muted-foreground">Fuel Surcharge (25%)</span>
+                                                                <span className="font-mono font-semibold">${bd.fuelSurcharge.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center py-1.5 px-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                                                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">Subtotal</span>
+                                                                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">${bd.subtotal.toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
+                                                        {miles === 0 && (
+                                                            <p className="text-[10px] text-muted-foreground text-center">Enter distance above to see mileage charge</p>
+                                                        )}
+                                                        <Button size="sm" className="w-full h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                            onClick={() => setAf({ revenue: bd.subtotal.toFixed(2) })}>
+                                                            <DollarSign className="h-3.5 w-3.5" /> Use this rate: ${bd.subtotal.toFixed(2)}
+                                                        </Button>
+                                                    </div>
+                                                );
+                                            })()}
+
                                             {/* Revenue */}
                                             <div>
                                                 <p className="form-section-label">💵 Revenue</p>
@@ -1894,6 +2025,129 @@ export default function DispatchTracker() {
                                                     <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART — LH ENGINE SEAL" className="mt-1" />
                                                 </div>
                                             </div>
+
+                                            {/* ── Anika Price Modifiers ── */}
+                                            {(af.vehicle_type === "cargo_van" || af.vehicle_type === "box_truck") && (() => {
+                                                const miles = parseFloat(af.distance_miles) || 0;
+                                                const wKg = parseFloat(af.weight_kg) || 0;
+                                                const wLbs = wKg * 2.205;
+                                                const bd = calculateRate(af.vehicle_type, miles, wLbs, anikaModifiers);
+                                                const setMod = (patch: Partial<AnikaModifiers>) =>
+                                                    setAnikaModifiers((m) => ({ ...m, ...patch }));
+                                                return (
+                                                    <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-4">
+                                                        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+                                                            <DollarSign className="h-3.5 w-3.5" /> Price Modifiers
+                                                        </p>
+
+                                                        {/* Time & Access */}
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">⏰ Time &amp; Access</p>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {[
+                                                                    { key: "afterHours" as const, label: "After Hours (20:00–07:59)", price: 25 },
+                                                                    { key: "weekend" as const, label: "Weekend (Sat & Sun)", price: 25 },
+                                                                    { key: "holiday" as const, label: "Holiday", price: 50 },
+                                                                    { key: "tenderingFee" as const, label: "Tendering Fee (airport)", price: 15 },
+                                                                    { key: "attemptCharge" as const, label: "Attempt Charge", price: bd.baseRate },
+                                                                ].map(({ key, label, price }) => (
+                                                                    <div key={key} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background/60">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Checkbox id={`mod-${key}`} checked={anikaModifiers[key] as boolean}
+                                                                                onCheckedChange={(v) => setMod({ [key]: !!v })} />
+                                                                            <Label htmlFor={`mod-${key}`} className="text-xs cursor-pointer leading-tight">{label}</Label>
+                                                                        </div>
+                                                                        <Badge variant="outline" className="text-[10px] shrink-0">+${price.toFixed(2)}</Badge>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            {/* Additional Stops counter */}
+                                                            <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background/60">
+                                                                <Label className="text-xs">Additional Stops (+$50 each)</Label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>−</Button>
+                                                                    <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
+                                                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                                                        onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <Separator />
+
+                                                        {/* Accessorial Services */}
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">📋 Accessorial Services</p>
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                {[
+                                                                    { key: "specialHandling" as const, label: "Special Handling", price: 20 },
+                                                                    { key: "documents" as const, label: "Documents", price: 20 },
+                                                                    { key: "secondPerson" as const, label: "2nd Person Ride Along", price: 100 },
+                                                                    { key: "whiteGlove" as const, label: "White Glove Service", price: 50 },
+                                                                    { key: "hazmat" as const, label: "Dangerous Goods / Hazmat", price: 50 },
+                                                                ].map(({ key, label, price }) => (
+                                                                    <div key={key} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background/60">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Checkbox id={`mod-${key}`} checked={anikaModifiers[key] as boolean}
+                                                                                onCheckedChange={(v) => setMod({ [key]: !!v })} />
+                                                                            <Label htmlFor={`mod-${key}`} className="text-xs cursor-pointer leading-tight">{label}</Label>
+                                                                        </div>
+                                                                        <Badge variant="outline" className="text-[10px] shrink-0">+${price}</Badge>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            {/* Counter modifiers */}
+                                                            {[
+                                                                { key: "extraPieces" as const, label: "Extra Pieces (+$15 each)", unit: 15 },
+                                                                { key: "holding" as const, label: "Holding per day (+$50 each)", unit: 50 },
+                                                                { key: "waitTime" as const, label: "Wait Time per 15 min (+$30 each, first free)", unit: 30 },
+                                                            ].map(({ key, label }) => (
+                                                                <div key={key} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-background/60">
+                                                                    <Label className="text-xs">{label}</Label>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>−</Button>
+                                                                        <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
+                                                                        <Button type="button" variant="outline" size="icon" className="h-6 w-6"
+                                                                            onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        <Separator />
+
+                                                        {/* Final Quote display */}
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex justify-between text-xs text-muted-foreground">
+                                                                <span>Base Quote (subtotal)</span>
+                                                                <span className="font-mono">${bd.subtotal.toFixed(2)}</span>
+                                                            </div>
+                                                            {bd.weightSurcharge > 0 && (
+                                                                <div className="flex justify-between text-xs text-muted-foreground">
+                                                                    <span>Weight Surcharge</span>
+                                                                    <span className="font-mono">+${bd.weightSurcharge.toFixed(2)}</span>
+                                                                </div>
+                                                            )}
+                                                            {bd.modifiersTotal > 0 && (
+                                                                <div className="flex justify-between text-xs text-muted-foreground">
+                                                                    <span>Modifiers</span>
+                                                                    <span className="font-mono">+${bd.modifiersTotal.toFixed(2)}</span>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex justify-between items-center p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 mt-2">
+                                                                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Final Quote</span>
+                                                                <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-mono">${bd.finalQuote.toFixed(2)}</span>
+                                                            </div>
+                                                            <Button size="sm" className="w-full h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white mt-1"
+                                                                onClick={() => setAf({ revenue: bd.finalQuote.toFixed(2) })}>
+                                                                <DollarSign className="h-3.5 w-3.5" /> Apply to Revenue: ${bd.finalQuote.toFixed(2)}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {/* Driver Assignment */}
                                             <div>
