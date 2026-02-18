@@ -35,8 +35,9 @@ import {
     AlertTriangle, CheckCircle, BarChart3, FileText, Copy, Timer, Package,
     Navigation, Download, History, Zap, PanelRightClose, PanelRightOpen, Layers, Radio,
     ChevronRight, Gauge, Shield, Upload, X, ChevronLeft,
-    MoreHorizontal, PlayCircle, PackageCheck, RotateCcw, RefreshCw,
+    MoreHorizontal, PlayCircle, PackageCheck, RotateCcw, RefreshCw, ReceiptText,
 } from "lucide-react";
+import { generateInvoice } from "@/lib/generateInvoice";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuSeparator, DropdownMenuTrigger,
@@ -1321,7 +1322,45 @@ export default function DispatchTracker() {
                                                                         <MoreHorizontal className="h-3 w-3" />
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="w-40">
+                                                                <DropdownMenuContent align="end" className="w-44">
+                                                                    {(load.status === "completed" || load.status === "delivered") && (
+                                                                        <>
+                                                                            <DropdownMenuItem
+                                                                                className="text-xs gap-2 text-emerald-600 font-semibold"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    generateInvoice(
+                                                                                        {
+                                                                                            id: load.id,
+                                                                                            reference_number: load.reference_number,
+                                                                                            client_name: load.client_name,
+                                                                                            pickup_address: load.pickup_address,
+                                                                                            delivery_address: load.delivery_address,
+                                                                                            pickup_company: load.pickup_company ?? null,
+                                                                                            delivery_company: load.delivery_company ?? null,
+                                                                                            revenue: Number(load.revenue),
+                                                                                            packages: load.packages,
+                                                                                            weight_kg: (load as any).weight_kg ?? null,
+                                                                                            weight_lbs: load.weight_lbs ?? null,
+                                                                                            package_type: (load as any).package_type ?? null,
+                                                                                            service_type: load.service_type,
+                                                                                            actual_pickup: load.actual_pickup ?? null,
+                                                                                            actual_delivery: load.actual_delivery ?? null,
+                                                                                            load_date: load.load_date,
+                                                                                            miles: Number(load.miles),
+                                                                                            hub: load.hub,
+                                                                                        },
+                                                                                        driverName(load.driver_id),
+                                                                                    );
+                                                                                    toast({ title: "📄 Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                                }}
+                                                                            >
+                                                                                <ReceiptText className="h-3.5 w-3.5" />
+                                                                                Generate Invoice
+                                                                            </DropdownMenuItem>
+                                                                            <DropdownMenuSeparator />
+                                                                        </>
+                                                                    )}
                                                                     <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                                                                         Change Status
                                                                     </div>
