@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const ROUTES_API_KEY = "AIzaSyC_RD-ZMJeOTV6WLND-XGdJCsCKefyGzEs";
+const ROUTES_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 const ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const FIELD_MASK = "routes.duration,routes.distanceMeters";
 const REFRESH_INTERVAL_MS = 60 * 1000; // 60 seconds
