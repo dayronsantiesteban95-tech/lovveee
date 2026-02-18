@@ -165,9 +165,18 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         return rawAlerts.map(alert => {
             const escalatedSeverity = computeEscalation(alert);
             const ageMinutes = computeAge(alert);
+            return {
+                ...alert,
+                escalatedSeverity,
+                ageMinutes,
+            };
+        });
+    }, [rawAlerts, escalationTick]);
 
-            // Auto-ping: toast to owner/supervisor when hitting 30min
-            if (escalatedSeverity === "auto_ping" && !autoPingedRef.current.has(alert.id)) {
+    // ── Auto-ping side effect (moved out of useMemo to avoid side effects in render) ──
+    useEffect(() => {
+        alerts.forEach(alert => {
+            if (alert.escalatedSeverity === "auto_ping" && !autoPingedRef.current.has(alert.id)) {
                 autoPingedRef.current.add(alert.id);
                 toast({
                     title: "🔴 ESCALATED: " + alert.title,
@@ -175,15 +184,8 @@ export function useAlerts(options: UseAlertsOptions = {}) {
                     variant: "destructive",
                 });
             }
-
-            return {
-                ...alert,
-                escalatedSeverity,
-                ageMinutes,
-            };
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [rawAlerts, escalationTick]);
+    }, [alerts, toast]);
 
     // ── Acknowledge alert ──
     const acknowledgeAlert = useCallback(async (alertId: string) => {

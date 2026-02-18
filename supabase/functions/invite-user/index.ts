@@ -22,43 +22,48 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // User-scoped client to verify caller
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // 2. Check caller is an owner — check both profiles and user_roles tables
+    // Use admin client to verify JWT via getUser (getClaims does not exist in supabase-js v2)
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await adminClient.auth.getUser(token);
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const callerId = claimsData.claims.sub as string;
+    const callerId = userData.user.id;
+    
+    const { data: profileRole } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("user_id", callerId)
+      .maybeSingle();
 
-    // 2. Check caller is an owner
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: callerRole } = await adminClient
+    const { data: userRole } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", callerId)
       .eq("role", "owner")
       .maybeSingle();
 
-    if (!callerRole) {
-      return new Response(JSON.stringify({ error: "Forbidden: Only owners can invite users" }), {
+    const isOwner = profileRole?.role === "owner" || !!userRole;
+
+    if (!isOwner) {
+      return new Response(JSON.stringify({ error: "Forbidden: Only owners can manage users" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 3. Parse request body
-    const { email, full_name, role, action } = await req.json();
+    // 3. Parse request body — parse once, destructure all fields
+    const body = await req.json();
+    const { email, full_name, role, action, password: providedPassword } = body;
 
     // Handle different actions
     if (action === "list") {
@@ -94,33 +99,17 @@ serve(async (req) => {
       });
     }
 
-    if (action === "update_role") {
-      const { user_id, new_role } = await req.json().catch(() => ({ user_id: null, new_role: null }));
-      // Re-parse from original body
-      const body = { email, full_name, role, user_id: (await req.json().catch(() => ({})) as any).user_id };
-      // Actually let's handle this properly - the body was already parsed above
-      // We need to get user_id and new_role from the original parsed body
-      return new Response(JSON.stringify({ error: "Use the dedicated fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     if (action === "change_role") {
-      const { user_id, new_role } = { user_id: email, new_role: role }; // reuse fields: email=user_id, role=new_role
-      if (!user_id || !new_role || !["owner", "dispatcher"].includes(new_role)) {
+      const user_id = body.user_id || email;
+      const new_role = body.new_role || role;
+      if (!user_id || !new_role || !["owner", "dispatcher", "driver"].includes(new_role)) {
         return new Response(JSON.stringify({ error: "Invalid user_id or role" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      // Upsert the role
-      await adminClient.from("user_roles").upsert(
-        { user_id, role: new_role },
-        { onConflict: "user_id" }
-      );
-
+      await adminClient.from("user_roles").upsert({ user_id, role: new_role }, { onConflict: "user_id" });
+      await adminClient.from("profiles").update({ role: new_role }).eq("user_id", user_id);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -191,18 +180,19 @@ serve(async (req) => {
       });
     }
 
-    if (!["owner", "dispatcher"].includes(role)) {
-      return new Response(JSON.stringify({ error: "Role must be 'owner' or 'dispatcher'" }), {
+    if (!["owner", "dispatcher", "driver"].includes(role)) {
+      return new Response(JSON.stringify({ error: "Role must be 'owner', 'dispatcher', or 'driver'" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 4. Create user via Admin API
-    const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
+    // 4. Create user via Admin API — use provided password or default
+    const userPassword = providedPassword || "Anika2026!";
+    
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
-      password: tempPassword,
+      password: userPassword,
       email_confirm: true,
       user_metadata: { full_name },
     });
@@ -214,28 +204,24 @@ serve(async (req) => {
       });
     }
 
-    // 5. Assign role
-    await adminClient.from("user_roles").insert({
-      user_id: newUser.user.id,
-      role,
-    });
-
-    // 6. Generate password reset link so the new user can set their own password
-    const { data: resetData } = await adminClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-    });
+    // 5. Assign role in both tables for compatibility
+    await adminClient.from("user_roles").upsert({ user_id: newUser.user.id, role }, { onConflict: "user_id" });
+    await adminClient.from("profiles").upsert(
+      { user_id: newUser.user.id, full_name, role },
+      { onConflict: "user_id" }
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
+        user_id: newUser.user.id,
         user: {
           id: newUser.user.id,
           email: newUser.user.email,
           full_name,
           role,
         },
-        recovery_link: resetData?.properties?.action_link || null,
+        temp_password: userPassword,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

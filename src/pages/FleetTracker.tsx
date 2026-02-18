@@ -142,14 +142,22 @@ export default function FleetTracker() {
     const handleVehSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
+        const vName = fd.get("vehicle_name") as string;
+        const vType = fd.get("vehicle_type") as string || "cargo_van";
+        const plateFd = (fd.get("license_plate") as string) || "N/A";
         const payload = {
-            vehicle_name: fd.get("vehicle_name") as string,
-            vehicle_type: fd.get("vehicle_type") as string || "cargo_van",
+            // Canonical UI columns
+            vehicle_name: vName,
+            vehicle_type: vType,
+            license_plate: plateFd !== "N/A" ? plateFd : null,
+            // Legacy NOT NULL columns (kept in sync)
+            name: vName,
+            type: vType,
+            plate_number: plateFd,
             make: fd.get("make") as string || null,
             model: fd.get("model") as string || null,
             year: Number(fd.get("year")) || null,
             vin: fd.get("vin") as string || null,
-            license_plate: fd.get("license_plate") as string || null,
             hub: fd.get("hub") as string || "phoenix",
             status: fd.get("status") as string || "active",
             current_mileage: Number(fd.get("current_mileage")) || 0,

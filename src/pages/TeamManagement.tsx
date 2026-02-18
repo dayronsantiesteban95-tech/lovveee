@@ -57,7 +57,7 @@ import {
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type AppRole = "owner" | "dispatcher";
+type AppRole = "owner" | "dispatcher" | "driver";
 type DisplayRole = "admin" | "dispatcher" | "driver";
 type UserStatus = "active" | "invited" | "disabled";
 type VehicleType = "Sedan" | "SUV" | "Van" | "Box Truck";
@@ -91,7 +91,7 @@ interface InviteForm {
 /** Map UI display role → DB app_role (drivers stored as dispatchers until we add enum value) */
 function toDbRole(displayRole: DisplayRole): AppRole {
   if (displayRole === "admin") return "owner";
-  if (displayRole === "driver") return "dispatcher"; // temporary mapping
+  if (displayRole === "driver") return "driver";
   return "dispatcher";
 }
 
@@ -352,6 +352,7 @@ export default function TeamManagement() {
               email: form.email,
               full_name: form.full_name,
               role: dbRole,
+              password: (form as any).password || "Anika2026!",
             }),
           }
         );
@@ -394,8 +395,8 @@ export default function TeamManagement() {
         }
 
         toast({
-          title: "User invited!",
-          description: `${form.full_name} has been invited as ${form.role}.`,
+          title: "User created!",
+          description: `${form.full_name} has been added as ${form.role}.`,
         });
         setShowInvite(false);
         setForm(DEFAULT_FORM);
@@ -819,10 +820,10 @@ export default function TeamManagement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
-              Invite New User
+              Add New User
             </DialogTitle>
             <DialogDescription>
-              Send an invitation to a new team member and assign their role.
+              Create a new team member account and assign their role.
             </DialogDescription>
           </DialogHeader>
 
@@ -848,6 +849,19 @@ export default function TeamManagement() {
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder="jane@anika.com"
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-password">Password *</Label>
+              <Input
+                id="invite-password"
+                type="password"
+                value={(form as any).password ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value } as any))}
+                placeholder="Set a password for this user"
                 required
               />
             </div>
@@ -995,7 +1009,7 @@ export default function TeamManagement() {
                 ) : (
                   <>
                     <Mail className="h-4 w-4" />
-                    Send Invite
+                    Add User
                   </>
                 )}
               </Button>

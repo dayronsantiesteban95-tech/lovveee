@@ -363,13 +363,13 @@ export default function DispatchTracker() {
         if (!pickupAddress || driverList.length === 0) return;
         const addr = pickupAddress.toLowerCase();
         const cityHubMap: Record<string, string> = {
-            phoenix: "phoenix", phx: "phoenix",
-            tucson: "tucson", tus: "tucson",
-            scottsdale: "phoenix", tempe: "phoenix", mesa: "phoenix",
-            chandler: "phoenix", gilbert: "phoenix", peoria: "phoenix",
-            flagstaff: "flagstaff",
-            los: "la", angeles: "la", "los angeles": "la",
-            atlanta: "atlanta", atl: "atlanta",
+            phoenix: "phx", phx: "phx",
+            tucson: "phx", tus: "phx",
+            scottsdale: "phx", tempe: "phx", mesa: "phx",
+            chandler: "phx", gilbert: "phx", peoria: "phx",
+            flagstaff: "phx",
+            los: "lax", angeles: "lax", "los angeles": "lax",
+            atlanta: "atl", atl: "atl",
         };
         const matchedHub = Object.entries(cityHubMap).find(([city]) => addr.includes(city))?.[1];
         if (!matchedHub) return;
@@ -399,8 +399,11 @@ export default function DispatchTracker() {
         if (!rateCards.length) return;
         const svcMap: Record<string, string> = { AOG: "hotshot", Courier: "courier", Standard: "last_mile" };
         const rateKey = svcMap[addForm.service_type] ?? "last_mile";
+        // Map UI hub values to DB hub codes (rate_cards uses PHX/LAX)
+        const hubDbMap: Record<string, string> = { phoenix: "PHX", phx: "PHX", la: "LAX", lax: "LAX", atlanta: "ATL", atl: "ATL" };
+        const dbHub = hubDbMap["phoenix"] ?? "PHX"; // default PHX hub for rate lookup
         const card = rateCards.find(
-            (r) => r.hub === "phoenix" && r.service_type === rateKey && r.vehicle_type === addForm.vehicle_type,
+            (r) => r.hub === dbHub && r.service_type === rateKey && r.vehicle_type === addForm.vehicle_type,
         );
         if (!card) { setComputedRevenue(null); return; }
         const miles = parseFloat(addForm.distance_miles) || 0;
