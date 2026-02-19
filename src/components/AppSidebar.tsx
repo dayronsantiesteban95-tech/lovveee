@@ -13,6 +13,7 @@ import {
   Truck,
   FileCheck,
   Crosshair,
+  Clock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -49,6 +50,7 @@ const resourcesNav = [
 const fleetNav = [
   { title: "Fleet Tracker", url: "/fleet", icon: Truck },
   { title: "POD Manager", url: "/pod-manager", icon: FileCheck },
+  { title: "Time Clock", url: "/time-clock", icon: Clock },
 ];
 
 export function AppSidebar() {
