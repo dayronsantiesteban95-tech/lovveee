@@ -583,6 +583,206 @@ export default function FleetTracker() {
                 </DialogContent>
             </Dialog>
 
+            {/* ═══ INSPECTION FORM DIALOG ═══ */}
+            <Dialog open={inspectionDialog} onOpenChange={(o) => { setInspectionDialog(o); }}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ClipboardCheck className="h-5 w-5 text-blue-500" />
+                            Walk-Around Inspection
+                        </DialogTitle>
+                        <DialogDescription>
+                            Record daily vehicle inspection. Minimum 2 photos required.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <InspectionForm
+                        vehicles={vehicles.map((v) => ({ id: v.id, vehicle_name: v.vehicle_name, license_plate: v.license_plate }))}
+                        drivers={drivers.map((d) => ({ id: d.id, full_name: d.full_name }))}
+                        defaultVehicleId={selectedVehicleForInspection}
+                        onSuccess={() => {
+                            setInspectionDialog(false);
+                            fetchFleetStatus();
+                        }}
+                        onCancel={() => setInspectionDialog(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* ═══ INSPECTION HISTORY SLIDE-OVER ═══ */}
+            <Sheet open={historySheet} onOpenChange={setHistorySheet}>
+                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                    <SheetHeader className="mb-4">
+                        <SheetTitle className="flex items-center gap-2">
+                            <Eye className="h-5 w-5 text-blue-500" />
+                            {historyVehicle?.vehicle_name} — Inspection History
+                        </SheetTitle>
+                        <SheetDescription>
+                            Last 30 days of walk-around inspections and odometer readings
+                        </SheetDescription>
+                    </SheetHeader>
+
+                    {historyLoading ? (
+                        <div className="space-y-3">
+                            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Odometer Trend */}
+                            {odometerHistory.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                                        <Gauge className="h-4 w-4 text-purple-500" /> Odometer Trend
+                                    </h3>
+                                    <div className="space-y-1">
+                                        {odometerHistory.map((o, i) => {
+                                            const prev = odometerHistory[i + 1];
+                                            const diff = prev ? o.odometer_reading - prev.odometer_reading : null;
+                                            return (
+                                                <div key={i} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
+                                                    <div>
+                                                        <span className="font-mono font-semibold">{o.odometer_reading.toLocaleString()} mi</span>
+                                                        {o.driver_name && <span className="text-muted-foreground text-xs ml-2">— {o.driver_name}</span>}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {diff !== null && (
+                                                            <span className={`text-xs flex items-center gap-0.5 ${diff >= 0 ? "text-green-500" : "text-red-500"}`}>
+                                                                {diff > 0 ? <ArrowUp className="h-3 w-3" /> : diff < 0 ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                                                {Math.abs(diff).toLocaleString()} mi
+                                                            </span>
+                                                        )}
+                                                        <span className="text-xs text-muted-foreground">{o.inspection_date}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Inspection Records */}
+                            {inspectionHistory.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                                        <ClipboardCheck className="h-4 w-4 text-blue-500" /> Inspection Records
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {inspectionHistory.map((insp) => (
+                                            <div key={insp.id} className="rounded-xl border border-border/60 p-3 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium">{insp.inspection_date}</span>
+                                                        <InspectionBadge done={true} status={insp.status} />
+                                                        {insp.car_wash_done && (
+                                                            <Badge className="bg-blue-500/15 text-blue-700 text-[10px]">
+                                                                <Droplets className="h-2.5 w-2.5 mr-0.5" /> Washed
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        {insp.status !== "flagged" && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 text-[10px] gap-1 text-red-600"
+                                                                onClick={() => flagInspection(insp.id)}
+                                                            >
+                                                                <Flag className="h-2.5 w-2.5" /> Flag
+                                                            </Button>
+                                                        )}
+                                                        {insp.status !== "approved" && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 text-[10px] gap-1 text-green-600"
+                                                                onClick={() => approveInspection(insp.id)}
+                                                            >
+                                                                <CheckCircle className="h-2.5 w-2.5" /> Approve
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                                    <span className="flex items-center gap-1"><Gauge className="h-3 w-3" /> {insp.odometer_reading.toLocaleString()} mi</span>
+                                                    {insp.checklist.fuel_level && <span>⛽ {insp.checklist.fuel_level}</span>}
+                                                </div>
+                                                {/* Checklist summary */}
+                                                <div className="flex flex-wrap gap-1">
+                                                    {insp.checklist.tires_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Tires ✓</Badge>}
+                                                    {insp.checklist.lights_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Lights ✓</Badge>}
+                                                    {insp.checklist.brakes_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Brakes ✓</Badge>}
+                                                    {insp.checklist.fluids_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Fluids ✓</Badge>}
+                                                    {insp.checklist.interior_clean && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Interior ✓</Badge>}
+                                                    {insp.checklist.exterior_damage && <Badge variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700">Damage ⚠️</Badge>}
+                                                </div>
+                                                {/* Photos */}
+                                                {insp.photos && insp.photos.length > 0 && (
+                                                    <div className="flex gap-1.5 flex-wrap">
+                                                        {insp.photos.map((url, pi) => (
+                                                            <button
+                                                                key={pi}
+                                                                type="button"
+                                                                onClick={() => setLightboxPhoto(url)}
+                                                                className="h-12 w-12 rounded-md overflow-hidden border border-border/60 hover:opacity-80 transition-opacity"
+                                                            >
+                                                                <img src={url} alt={`Photo ${pi + 1}`} className="w-full h-full object-cover" />
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {insp.notes && (
+                                                    <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-2 py-1.5 italic">
+                                                        {insp.notes}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {inspectionHistory.length === 0 && odometerHistory.length === 0 && (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <ClipboardCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                                    <p className="font-medium text-sm">No inspections yet</p>
+                                    <p className="text-xs">No walk-around inspections in the last 30 days.</p>
+                                    <Button
+                                        className="mt-3 btn-gradient gap-2 text-xs h-8"
+                                        onClick={() => {
+                                            setHistorySheet(false);
+                                            setSelectedVehicleForInspection(historyVehicle?.id);
+                                            setInspectionDialog(true);
+                                        }}
+                                    >
+                                        <ClipboardCheck className="h-3.5 w-3.5" /> Start First Inspection
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+
+            {/* ═══ PHOTO LIGHTBOX ═══ */}
+            {lightboxPhoto && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+                    onClick={() => setLightboxPhoto(null)}
+                >
+                    <button
+                        className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
+                        onClick={() => setLightboxPhoto(null)}
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                    <img
+                        src={lightboxPhoto}
+                        alt="Inspection photo"
+                        className="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
+
             {/* Delete Confirmation */}
             {deleteTarget && (
                 <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
