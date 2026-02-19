@@ -218,8 +218,7 @@ export function useDriverGPS({
             stopTracking();
         }
         return () => { stopTracking(); };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [enabled]);
+    }, [enabled, startTracking, stopTracking]);
 
     return {
         ...state,

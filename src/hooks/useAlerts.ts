@@ -119,7 +119,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
             // Never crash — network or other unexpected error
             setLoading(false);
         }
-    }, [today, toast]);
+    }, [toast]);
 
     // ── Initial fetch ──
     useEffect(() => {
