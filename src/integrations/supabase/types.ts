@@ -1352,6 +1352,138 @@ export type Database = {
           },
         ]
       }
+      vehicle_inspections: {
+        Row: {
+          id: string
+          vehicle_id: string | null
+          driver_id: string | null
+          inspection_date: string
+          odometer_reading: number
+          checklist: {
+            tires_ok: boolean
+            lights_ok: boolean
+            brakes_ok: boolean
+            fluids_ok: boolean
+            exterior_damage: boolean
+            interior_clean: boolean
+            fuel_level: string
+          }
+          photos: string[]
+          notes: string | null
+          car_wash_done: boolean
+          status: string
+          submitted_by: string | null
+          reviewed_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id?: string | null
+          driver_id?: string | null
+          inspection_date?: string
+          odometer_reading: number
+          checklist?: {
+            tires_ok?: boolean
+            lights_ok?: boolean
+            brakes_ok?: boolean
+            fluids_ok?: boolean
+            exterior_damage?: boolean
+            interior_clean?: boolean
+            fuel_level?: string
+          }
+          photos?: string[]
+          notes?: string | null
+          car_wash_done?: boolean
+          status?: string
+          submitted_by?: string | null
+          reviewed_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string | null
+          driver_id?: string | null
+          inspection_date?: string
+          odometer_reading?: number
+          checklist?: {
+            tires_ok?: boolean
+            lights_ok?: boolean
+            brakes_ok?: boolean
+            fluids_ok?: boolean
+            exterior_damage?: boolean
+            interior_clean?: boolean
+            fuel_level?: string
+          }
+          photos?: string[]
+          notes?: string | null
+          car_wash_done?: boolean
+          status?: string
+          submitted_by?: string | null
+          reviewed_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_car_washes: {
+        Row: {
+          id: string
+          vehicle_id: string | null
+          driver_id: string | null
+          wash_date: string
+          notes: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id?: string | null
+          driver_id?: string | null
+          wash_date?: string
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string | null
+          driver_id?: string | null
+          wash_date?: string
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_car_washes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_car_washes_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitor_rates: {
         Row: {
           id: string
@@ -1459,6 +1591,30 @@ export type Database = {
           p_token: string
         }
         Returns: Json
+      }
+      get_vehicle_odometer_history: {
+        Args: {
+          p_vehicle_id: string
+        }
+        Returns: {
+          inspection_date: string
+          odometer_reading: number
+          driver_name: string | null
+        }[]
+      }
+      get_fleet_inspection_status: {
+        Args: Record<string, never>
+        Returns: {
+          vehicle_id: string
+          vehicle_name: string
+          plate: string | null
+          inspection_done: boolean
+          inspection_status: string
+          last_odometer: number | null
+          last_car_wash: string | null
+          days_since_wash: number
+          car_wash_overdue: boolean
+        }[]
       }
     }
     Enums: {
