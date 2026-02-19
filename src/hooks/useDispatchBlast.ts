@@ -91,7 +91,6 @@ export function useDispatchBlast() {
             .limit(50) as { data: DispatchBlast[] | null; error: any };
 
         if (error || !blastRows) {
-            console.error("Failed to fetch blasts:", error);
             setLoading(false);
             return;
         }
@@ -190,7 +189,7 @@ export function useDispatchBlast() {
                 .insert(responseRows);
 
             if (respErr) {
-                console.error("Failed to create response rows:", respErr);
+                // Non-fatal — blast was created; response tracking may be incomplete
             }
 
             // 3. Update load status to show it's being blasted

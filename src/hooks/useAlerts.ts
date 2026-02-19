@@ -88,8 +88,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
             .order("created_at", { ascending: false });
 
         if (error) {
-            // Table may not exist yet — log silently and continue with empty state
-            console.warn("[useAlerts] fetch error (table may not exist yet):", error.message);
+            // Table may not exist yet — continue with empty state
             setLoading(false);
             return;
         }
@@ -116,9 +115,8 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         setRawAlerts(alerts);
         setLastFetched(new Date());
         setLoading(false);
-        } catch (err) {
+        } catch {
             // Never crash — network or other unexpected error
-            console.warn("[useAlerts] unexpected error in fetchAlerts:", err);
             setLoading(false);
         }
     }, [today, toast]);

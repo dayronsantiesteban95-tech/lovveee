@@ -135,7 +135,7 @@ export function useDriverGPS({
                 lastPingAt: new Date().toISOString(),
             }));
         } else {
-            console.error("GPS ping failed:", error.message);
+            // GPS ping failed — will retry on next position update
         }
     }, [driverId, activeLoadId]);
 

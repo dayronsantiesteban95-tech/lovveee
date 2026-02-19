@@ -91,7 +91,6 @@ export async function createSequenceForLead(leadId: string, userId: string): Pro
 
     const { error } = await supabase.from("lead_sequences").insert(rows);
     if (error) {
-        console.error("Failed to create sequence:", error);
         return false;
     }
     return true;

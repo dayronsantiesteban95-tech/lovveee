@@ -263,8 +263,8 @@ export default function TimeClock() {
       if (driversRes.data) setDrivers(driversRes.data);
       if (activeRes.data) setActiveClocks(activeRes.data as ActiveClock[]);
       if (entriesRes.data) setRecentEntries(entriesRes.data as TimeEntry[]);
-    } catch (err) {
-      console.error("TimeClock fetch error:", err);
+    } catch {
+      // Silent failure — will show empty state
     } finally {
       setLoading(false);
     }

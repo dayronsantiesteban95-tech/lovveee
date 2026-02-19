@@ -171,8 +171,7 @@ export default function DriverPerformance() {
         pod_compliance_rate: Number(r.pod_compliance_rate ?? 0),
       }));
       setData(parsed);
-    } catch (err) {
-      console.error("DriverPerformance fetch error:", err);
+    } catch {
       setData([]);
     } finally {
       setLoading(false);

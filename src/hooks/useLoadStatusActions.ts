@@ -78,8 +78,7 @@ export function useLoadStatusActions() {
         });
 
       if (evtErr) {
-        // Non-fatal — load was already updated, just log it
-        console.warn("load_status_events insert failed:", evtErr.message);
+        // Non-fatal — load was already updated; event record failed silently
       }
 
       const statusLabels: Record<string, string> = {

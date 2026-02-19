@@ -208,7 +208,7 @@ export default function FleetTracker() {
 
     const fetchFleetStatus = useCallback(async () => {
         const { data, error } = await db.rpc("get_fleet_inspection_status");
-        if (error) { console.error("Fleet status error:", error); return; }
+        if (error) { return; }
         if (data) setFleetStatus(data as FleetInspectionStatus[]);
     }, []);
 

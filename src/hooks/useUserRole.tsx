@@ -21,8 +21,7 @@ export function useUserRole() {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) {
-          // Log but don't crash — default to dispatcher
-          console.warn("[useUserRole] Error fetching role:", error.message);
+          // Don't crash — default to dispatcher
           setRole("dispatcher");
         } else if (!data || !data.role) {
           // No role row yet (new user) — default to dispatcher
@@ -32,9 +31,8 @@ export function useUserRole() {
         }
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         // Unexpected error — never crash, default gracefully
-        console.warn("[useUserRole] Unexpected error:", err);
         setRole("dispatcher");
         setLoading(false);
       });

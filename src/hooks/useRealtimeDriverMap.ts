@@ -46,7 +46,6 @@ export function useRealtimeDriverMap(): UseRealtimeDriverMapReturn {
         setLoading(true);
         const { data, error } = await supabase.rpc("get_driver_positions");
         if (error) {
-            console.error("Failed to fetch driver positions:", error.message);
             setLoading(false);
             return;
         }

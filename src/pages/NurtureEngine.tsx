@@ -707,7 +707,6 @@ export default function NurtureEngine() {
       fetchTracker();
       fetchAttention();
     } catch (err: any) {
-      console.error("Auto-send error:", err);
       toast({ title: "Auto-send failed", description: err.message, variant: "destructive" });
     } finally {
       setAutoSending(false);

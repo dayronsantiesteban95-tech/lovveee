@@ -184,7 +184,6 @@ export default function LiveDriverMap() {
                 .order("recorded_at", { ascending: false });
 
             if (error) {
-                console.warn("[LiveDriverMap] fetch error:", error.message);
                 return;
             }
 
@@ -202,9 +201,8 @@ export default function LiveDriverMap() {
                 }
             }
             setDrivers(deduped);
-        } catch (err) {
+        } catch {
             // Never crash the map — network or other unexpected errors
-            console.warn("[LiveDriverMap] unexpected error in fetchDriverLocations:", err);
         }
     }, []);
 

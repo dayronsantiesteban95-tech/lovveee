@@ -101,8 +101,8 @@ export default function BlastLoadDialog({
 
         if (!error && data) {
             setDrivers(data as AvailableDriver[]);
-        } else {
-            console.error("Failed to fetch drivers:", error);
+        } else if (error) {
+            toast({ title: "Error", description: "Failed to load drivers: " + error.message, variant: "destructive" });
         }
         setLoadingDrivers(false);
     };

@@ -238,7 +238,6 @@ export default function TeamManagement() {
       .select("id, user_id, full_name, created_at");
 
     if (profilesError) {
-      console.warn("[TeamManagement] profiles fallback error:", profilesError.message);
       return [];
     }
 
@@ -304,7 +303,6 @@ export default function TeamManagement() {
         setTeam([]);
       }
     } catch (err) {
-      console.warn("[TeamManagement] Edge Function unavailable, using fallback:", err);
       // Fallback: load from profiles table directly
       try {
         const fallbackTeam = await fetchTeamFallback();
@@ -316,7 +314,6 @@ export default function TeamManagement() {
           });
         }
       } catch (fallbackErr) {
-        console.error("[TeamManagement] Fallback also failed:", fallbackErr);
         toast({
           title: "Warning",
           description: "Could not load team members. Please refresh.",
@@ -367,8 +364,7 @@ export default function TeamManagement() {
           invitedUserId = data.user_id ?? null;
         }
       } catch (edgeFnErr) {
-        console.warn("[TeamManagement] Invite Edge Function unavailable:", edgeFnErr);
-        toast({
+          toast({
           title: "Invite service offline",
           description: "The email invite could not be sent. User was not created.",
           variant: "destructive",
@@ -392,8 +388,7 @@ export default function TeamManagement() {
               created_by: user?.id,
             });
           } catch (driverErr) {
-            console.warn("[TeamManagement] Failed to create driver record:", driverErr);
-          }
+            }
         }
 
         toast({
@@ -405,7 +400,6 @@ export default function TeamManagement() {
         fetchTeam();
       }
     } catch (err) {
-      console.error("[TeamManagement] handleInvite unexpected error:", err);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -471,7 +465,6 @@ export default function TeamManagement() {
         fetchTeam();
       }
     } catch (err) {
-      console.error("[TeamManagement] handleEditRole unexpected error:", err);
       toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
     }
     setEditLoading(false);
@@ -518,7 +511,6 @@ export default function TeamManagement() {
         });
       }
     } catch (err) {
-      console.warn("[TeamManagement] Resend invite Edge Function unavailable:", err);
       toast({
         title: "Invite service offline",
         description: "Could not resend invite — the email service is currently unavailable.",
@@ -1109,3 +1101,4 @@ export default function TeamManagement() {
     </div>
   );
 }
+

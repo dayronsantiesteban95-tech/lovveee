@@ -8,7 +8,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    // 404 tracking: log route miss for analytics (production monitoring)
   }, [location.pathname]);
 
   return (

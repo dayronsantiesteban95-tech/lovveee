@@ -79,7 +79,7 @@ export default function MarketComparison({ hub, vehicleType, distance, ourTotal 
             .order("competitor_name");
 
         if (error) {
-            console.error("Error fetching competitor rates:", error);
+            // Silently fail — competitor rates table may not be populated
         } else {
             setRates((data ?? []).map((r) => ({
                 ...r,

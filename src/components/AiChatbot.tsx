@@ -126,8 +126,7 @@ export default function AiChatbot() {
         onDelta: upsert,
         onDone: () => setLoading(false),
       });
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast.error("Failed to get AI response");
       setLoading(false);
     }

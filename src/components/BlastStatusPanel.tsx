@@ -81,7 +81,6 @@ export default function BlastStatusPanel({
             .single();
 
         if (blastErr || !blastData) {
-            console.error("Failed to fetch blast:", blastErr);
             setLoading(false);
             return;
         }

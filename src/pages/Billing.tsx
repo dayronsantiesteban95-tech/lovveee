@@ -211,8 +211,7 @@ export default function Billing() {
       if (error) throw error;
       setUninvoicedLoads((data as UninvoicedLoad[]) ?? []);
     } catch (err) {
-      console.error("fetchUninvoiced error:", err);
-      toast({ title: "Error", description: "Could not load uninvoiced loads", variant: "destructive" });
+            toast({ title: "Error", description: "Could not load uninvoiced loads", variant: "destructive" });
     } finally {
       setLoadingUninvoiced(false);
     }
@@ -228,8 +227,7 @@ export default function Billing() {
       if (error) throw error;
       setInvoices((data as Invoice[]) ?? []);
     } catch (err) {
-      console.error("fetchInvoices error:", err);
-      toast({ title: "Error", description: "Could not load invoices", variant: "destructive" });
+            toast({ title: "Error", description: "Could not load invoices", variant: "destructive" });
     } finally {
       setLoadingInvoices(false);
     }
@@ -245,8 +243,7 @@ export default function Billing() {
       if (error) throw error;
       setProfiles((data as ClientBillingProfile[]) ?? []);
     } catch (err) {
-      console.error("fetchProfiles error:", err);
-      toast({ title: "Error", description: "Could not load client profiles", variant: "destructive" });
+            toast({ title: "Error", description: "Could not load client profiles", variant: "destructive" });
     } finally {
       setLoadingProfiles(false);
     }
@@ -271,8 +268,7 @@ export default function Billing() {
       setInvoiceLineItems((lines as InvoiceLineItem[]) ?? []);
       setInvoicePayments((payments as InvoicePayment[]) ?? []);
     } catch (err) {
-      console.error("openInvoiceDetail error:", err);
-    } finally {
+          } finally {
       setLoadingDetail(false);
     }
   }, []);
@@ -383,8 +379,7 @@ export default function Billing() {
       fetchUninvoiced();
       fetchInvoices();
     } catch (err) {
-      console.error("saveInvoice error:", err);
-      toast({ title: "Error", description: "Could not create invoice. Please try again.", variant: "destructive" });
+            toast({ title: "Error", description: "Could not create invoice. Please try again.", variant: "destructive" });
     } finally {
       setSavingInvoice(false);
     }
@@ -460,8 +455,7 @@ export default function Billing() {
       fetchInvoices();
       if (detailOpen) openInvoiceDetail({ ...selectedInvoice, amount_paid: newAmountPaid, status: newStatus });
     } catch (err) {
-      console.error("savePayment error:", err);
-      toast({ title: "Error", description: "Could not record payment", variant: "destructive" });
+            toast({ title: "Error", description: "Could not record payment", variant: "destructive" });
     } finally {
       setSavingPayment(false);
     }
@@ -539,7 +533,6 @@ export default function Billing() {
       setProfileModalOpen(false);
       fetchProfiles();
     } catch (err: any) {
-      console.error("saveProfile error:", err);
       toast({ title: "Error", description: err.message ?? "Could not save profile", variant: "destructive" });
     } finally {
       setSavingProfile(false);
@@ -1294,3 +1287,4 @@ export default function Billing() {
     </div>
   );
 }
+

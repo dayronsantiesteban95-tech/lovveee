@@ -264,7 +264,7 @@ export default function RateCalculator() {
                     margin_pct: Number(q.margin_pct) || 0,
                 })) as SavedQuote[]);
             }
-        } catch (err) { console.error(err); }
+        } catch { /* Silently handle history load error */ }
         setLoadingHistory(false);
     }, []);
 
