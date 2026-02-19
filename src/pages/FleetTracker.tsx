@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════════
 // FLEET TRACKER — Vehicle & Equipment Management
-// Tab 1: Vehicles     — CRUD + status + mileage tracking
+// Tab 1: Vehicles     — CRUD + status + mileage + inspections
 // Tab 2: Maintenance  — Service records & upcoming alerts
 // Tab 3: Drivers      — Driver roster management
+// + Walk-Around Inspection System + Car Wash Tracking
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,10 +29,15 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+    Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
+import {
     Truck, Plus, Pencil, Trash2, Wrench, Users, AlertTriangle,
-    CheckCircle, Gauge, Calendar, Shield, Fuel,
+    CheckCircle, Gauge, Shield, Fuel, ClipboardCheck,
+    Droplets, ArrowUp, ArrowDown, Minus, Eye, Flag, X,
 } from "lucide-react";
 import { differenceInDays } from "date-fns";
+import InspectionForm from "@/components/InspectionForm";
 
 // ─── Types ──────────────────────────────────────────
 type Vehicle = {
@@ -293,6 +299,54 @@ export default function FleetTracker() {
                 ))}
             </div>
 
+            {/* ─── TODAY'S FLEET STATUS ─── */}
+            {fleetStatus.length > 0 && (
+                <Card className="glass-card rounded-2xl">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                            <ClipboardCheck className="h-4 w-4 text-blue-500" />
+                            Today&apos;s Fleet Status
+                            <Badge variant="secondary" className="ml-auto text-[10px]">
+                                {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                            </Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                            {[
+                                { label: "Total Vehicles", value: inspectionStats.total, color: "text-foreground" },
+                                { label: "Inspected Today", value: inspectionStats.inspected, color: "text-green-500" },
+                                { label: "Pending Inspection", value: inspectionStats.pending, color: inspectionStats.pending > 0 ? "text-red-500" : "text-green-500" },
+                                { label: "Car Wash Overdue", value: inspectionStats.washOverdue, color: inspectionStats.washOverdue > 0 ? "text-orange-500" : "text-green-500" },
+                            ].map((s) => (
+                                <div key={s.label} className="rounded-xl bg-muted/40 px-3 py-2.5 text-center">
+                                    <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {fleetStatus.map((fs) => (
+                                <div key={fs.vehicle_id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 gap-2">
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-medium truncate">{fs.vehicle_name}</p>
+                                        {fs.plate && <p className="text-[10px] text-muted-foreground">{fs.plate}</p>}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                                        <InspectionBadge done={fs.inspection_done} status={fs.inspection_status} />
+                                        {fs.car_wash_overdue && (
+                                            <Badge className="bg-orange-500/15 text-orange-700 text-[10px]">
+                                                <Droplets className="h-2.5 w-2.5" />
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* TABS */}
             <Tabs defaultValue="vehicles" className="space-y-4">
                 <TabsList>
@@ -303,7 +357,14 @@ export default function FleetTracker() {
 
                 {/* ──── VEHICLES TAB ──── */}
                 <TabsContent value="vehicles" className="space-y-4">
-                    <div className="flex justify-end">
+                    <div className="flex gap-2 justify-end">
+                        <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => { setSelectedVehicleForInspection(undefined); setInspectionDialog(true); }}
+                        >
+                            <ClipboardCheck className="h-4 w-4" /> Log Inspection
+                        </Button>
                         <Button className="btn-gradient gap-2" onClick={() => { setEditVeh(null); setVehDialog(true); }}>
                             <Plus className="h-4 w-4" /> Add Vehicle
                         </Button>
@@ -315,6 +376,7 @@ export default function FleetTracker() {
                             const serviceDue = (v.next_service_date && new Date(v.next_service_date) <= today) ||
                                 (v.next_service_mileage && v.current_mileage >= v.next_service_mileage);
                             const insuranceWarn = v.insurance_expiry && differenceInDays(new Date(v.insurance_expiry), today) <= 30;
+                            const fs = getVehicleFleetStatus(v.id);
                             return (
                                 <Card key={v.id} className={`glass-card rounded-2xl relative overflow-hidden ${serviceDue ? "ring-2 ring-red-500/30" : ""}`}>
                                     {serviceDue && <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />}
@@ -332,6 +394,21 @@ export default function FleetTracker() {
                                             <div className="flex items-center gap-1.5 text-muted-foreground"><Truck className="h-3 w-3" />{vehTypeLbl(v.vehicle_type)}</div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground">{v.license_plate || "No plate"}</div>
                                         </div>
+                                        {/* Inspection + Car Wash Status */}
+                                        {fs && (
+                                            <div className="space-y-1.5 mb-3">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <InspectionBadge done={fs.inspection_done} status={fs.inspection_status} />
+                                                    <CarWashBadge daysSince={fs.days_since_wash} overdue={fs.car_wash_overdue} />
+                                                </div>
+                                                {fs.last_odometer && (
+                                                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                        <Gauge className="h-2.5 w-2.5" />
+                                                        Last odometer: {fs.last_odometer.toLocaleString()} mi
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                         {/* Alerts */}
                                         {serviceDue && (
                                             <div className="flex items-center gap-1.5 text-xs text-red-500 bg-red-500/10 rounded-lg px-2 py-1 mb-2">
@@ -343,12 +420,31 @@ export default function FleetTracker() {
                                                 <Shield className="h-3 w-3" /> Insurance expiring soon
                                             </div>
                                         )}
-                                        <div className="flex gap-1 mt-2">
+                                        <div className="flex gap-1 mt-2 flex-wrap">
                                             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => { setEditVeh(v); setVehDialog(true); }}>
                                                 <Pencil className="h-3 w-3" /> Edit
                                             </Button>
                                             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => { setEditMaint(null); setMaintDialog(true); }}>
                                                 <Wrench className="h-3 w-3" /> Log Service
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => openHistory(v)}>
+                                                <Eye className="h-3 w-3" /> Inspections
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs gap-1 text-blue-600"
+                                                onClick={() => logCarWash(v)}
+                                            >
+                                                <Droplets className="h-3 w-3" /> Car Wash
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs gap-1"
+                                                onClick={() => { setSelectedVehicleForInspection(v.id); setInspectionDialog(true); }}
+                                            >
+                                                <ClipboardCheck className="h-3 w-3" /> Inspect
                                             </Button>
                                             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-destructive" onClick={() => setDeleteTarget({ type: "vehicle", id: v.id })}>
                                                 <Trash2 className="h-3 w-3" />

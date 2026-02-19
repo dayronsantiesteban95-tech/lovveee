@@ -54,6 +54,7 @@ import CSVImportPanel, { exportToCSV } from "@/components/CSVImportPanel";
 import QuickLoadEntry, { cloneLoadData } from "@/components/QuickLoadEntry";
 import AutoDispatchPanel from "@/components/AutoDispatchPanel";
 import DispatchBlastPanel from "@/components/DispatchBlast";
+import BlastLoadDialog from "@/components/BlastLoadDialog";
 import CustomerOrderHistory from "@/components/CustomerOrderHistory";
 import ActivityLog from "@/components/ActivityLog";
 import { useRealtimeDriverMap } from "@/hooks/useRealtimeDriverMap";
@@ -391,6 +392,7 @@ export default function DispatchTracker() {
     const [toolsOpen, setToolsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState<"quick" | "import" | "history" | "log" | "blast" | null>("quick");
     const [autoDispatchLoadId, setAutoDispatchLoadId] = useState<string | null>(null);
+    const [blastDialogLoad, setBlastDialogLoad] = useState<Load | null>(null);
     const [clonePrefill, setClonePrefill] = useState<any>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     // ── Detail panel ─────────────────────────
@@ -1317,7 +1319,7 @@ export default function DispatchTracker() {
                                                                         <Zap className="h-3 w-3" />
                                                                     </Button>
                                                                     <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Blast to drivers"
-                                                                        onClick={(e) => { e.stopPropagation(); setActiveTool("blast"); setToolsOpen(true); }}>
+                                                                        onClick={(e) => { e.stopPropagation(); setBlastDialogLoad(load); }}>
                                                                         <Radio className="h-3 w-3" />
                                                                     </Button>
                                                                 </>
@@ -2524,6 +2526,30 @@ export default function DispatchTracker() {
                     })()}
                 </DialogContent>
             </Dialog>
+
+            {/* Blast Load Dialog */}
+            <BlastLoadDialog
+                open={!!blastDialogLoad}
+                onOpenChange={(open) => { if (!open) setBlastDialogLoad(null); }}
+                load={blastDialogLoad ? {
+                    id: blastDialogLoad.id,
+                    reference_number: blastDialogLoad.reference_number ?? null,
+                    client_name: blastDialogLoad.client_name ?? null,
+                    pickup_address: blastDialogLoad.pickup_address ?? null,
+                    delivery_address: blastDialogLoad.delivery_address ?? null,
+                    miles: Number(blastDialogLoad.miles),
+                    revenue: Number(blastDialogLoad.revenue),
+                    packages: blastDialogLoad.packages ?? 0,
+                    status: blastDialogLoad.status,
+                    hub: blastDialogLoad.hub ?? "",
+                    service_type: blastDialogLoad.service_type ?? "",
+                } : null}
+                onBlastSent={(_blastId, driverCount) => {
+                    toast({ title: `📡 Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
+                    fetchLoads();
+                    setBlastDialogLoad(null);
+                }}
+            />
 
             {/* Delete Confirmation */}
             {
