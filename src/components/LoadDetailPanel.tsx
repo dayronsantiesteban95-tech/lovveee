@@ -13,9 +13,11 @@
  *   • Comments / notes
  * ═══════════════════════════════════════════════════════════
  */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useMessages } from "@/hooks/useMessages";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,7 @@ import {
     X, MapPin, Clock, Package, DollarSign, Truck, FileText, Route,
     AlertTriangle, CheckCircle2, Timer, Copy, ExternalLink, Navigation,
     Building2, User, Hash, Ruler, Weight, Gauge, History, ReceiptText,
+    MessageSquare, Send,
 } from "lucide-react";
 import { generateInvoice } from "@/lib/generateInvoice";
 import StatusTimeline from "@/components/StatusTimeline";
@@ -188,6 +191,142 @@ function Field({ label, value, mono = false, className = "" }: {
     );
 }
 
+// ─── Chat Panel ─────────────────────────────────────────────────────────────
+
+interface ChatPanelProps {
+    loadId: string;
+    dispatcherName: string;
+    userId: string;
+    unreadCount: number;
+}
+
+function ChatPanel({ loadId, dispatcherName, userId, unreadCount }: ChatPanelProps) {
+    const { messages, loading, sendMessage, markAsRead } = useMessages(loadId, userId);
+    const [inputText, setInputText] = useState("");
+    const [sending, setSending] = useState(false);
+    const bottomRef = useRef<HTMLDivElement>(null);
+
+    // Mark as read on mount + when messages arrive
+    useEffect(() => {
+        markAsRead();
+    }, [messages.length, markAsRead]);
+
+    // Auto-scroll to bottom
+    useEffect(() => {
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages.length]);
+
+    const handleSend = async () => {
+        if (!inputText.trim() || sending) return;
+        const text = inputText.trim();
+        setInputText("");
+        setSending(true);
+        try {
+            await sendMessage(text, dispatcherName || "Dispatcher", "dispatcher");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-40">
+                <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col h-[360px]">
+            {/* Message list */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 sleek-scroll">
+                {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+                        <MessageSquare className="h-8 w-8 opacity-40" />
+                        <p className="text-xs">No messages yet. Send the first one!</p>
+                    </div>
+                ) : (
+                    messages.map(msg => {
+                        const isOwn = msg.sender_id === userId;
+                        const time = new Date(msg.created_at).toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        });
+                        const isRead = msg.read_by.length > 1;
+
+                        return (
+                            <div
+                                key={msg.id}
+                                className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+                            >
+                                <div
+                                    className={`max-w-[75%] rounded-2xl px-3 py-2 ${
+                                        isOwn
+                                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                                            : "bg-muted border border-border rounded-bl-sm"
+                                    }`}
+                                >
+                                    {!isOwn && (
+                                        <p className="text-[10px] font-semibold text-muted-foreground mb-1">
+                                            {msg.sender_name}
+                                        </p>
+                                    )}
+                                    <p className="text-[13px] leading-snug break-words">{msg.message}</p>
+                                    <div className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                                        <span className={`text-[10px] ${isOwn ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                                            {time}
+                                        </span>
+                                        {isOwn && (
+                                            <span className={`text-[10px] ${isRead ? "text-cyan-400" : "text-primary-foreground/50"}`}>
+                                                {isRead ? "✓✓" : "✓"}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+                <div ref={bottomRef} />
+            </div>
+
+            {/* Input bar */}
+            <div className="flex items-center gap-2 p-3 border-t border-border/30">
+                <Input
+                    value={inputText}
+                    onChange={e => setInputText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message..."
+                    className="flex-1 h-9 text-sm"
+                    maxLength={1000}
+                    disabled={sending}
+                />
+                <Button
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                    onClick={handleSend}
+                    disabled={!inputText.trim() || sending}
+                >
+                    {sending ? (
+                        <div className="h-3 w-3 border border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                        <Send className="h-3.5 w-3.5" />
+                    )}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 // ═══════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════
@@ -203,7 +342,15 @@ export default function LoadDetailPanel({
     onRefresh,
 }: LoadDetailPanelProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [saving, setSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState<'details' | 'messages'>('details');
+    const { messages: allMessages } = useMessages(load.id, user?.id ?? null);
+    const unreadCount = user
+        ? allMessages.filter(
+            m => m.sender_role === 'driver' && !m.read_by.includes(user.id)
+          ).length
+        : 0;
 
     const profit = Number(load.revenue) - Number(load.driver_pay) - Number(load.fuel_cost);
     const margin = Number(load.revenue) > 0 ? (profit / Number(load.revenue) * 100) : 0;
@@ -352,10 +499,49 @@ export default function LoadDetailPanel({
                             </Button>
                         )}
                     </div>
+
+                    {/* Tab switcher */}
+                    <div className="flex gap-1 mt-1">
+                        <button
+                            onClick={() => setActiveTab('details')}
+                            className={`flex-1 h-7 text-[10px] font-semibold rounded-md transition-colors ${
+                                activeTab === 'details'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                        >
+                            Details
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('messages')}
+                            className={`flex-1 h-7 text-[10px] font-semibold rounded-md transition-colors relative ${
+                                activeTab === 'messages'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                        >
+                            Messages
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
-                {/* ────── Content ────── */}
-                <div className="p-4 space-y-5">
+                {/* ────── Messages Tab ────── */}
+                {activeTab === 'messages' && user && (
+                    <ChatPanel
+                        loadId={load.id}
+                        dispatcherName={dispatcherName}
+                        userId={user.id}
+                        unreadCount={unreadCount}
+                    />
+                )}
+
+                {/* ────── Details Tab ────── */}
+                {activeTab === 'details' && <div className="p-4 space-y-5">
                     {/* Shipper / Client */}
                     <Section title="Client & Shipper" icon={Building2} accentColor="bg-blue-500">
                         <Field label="Client" value={load.client_name} />
@@ -481,7 +667,7 @@ export default function LoadDetailPanel({
                         <Field label="Updated" value={fmtTimestamp(load.updated_at)} className="text-muted-foreground/60" />
                         <Field label="ID" value={<span className="text-data text-[9px]">{load.id}</span>} />
                     </div>
-                </div>
+                </div>}
             </div>
         </div>
     );

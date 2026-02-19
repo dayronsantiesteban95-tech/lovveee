@@ -1064,6 +1064,8 @@ export type Database = {
           package_type: string | null
           weight_kg: number | null
           bol_url: string | null
+          signature_url: string | null
+          signer_name: string | null
         }
         Insert: {
           id?: string
@@ -1115,6 +1117,8 @@ export type Database = {
           package_type?: string | null
           weight_kg?: number | null
           bol_url?: string | null
+          signature_url?: string | null
+          signer_name?: string | null
         }
         Update: {
           id?: string
@@ -1166,6 +1170,8 @@ export type Database = {
           package_type?: string | null
           weight_kg?: number | null
           bol_url?: string | null
+          signature_url?: string | null
+          signer_name?: string | null
         }
         Relationships: [
           {

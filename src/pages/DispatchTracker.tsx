@@ -10,6 +10,7 @@ import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { CITY_HUBS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadMessageCounts } from "@/hooks/useMessages";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -334,6 +335,7 @@ function waitBadgeClass(mins: number) {
 // ═══════════════════════════════════════════════════════════
 export default function DispatchTracker() {
     const { user } = useAuth();
+    const { unreadMap } = useUnreadMessageCounts(user?.id ?? null);
     const { toast } = useToast();
 
     // ── Data ─────────────────────────────────
@@ -1285,7 +1287,16 @@ export default function DispatchTracker() {
                                             const si = statusInfo(load.status);
                                             return (
                                                 <TableRow key={load.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLoadDetail(load)}>
-                                                    <TableCell className="font-mono text-xs">{load.reference_number || "—"}</TableCell>
+                                                    <TableCell className="font-mono text-xs">
+                                                        <div className="flex items-center gap-1.5">
+                                                            {load.reference_number || "—"}
+                                                            {unreadMap[load.id] > 0 && (
+                                                                <span className="inline-flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] px-0.5">
+                                                                    {unreadMap[load.id] > 99 ? '99+' : unreadMap[load.id]}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "☀️ Día" : "🌙 Noche"}</Badge></TableCell>
                                                     <TableCell className="font-medium text-sm">{driverName(load.driver_id)}</TableCell>
                                                     <TableCell className="text-sm">{load.client_name || "—"}</TableCell>

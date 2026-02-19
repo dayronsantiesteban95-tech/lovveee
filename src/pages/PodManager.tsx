@@ -14,6 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+    Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
@@ -42,6 +45,8 @@ type Load = {
     packages: number;
     pod_confirmed: boolean;
     bol_url: string | null;
+    signature_url: string | null;
+    signer_name: string | null;
 };
 
 type Driver = { id: string; full_name: string; hub: string };
@@ -52,6 +57,8 @@ type PodSubmission = {
     driver_id: string | null;
     photo_url: string | null;
     signature_url: string | null;
+    signer_name: string | null;
+    signed_at: string | null;
     notes: string | null;
     lat: number | null;
     lng: number | null;
@@ -205,13 +212,13 @@ export default function PodManager() {
         const [loadsRes, driversRes, subsRes] = await Promise.all([
             supabase
                 .from("daily_loads")
-                .select("id, load_date, reference_number, client_name, pickup_address, delivery_address, driver_id, vehicle_id, status, hub, packages, pod_confirmed, bol_url")
+                .select("id, load_date, reference_number, client_name, pickup_address, delivery_address, driver_id, vehicle_id, status, hub, packages, pod_confirmed, bol_url, signature_url, signer_name")
                 .order("load_date", { ascending: false })
                 .limit(300),
             supabase.from("drivers").select("id, full_name, hub"),
             supabase
                 .from("pod_submissions")
-                .select("id, load_id, driver_id, photo_url, signature_url, notes, lat, lng, captured_at, created_at")
+                .select("id, load_id, driver_id, photo_url, signature_url, signer_name, signed_at, notes, lat, lng, captured_at, created_at")
                 .order("created_at", { ascending: false }),
         ]);
         if (loadsRes.data) setLoads(loadsRes.data as Load[]);
