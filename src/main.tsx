@@ -4,21 +4,17 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import App from "./App.tsx";
 import "./index.css";
 
-// ─── Noise patterns to filter from Sentry ───────────────────────────────────
+// Noise patterns to filter from Sentry
 const IGNORED_ERRORS: RegExp[] = [
-  // Vite / webpack lazy-chunk load failures — not actionable, user just needs to refresh
   /Loading chunk \d+ failed/i,
   /Loading CSS chunk \d+ failed/i,
   /Failed to fetch dynamically imported module/i,
   /Importing a module script failed/i,
-  // Generic network errors that aren't app bugs
   /NetworkError when attempting to fetch resource/i,
   /The operation was aborted/i,
   /Load failed/i,
-  // Browser extension noise
   /ResizeObserver loop limit exceeded/i,
   /ResizeObserver loop completed with undelivered notifications/i,
-  // Safari-specific non-errors
   /Non-Error promise rejection captured with value: undefined/i,
 ];
 
@@ -31,21 +27,15 @@ Sentry.init({
       maskAllText: false,
       blockAllMedia: false,
     }),
-    Sentry.httpClientIntegration(),
-    Sentry.browserProfilingIntegration(),
   ],
 
-  // ── Sampling — keep billing low, signal high ──────────────────────────────
-  tracesSampleRate: 0.1,           // 10% of transactions traced
-  profilesSampleRate: 0.1,         // 10% of traced transactions profiled
-  replaysSessionSampleRate: 0.05,  // 5% of sessions recorded (was 10%)
-  replaysOnErrorSampleRate: 1.0,   // 100% on error — always capture crashes
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0.05,
+  replaysOnErrorSampleRate: 1.0,
 
-  // ── Environment & release ─────────────────────────────────────────────────
   environment: import.meta.env.MODE,
   enabled: import.meta.env.PROD,
 
-  // ── Global tags applied to every event ───────────────────────────────────
   initialScope: {
     tags: {
       app: "dispatcher",
@@ -53,20 +43,17 @@ Sentry.init({
     },
   },
 
-  // ── Noise filter ─────────────────────────────────────────────────────────
   beforeSend(event, hint) {
     const error = hint?.originalException;
 
-    // Filter by error message regex
     if (error instanceof Error) {
       for (const pattern of IGNORED_ERRORS) {
         if (pattern.test(error.message)) {
-          return null; // Drop the event
+          return null;
         }
       }
     }
 
-    // Filter string rejections that match noise patterns
     if (typeof error === "string") {
       for (const pattern of IGNORED_ERRORS) {
         if (pattern.test(error)) {
@@ -75,7 +62,6 @@ Sentry.init({
       }
     }
 
-    // Drop events with no useful stack (browser extension garbage, etc.)
     const frames = event.exception?.values?.[0]?.stacktrace?.frames;
     if (frames && frames.length === 0) {
       return null;
@@ -84,7 +70,6 @@ Sentry.init({
     return event;
   },
 
-  // ── Trace propagation ─────────────────────────────────────────────────────
   tracePropagationTargets: [
     "localhost",
     /^https:\/\/dispatch\.anikalogistics\.com/,
@@ -108,10 +93,13 @@ function ErrorFallback() {
       }}
     >
       <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#f87171" }}>
-        ⚠️ Something went wrong
+        Something went wrong
       </h2>
       <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>
-        Our team has been notified. Please refresh the page.
+        The app encountered an error. Check the browser console (F12) for details.
+      </p>
+      <p style={{ color: "#64748b", fontSize: "0.75rem" }}>
+        Error ID has been reported to our team.
       </p>
       <button
         onClick={() => window.location.reload()}
@@ -125,7 +113,7 @@ function ErrorFallback() {
           fontWeight: 600,
         }}
       >
-        Refresh
+        Reload Page
       </button>
     </div>
   );
@@ -134,7 +122,7 @@ function ErrorFallback() {
 const container = document.getElementById("root")!;
 const root = createRoot(container);
 root.render(
-  <Sentry.ErrorBoundary fallback={<ErrorFallback />} showDialog>
+  <Sentry.ErrorBoundary fallback={<ErrorFallback />}>
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
