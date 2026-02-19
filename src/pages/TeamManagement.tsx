@@ -373,12 +373,12 @@ export default function TeamManagement() {
 
       if (inviteSucceeded) {
         // If driver role, also save to drivers table
-        if (form.role === "driver" && invitedUserId) {
+        if (form.role === "driver") {
           try {
             await supabase.from("drivers").insert({
               full_name: form.full_name,
               email: form.email,
-              phone: form.phone || null,
+              phone: form.phone || "N/A",
               hub: form.hub.toLowerCase(),
               status: "active",
               license_number: form.license_plate || null,
