@@ -36,6 +36,7 @@ import { generateInvoice } from "@/lib/generateInvoice";
 import StatusTimeline from "@/components/StatusTimeline";
 import ETASection from "@/components/ETASection";
 import { fmtMoney, fmtWait } from "@/lib/formatters";
+import DriverSuggestionBadge from "@/components/dispatch/DriverSuggestionBadge";
 
 // ─── Types ──────────────────────────────────────────
 export interface LoadDetail {
@@ -91,6 +92,8 @@ export interface LoadDetail {
     route_distance_meters?: number | null;
     route_duration_seconds?: number | null;
     tracking_token?: string | null;
+    pickup_lat?: number | null;
+    pickup_lng?: number | null;
 }
 
 interface LoadDetailPanelProps {
@@ -626,6 +629,19 @@ export default function LoadDetailPanel({
                         <Field label="Inbound Tracking" value={load.inbound_tracking} mono />
                         <Field label="Outbound Tracking" value={load.outbound_tracking} mono />
                     </Section>
+
+                    {/* Auto-Dispatch Suggestion — only when no driver assigned and GPS coords available */}
+                    {!load.driver_id && load.pickup_lat != null && load.pickup_lng != null && (
+                        <DriverSuggestionBadge
+                            load={{
+                                id: load.id,
+                                pickup_lat: load.pickup_lat,
+                                pickup_lng: load.pickup_lng,
+                                driver_id: load.driver_id,
+                            }}
+                            onAssigned={() => onRefresh()}
+                        />
+                    )}
 
                     {/* Assignment */}
                     <Section title="Assignment" icon={User} accentColor="bg-indigo-500">
