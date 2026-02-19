@@ -15,6 +15,7 @@ import {
   Crosshair,
   Clock,
   TrendingUp,
+  ReceiptText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -39,6 +40,7 @@ const mainNav = [
   { title: "Command Center", url: "/command-center", icon: Crosshair },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Dispatch", url: "/dispatch", icon: ClipboardList },
+  { title: "Billing", url: "/billing", icon: ReceiptText },
   { title: "Task Board", url: "/tasks", icon: CheckSquare },
   { title: "Calendar", url: "/calendar", icon: CalendarDays },
   { title: "Rate Calculator", url: "/rate-calculator", icon: Calculator },
