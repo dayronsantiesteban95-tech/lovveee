@@ -20,7 +20,7 @@ export function fmtMoney(n: number): string {
  * e.g. 0 → "—", 45 → "45m", 90 → "1h 30m"
  */
 export function fmtWait(mins: number): string {
-    if (!mins) return "—";
+    if (!mins) return "\u2014";
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
