@@ -1,45 +1,25 @@
-// ═══════════════════════════════════════════════════════════
-// DISPATCH TRACKER — Daily Load Tracking & Analytics
-// Tab 1: Load Board   — CRUD (full OnTime 360 parity)
-// Tab 2: Live Ops     — Real-time GPS feed
-// Tab 3: Wait Time    — Analytics & detention tracking
-// Tab 4: Daily Report — Operations summary / export
-// ═══════════════════════════════════════════════════════════
+// Dispatch Tracker — orchestrates tabs: Load Board, Live Ops, Wait Time, Daily Report
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
-import { CITY_HUBS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-    Truck, Clock, DollarSign, Plus, Pencil, Trash2, MapPin,
-    AlertTriangle, CheckCircle, BarChart3, FileText, Timer, Package,
-    Navigation, Download, Zap, Radio,
+    Truck, Clock, DollarSign, Plus, MapPin,
+    FileText, Timer, Package,
+    Navigation,
 } from "lucide-react";
-import {
-    ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
-} from "recharts";
-import LiveDriverMap from "@/components/LiveDriverMap";
-import IntegrationSyncPanel from "@/components/IntegrationSyncPanel";
-import RouteOptimizerPanel from "@/components/RouteOptimizerPanel";
+import LiveOpsTab from "./dispatch/LiveOpsTab";
 import BlastLoadDialog from "@/components/BlastLoadDialog";
 import { useRealtimeDriverMap } from "@/hooks/useRealtimeDriverMap";
 import { useLoadStatusActions } from "@/hooks/useLoadStatusActions";
@@ -49,27 +29,13 @@ import { EMPTY_LOAD_FILTERS, type LoadFilters } from "@/components/LoadSearchFil
 import NewLoadForm from "./dispatch/NewLoadForm";
 import LoadBoard from "./dispatch/LoadBoard";
 import DailyReport from "./dispatch/DailyReport";
+import EditLoadDialog from "./dispatch/EditLoadDialog";
+import WaitTimeTab from "./dispatch/WaitTimeTab";
 import type { Load } from "./dispatch/types";
 
 const LoadDetailPanel = lazy(() => import("@/components/LoadDetailPanel"));
 import type { LoadDetail } from "@/components/LoadDetailPanel";
 
-// ════════════════════Constants ======================================
-const SHIFTS = [{ value: "day", label: "Día" }, { value: "night", label: "Noche" }];
-const STATUSES = [
-    { value: "pending", label: "Pending", color: "bg-gray-500" },
-    { value: "assigned", label: "Assigned", color: "bg-blue-500" },
-    { value: "blasted", label: "Blasted", color: "bg-violet-500" },
-    { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_pickup", label: "At Pickup 📍", color: "bg-blue-400" },
-    { value: "in_transit", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_delivery", label: "At Delivery 📍", color: "bg-purple-400" },
-    { value: "delivered", label: "Delivered", color: "bg-green-500" },
-    { value: "completed", label: "Completed", color: "bg-green-600" },
-    { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
-    { value: "failed", label: "Failed", color: "bg-red-500" },
-];
-const HUBS = CITY_HUBS;
 const WAIT_COLORS = [
     { max: 15, label: "Good", class: "bg-green-500/15 text-green-700 dark:text-green-400" },
     { max: 30, label: "Caution", class: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400" },
@@ -77,10 +43,6 @@ const WAIT_COLORS = [
     { max: Infinity, label: "Critical", class: "bg-red-500/15 text-red-700 dark:text-red-400" },
 ];
 const DETENTION_THRESHOLD = 30;
-
-function waitBadgeClass(mins: number) {
-    return (WAIT_COLORS.find((w) => mins <= w.max) ?? WAIT_COLORS[3]).class;
-}
 
 // ═══════════════════════════════════════════════════════════
 export default function DispatchTracker() {
@@ -457,76 +419,16 @@ export default function DispatchTracker() {
 
                 {/* ======== TAB: LIVE OPS ======== */}
                 <TabsContent value="live">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <div className="lg:col-span-2">
-                            <LiveDriverMap
-                                drivers={liveDrivers.map(d => ({
-                                    id: d.driverId,
-                                    name: d.name,
-                                    lat: d.lat,
-                                    lng: d.lng,
-                                    status: d.isMoving ? "active" as const : d.shiftStatus === "on_duty" ? "idle" as const : "offline" as const,
-                                    speed: d.speed ?? undefined,
-                                    heading: d.heading ?? undefined,
-                                    battery: d.battery ?? undefined,
-                                    lastSeen: d.lastSeen,
-                                    activeLoadId: d.activeLoadId ?? undefined,
-                                    source: "own" as const,
-                                }))}
-                                loading={liveDriversLoading}
-                                pollActive={liveDriversConnected}
-                                onRefresh={refreshLiveDrivers}
-                            />
-                        </div>
-                        <div className="space-y-4">
-                            <IntegrationSyncPanel
-                                onfleetConnected={false}
-                                ontime360Connected={false}
-                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management → Integrations." })}
-                            />
-                            <RouteOptimizerPanel
-                                loads={boardLoads.map(l => ({
-                                    id: l.id,
-                                    client_name: l.client_name,
-                                    delivery_address: l.delivery_address,
-                                    pickup_address: l.pickup_address,
-                                    delivery_lat: (l as any).delivery_lat ?? null,
-                                    delivery_lng: (l as any).delivery_lng ?? null,
-                                    status: l.status,
-                                    packages: l.packages,
-                                    tracking_token: (l as any).tracking_token ?? null,
-                                }))}
-                                onRouteApplied={() => refetchLoads()}
-                            />
-                            {/* Quick Stats */}
-                            <Card className="border-0 shadow-sm">
-                                <CardContent className="pt-4 pb-3">
-                                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                                        <BarChart3 className="h-4 w-4 text-primary" />
-                                        Today's Sync Status
-                                    </h3>
-                                    <div className="space-y-2 text-xs">
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                                            <span className="text-muted-foreground">Board loads</span>
-                                            <Badge variant="secondary">{boardLoads.length}</Badge>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                                            <span className="text-muted-foreground">Active drivers</span>
-                                            <Badge variant="secondary">{drivers.filter(d => d.status === "active").length}</Badge>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                                            <span className="text-muted-foreground">Delivered today</span>
-                                            <Badge className="bg-green-500/15 text-green-600 border-0">{boardLoads.filter(l => l.status === "delivered").length}</Badge>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                                            <span className="text-muted-foreground">In transit</span>
-                                            <Badge className="bg-yellow-500/15 text-yellow-600 border-0">{boardLoads.filter(l => l.status === "in_progress").length}</Badge>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
+                    <LiveOpsTab
+                        liveDrivers={liveDrivers}
+                        liveDriversLoading={liveDriversLoading}
+                        liveDriversConnected={liveDriversConnected}
+                        refreshLiveDrivers={refreshLiveDrivers}
+                        boardLoads={boardLoads}
+                        drivers={drivers}
+                        onRefetchLoads={refetchLoads}
+                        onSettingsClick={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management → Integrations." })}
+                    />
                 </TabsContent>
 
                 {/* ======== TAB: LOAD BOARD ======== */}
@@ -551,111 +453,8 @@ export default function DispatchTracker() {
                 </TabsContent>
 
                 {/* ======== TAB: WAIT TIME INTELLIGENCE ======== */}
-                <TabsContent value="wait" className="space-y-6">
-                    {/* Wait Stats */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                            { label: "Avg Wait (Period)", value: fmtWait(waitAnalytics.avgAll), icon: Clock, color: waitAnalytics.avgAll > 30 ? "text-red-500" : "text-green-500" },
-                            { label: "Detention Eligible", value: waitAnalytics.detentionEligible.length, icon: AlertTriangle, color: "text-orange-500" },
-                            { label: "Detention Billed", value: fmtMoney(waitAnalytics.detentionBilled), icon: DollarSign, color: "text-green-500" },
-                            { label: "Recovery Rate", value: waitAnalytics.detentionEligible.length > 0 ? `${Math.round(waitAnalytics.detentionEligible.filter((l) => l.detention_billed > 0).length / waitAnalytics.detentionEligible.length * 100)}%` : "N/A", icon: BarChart3, color: "text-blue-500" },
-                        ].map((s) => (
-                            <Card key={s.label} className="glass-card rounded-2xl">
-                                <CardContent className="pt-5 pb-4 px-5">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-xs text-muted-foreground font-medium">{s.label}</p>
-                                            <p className="text-2xl font-bold mt-1">{s.value}</p>
-                                        </div>
-                                        <s.icon className={`h-5 w-5 ${s.color}`} />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Wait by Client */}
-                        <Card className="glass-card rounded-2xl">
-                            <CardHeader className="pb-2"><CardTitle className="text-base">Wait Time by Client</CardTitle></CardHeader>
-                            <CardContent>
-                                {waitAnalytics.clientWait.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-8">No wait time data yet</p>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height={220}>
-                                        <BarChart data={waitAnalytics.clientWait} layout="vertical">
-                                            <XAxis type="number" tick={{ fontSize: 11 }} unit="m" />
-                                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-                                            <Tooltip formatter={(v: number) => [`${v} min`, "Avg Wait"]} />
-                                            <Bar dataKey="avg" radius={[0, 4, 4, 0]}>
-                                                {waitAnalytics.clientWait.map((_, i) => (
-                                                    <Cell key={i} fill={waitAnalytics.clientWait[i].avg >= 30 ? "hsl(0,70%,55%)" : waitAnalytics.clientWait[i].avg >= 15 ? "hsl(40,90%,50%)" : "hsl(140,60%,45%)"} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Wait by Driver */}
-                        <Card className="glass-card rounded-2xl">
-                            <CardHeader className="pb-2"><CardTitle className="text-base">Wait Time by Driver</CardTitle></CardHeader>
-                            <CardContent>
-                                {waitAnalytics.driverWait.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-8">No wait time data yet</p>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height={220}>
-                                        <BarChart data={waitAnalytics.driverWait} layout="vertical">
-                                            <XAxis type="number" tick={{ fontSize: 11 }} unit="m" />
-                                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-                                            <Tooltip formatter={(v: number) => [`${v} min`, "Avg Wait"]} />
-                                            <Bar dataKey="avg" fill="hsl(200,80%,50%)" radius={[0, 4, 4, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Detention-Eligible Loads */}
-                    <Card className="glass-card rounded-2xl">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4 text-orange-500" /> Detention-Eligible Loads (≥{DETENTION_THRESHOLD}min)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {waitAnalytics.detentionEligible.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-6">No detention-eligible loads in this period 🎉</p>
-                            ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Ref #</TableHead>
-                                            <TableHead>Client</TableHead>
-                                            <TableHead>Driver</TableHead>
-                                            <TableHead>Wait</TableHead>
-                                            <TableHead className="text-right">Detention Billed</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {waitAnalytics.detentionEligible.map((l) => (
-                                            <TableRow key={l.id}>
-                                                <TableCell className="text-sm">{l.load_date}</TableCell>
-                                                <TableCell className="font-mono text-xs">{l.reference_number || "—"}</TableCell>
-                                                <TableCell className="text-sm">{l.client_name || "—"}</TableCell>
-                                                <TableCell className="text-sm">{driverName(l.driver_id)}</TableCell>
-                                                <TableCell><Badge className={`${waitBadgeClass(l.wait_time_minutes)} text-xs`}>{fmtWait(l.wait_time_minutes)}</Badge></TableCell>
-                                                <TableCell className="text-right font-mono">{l.detention_billed > 0 ? fmtMoney(l.detention_billed) : <span className="text-red-500 text-xs">Not billed</span>}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            )}
-                        </CardContent>
-                    </Card>
+                <TabsContent value="wait">
+                    <WaitTimeTab analytics={waitAnalytics} driverName={driverName} />
                 </TabsContent>
 
                 {/* ======== TAB: DAILY REPORT ======== */}
@@ -681,73 +480,17 @@ export default function DispatchTracker() {
             />
 
             {/* ═══ EDIT LOAD DIALOG ═══ */}
-            <Dialog open={dialogOpen} onOpenChange={(o) => {
-                setDialogOpen(o);
-                if (!o) { setEditLoad(null); }
-            }}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    {editLoad && (
-                        <>
-                            <DialogHeader className="px-6 pt-6">
-                                <DialogTitle>Edit Load</DialogTitle>
-                                <DialogDescription>Update load details below.</DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 overflow-y-auto">
-                                <div>
-                                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Logistics</p>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        <div><Label>Date *</Label><Input name="load_date" type="date" defaultValue={editLoad.load_date ?? selectedDate} /></div>
-                                        <div><Label>Shift</Label><Select name="shift" defaultValue={editLoad.shift ?? "day"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{SHIFTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
-                                        <div><Label>Hub</Label><Select name="hub" defaultValue={editLoad.hub ?? "PHX"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{HUBS.map((h) => <SelectItem key={h.value} value={h.value}>{h.label}</SelectItem>)}</SelectContent></Select></div>
-                                        <div><Label>Reference #</Label><Input name="reference_number" defaultValue={editLoad.reference_number ?? ""} /></div>
-                                        <div><Label>Driver</Label><Select name="driver_id" defaultValue={editLoad.driver_id ?? ""}><SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger><SelectContent>{drivers.map((d) => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}</SelectContent></Select></div>
-                                        <div><Label>Vehicle</Label><Select name="vehicle_id" defaultValue={editLoad.vehicle_id ?? ""}><SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger><SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.vehicle_name}</SelectItem>)}</SelectContent></Select></div>
-                                        <div><Label>Client Name</Label><Input name="client_name" defaultValue={editLoad.client_name ?? ""} /></div>
-                                        <div><Label>Service Type</Label><Select name="service_type" defaultValue={editLoad.service_type ?? "standard"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="AOG">AOG</SelectItem><SelectItem value="Courier">Courier</SelectItem><SelectItem value="Standard">Standard</SelectItem><SelectItem value="standard">Standard (legacy)</SelectItem><SelectItem value="same_day">Same Day</SelectItem><SelectItem value="rush">Rush</SelectItem></SelectContent></Select></div>
-                                        <div><Label>Status</Label><Select name="status" defaultValue={editLoad.status ?? "assigned"}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div><Label>Pickup Address</Label><Input name="pickup_address" defaultValue={editLoad.pickup_address ?? ""} /></div>
-                                    <div><Label>Delivery Address</Label><Input name="delivery_address" defaultValue={editLoad.delivery_address ?? ""} /></div>
-                                    <div><Label>Pickup Company</Label><Input name="pickup_company" defaultValue={editLoad.pickup_company ?? ""} /></div>
-                                    <div><Label>Delivery Company</Label><Input name="delivery_company" defaultValue={editLoad.delivery_company ?? ""} /></div>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    <div><Label>Miles</Label><Input name="miles" type="number" step="0.1" defaultValue={editLoad.miles ?? ""} /></div>
-                                    <div><Label>Packages</Label><Input name="packages" type="number" defaultValue={editLoad.packages ?? 1} /></div>
-                                    <div><Label>Revenue ($)</Label><Input name="revenue" type="number" step="0.01" defaultValue={editLoad.revenue ?? ""} /></div>
-                                    <div><Label>Driver Pay ($)</Label><Input name="driver_pay" type="number" step="0.01" defaultValue={editLoad.driver_pay ?? ""} /></div>
-                                    <div><Label>Fuel Cost ($)</Label><Input name="fuel_cost" type="number" step="0.01" defaultValue={editLoad.fuel_cost ?? ""} /></div>
-                                    <div><Label>Wait (min)</Label><Input name="wait_time_minutes" type="number" defaultValue={editLoad.wait_time_minutes ?? ""} /></div>
-                                    <div><Label>Start Time</Label><Input name="start_time" type="time" defaultValue={editLoad.start_time ?? ""} /></div>
-                                    <div><Label>End Time</Label><Input name="end_time" type="time" defaultValue={editLoad.end_time ?? ""} /></div>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                    <div><Label>PO Number</Label><Input name="po_number" defaultValue={editLoad.po_number ?? ""} /></div>
-                                    <div><Label>Description</Label><Input name="description" defaultValue={editLoad.description ?? ""} /></div>
-                                    <div><Label>Dimensions</Label><Input name="dimensions_text" defaultValue={editLoad.dimensions_text ?? ""} /></div>
-                                    <div><Label>SLA Deadline</Label><Input name="sla_deadline" type="datetime-local" defaultValue={editLoad.sla_deadline?.slice(0, 16) ?? ""} /></div>
-                                    <div><Label>Inbound Tracking</Label><Input name="inbound_tracking" defaultValue={editLoad.inbound_tracking ?? ""} /></div>
-                                    <div><Label>Outbound Tracking</Label><Input name="outbound_tracking" defaultValue={editLoad.outbound_tracking ?? ""} /></div>
-                                </div>
-                                <div><Label>Comments</Label><Textarea name="comments" defaultValue={editLoad.comments ?? ""} rows={2} /></div>
-                                <input type="hidden" name="deadhead_miles" value={editLoad.deadhead_miles ?? 0} />
-                                <input type="hidden" name="detention_billed" value={editLoad.detention_billed ?? 0} />
-                                <input type="hidden" name="shipper_name" value={editLoad.shipper_name ?? ""} />
-                                <input type="hidden" name="requested_by" value={editLoad.requested_by ?? ""} />
-                                <input type="hidden" name="vehicle_required" value={editLoad.vehicle_required ?? ""} />
-                                <input type="hidden" name="inbound_tracking" value={editLoad.inbound_tracking ?? ""} />
-                                <input type="hidden" name="outbound_tracking" value={editLoad.outbound_tracking ?? ""} />
-                                <DialogFooter>
-                                    <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); setEditLoad(null); }}>Cancel</Button>
-                                    <Button type="submit" className="btn-gradient">Save Changes</Button>
-                                </DialogFooter>
-                            </form>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
+            {editLoad && (
+                <EditLoadDialog
+                    open={dialogOpen}
+                    editLoad={editLoad}
+                    drivers={drivers}
+                    vehicles={vehicles}
+                    selectedDate={selectedDate}
+                    onSubmit={handleSubmit}
+                    onClose={() => { setDialogOpen(false); setEditLoad(null); }}
+                />
+            )}
 
             {/* Blast Load Dialog */}
             <BlastLoadDialog
