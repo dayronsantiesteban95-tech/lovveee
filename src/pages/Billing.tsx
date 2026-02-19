@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════════
-// BILLING MODULE — Phase 1
+// BILLING MODULE — Phase 2
 // Tab 1: Uninvoiced Queue
 // Tab 2: Invoices List
 // Tab 3: Client Billing Profiles
+// QB: QuickBooks Online sync integration
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { fmtMoney } from "@/lib/formatters";
 import { generateBillingInvoice } from "@/lib/generateBillingInvoice";
+import { useQuickBooks } from "@/hooks/useQuickBooks";
 
 // ── UI Components ──────────────────────────────────────────
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +42,7 @@ import {
   ReceiptText, Plus, CheckCircle, Clock, AlertTriangle, Ban,
   DollarSign, Send, Download, Eye, RefreshCw, FileText,
   User, Mail, Calendar, CreditCard, Pencil, X, Check,
+  Link2, Loader2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────
@@ -146,6 +149,10 @@ function addDaysISO(dateStr: string, days: number): string {
 export default function Billing() {
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // ── QuickBooks integration ─────────────────────────────
+  const { connected: qbConnected, loading: qbLoading, connect: connectQB, syncInvoice: syncQBInvoice } = useQuickBooks();
+  const [syncingInvoiceId, setSyncingInvoiceId] = useState<string | null>(null);
 
   // ── Tab state ──────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("uninvoiced");
@@ -485,6 +492,28 @@ export default function Billing() {
     });
   };
 
+  // ─── Sync invoice to QuickBooks ───────────────────────
+  const syncToQB = async (inv: Invoice) => {
+    if (!qbConnected) {
+      toast({ title: "QuickBooks not connected", description: "Connect QuickBooks first.", variant: "destructive" });
+      return;
+    }
+    setSyncingInvoiceId(inv.id);
+    try {
+      const { qbInvoiceId, qbInvoiceNumber } = await syncQBInvoice(inv.id);
+      toast({
+        title: "✅ Synced to QuickBooks",
+        description: `QB Invoice #${qbInvoiceNumber} (ID: ${qbInvoiceId})`,
+      });
+      fetchInvoices();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Sync failed";
+      toast({ title: "QuickBooks Sync Failed", description: message, variant: "destructive" });
+    } finally {
+      setSyncingInvoiceId(null);
+    }
+  };
+
   // ─── Profile save ─────────────────────────────────────
   const openProfileModal = (profile?: ClientBillingProfile) => {
     if (profile) {
@@ -570,6 +599,33 @@ export default function Billing() {
           </Button>
         </div>
       </div>
+
+      {/* ── QuickBooks Connection Banner ──────────────────── */}
+      {!qbLoading && (
+        qbConnected ? (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+            <span>✅ QuickBooks Connected (Sandbox)</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800">
+            <div className="flex items-center gap-2 text-sm">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-yellow-600" />
+              <span className="font-medium">QuickBooks not connected</span>
+              <span className="text-yellow-700 hidden sm:inline">— Connect to sync invoices automatically.</span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-yellow-400 text-yellow-800 hover:bg-yellow-100 shrink-0 gap-1"
+              onClick={connectQB}
+            >
+              <Link2 className="h-3 w-3" />
+              Connect Now
+            </Button>
+          </div>
+        )
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 max-w-md">
@@ -758,41 +814,70 @@ export default function Billing() {
                       <TableHead>Due Date</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>QB Sync</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredInvoices.map(inv => (
-                      <TableRow
-                        key={inv.id}
-                        className="cursor-pointer hover:bg-muted/40"
-                        onClick={() => openInvoiceDetail(inv)}
-                      >
-                        <TableCell className="font-mono text-sm font-semibold">{inv.invoice_number}</TableCell>
-                        <TableCell>{inv.client_name}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{fmtDate(inv.issue_date)}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{fmtDate(inv.due_date)}</TableCell>
-                        <TableCell className="text-right font-semibold">{fmtMoney(inv.total_amount)}</TableCell>
-                        <TableCell><StatusBadge status={inv.status} /></TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                            {inv.status === "draft" && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => markSent(inv)}>
-                                <Send className="h-3 w-3 mr-1" /> Send
+                    {filteredInvoices.map(inv => {
+                      const isSyncedToQB = !!(inv as Invoice & { quickbooks_invoice_id?: string }).quickbooks_invoice_id;
+                      const isSyncing = syncingInvoiceId === inv.id;
+                      return (
+                        <TableRow
+                          key={inv.id}
+                          className="cursor-pointer hover:bg-muted/40"
+                          onClick={() => openInvoiceDetail(inv)}
+                        >
+                          <TableCell className="font-mono text-sm font-semibold">{inv.invoice_number}</TableCell>
+                          <TableCell>{inv.client_name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{fmtDate(inv.issue_date)}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{fmtDate(inv.due_date)}</TableCell>
+                          <TableCell className="text-right font-semibold">{fmtMoney(inv.total_amount)}</TableCell>
+                          <TableCell><StatusBadge status={inv.status} /></TableCell>
+                          <TableCell onClick={e => e.stopPropagation()}>
+                            {isSyncedToQB ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
+                                <CheckCircle className="h-3 w-3" /> Synced
+                              </span>
+                            ) : inv.status === "void" ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs border-blue-300 text-blue-700 hover:bg-blue-50 gap-1"
+                                disabled={isSyncing || !qbConnected}
+                                onClick={() => syncToQB(inv)}
+                                title={qbConnected ? "Sync to QuickBooks" : "Connect QuickBooks first"}
+                              >
+                                {isSyncing ? (
+                                  <><Loader2 className="h-3 w-3 animate-spin" /> Syncing…</>
+                                ) : (
+                                  <><Link2 className="h-3 w-3" /> Sync to QB</>
+                                )}
                               </Button>
                             )}
-                            {(inv.status === "sent" || inv.status === "overdue") && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openPaymentModal(inv)}>
-                                <DollarSign className="h-3 w-3 mr-1" /> Payment
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                              {inv.status === "draft" && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => markSent(inv)}>
+                                  <Send className="h-3 w-3 mr-1" /> Send
+                                </Button>
+                              )}
+                              {(inv.status === "sent" || inv.status === "overdue") && (
+                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openPaymentModal(inv)}>
+                                  <DollarSign className="h-3 w-3 mr-1" /> Payment
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openInvoiceDetail(inv)}>
+                                <Eye className="h-3 w-3" />
                               </Button>
-                            )}
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openInvoiceDetail(inv)}>
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}

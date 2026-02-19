@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded pages — these are the largest chunks
+const QuickBooksCallback = lazy(() => import("@/pages/QuickBooksCallback"));
 const RateCalculator = lazy(() => import("@/pages/RateCalculator"));
 const TaskBoard = lazy(() => import("@/pages/TaskBoard"));
 const CalendarView = lazy(() => import("@/pages/CalendarView"));
@@ -64,6 +65,7 @@ const App = () => (
         }>
           <Routes>
             <Route path="/auth" element={<AuthRoute />} />
+            <Route path="/auth/quickbooks/callback" element={<QuickBooksCallback />} />
             <Route path="/track" element={<TrackDelivery />} />
             <Route path="/track/:token" element={<TrackDelivery />} />
             <Route element={<ProtectedRoutes />}>
