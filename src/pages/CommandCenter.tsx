@@ -132,15 +132,18 @@ function MetricCard({
 function LiveDot({ status, size = "sm" }: { status: string; size?: "xs" | "sm" | "md" }) {
     const sizeClass = { xs: "h-1.5 w-1.5", sm: "h-2 w-2", md: "h-2.5 w-2.5" }[size];
     const colors: Record<string, string> = {
+        pending: "bg-gray-400",
+        assigned: "bg-blue-400",
+        in_transit: "bg-yellow-400",
+        in_progress: "bg-yellow-400",
+        arrived_pickup: "bg-orange-400",
+        arrived_delivery: "bg-purple-400",
         delivered: "bg-emerald-400",
-        in_progress: "bg-blue-400",
-        assigned: "bg-amber-400",
-        pending: "bg-muted-foreground",
         cancelled: "bg-red-400",
         failed: "bg-red-500",
         blasted: "bg-violet-400",
     };
-    const isLive = status === "in_progress";
+    const isLive = status === "in_transit" || status === "in_progress";
 
     return (
         <span className="relative flex">
@@ -158,16 +161,19 @@ function LiveDot({ status, size = "sm" }: { status: string; size?: "xs" | "sm" |
 
 function StatusBadge({ status }: { status: string }) {
     const configs: Record<string, { label: string; className: string }> = {
-        delivered: { label: "Delivered", className: "status-on-time" },
-        in_progress: { label: "In Transit", className: "status-live" },
-        assigned: { label: "Assigned", className: "status-at-risk" },
-        pending: { label: "Pending", className: "status-idle" },
-        cancelled: { label: "Cancelled", className: "status-late" },
-        failed: { label: "Failed", className: "status-late" },
+        pending: { label: "Pending", className: "bg-gray-500/15 text-gray-400 border border-gray-500/25" },
+        assigned: { label: "Assigned", className: "bg-blue-500/15 text-blue-400 border border-blue-500/25" },
+        in_transit: { label: "In Transit", className: "bg-yellow-500/15 text-yellow-400 border border-yellow-500/25" },
+        in_progress: { label: "In Transit", className: "bg-yellow-500/15 text-yellow-400 border border-yellow-500/25" },
+        arrived_pickup: { label: "At Pickup", className: "bg-orange-500/15 text-orange-400 border border-orange-500/25" },
+        arrived_delivery: { label: "At Delivery", className: "bg-purple-500/15 text-purple-400 border border-purple-500/25" },
+        delivered: { label: "Delivered", className: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25" },
+        cancelled: { label: "Cancelled", className: "bg-red-500/15 text-red-400 border border-red-500/25" },
+        failed: { label: "Failed", className: "bg-red-500/15 text-red-400 border border-red-500/25" },
         blasted: { label: "Blasted", className: "bg-violet-500/15 text-violet-400 border border-violet-500/25" },
     };
 
-    const config = configs[status] ?? { label: status, className: "status-idle" };
+    const config = configs[status] ?? { label: status, className: "bg-gray-500/15 text-gray-400 border border-gray-500/25" };
 
     return (
         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold rounded-full tracking-wide uppercase ${config.className}`}>
@@ -396,6 +402,7 @@ export default function CommandCenter() {
     const [filterStatus, setFilterStatus] = useState<string>("all");
     const [showSidebar, setShowSidebar] = useState(true);
     const [selectedLoad, setSelectedLoad] = useState<Load | null>(null);
+    const [clock, setClock] = useState(() => new Date());
     const today = new Date().toISOString().slice(0, 10);
 
     // ── Alerts (real-time from route_alerts table) ──
@@ -419,6 +426,12 @@ export default function CommandCenter() {
     }, [today]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    // ── Real-time clock ──
+    useEffect(() => {
+        const timer = setInterval(() => setClock(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     // ── Realtime subscriptions ──
     useEffect(() => {
@@ -455,10 +468,16 @@ export default function CommandCenter() {
     const metrics = useMemo(() => {
         const total = loads.length;
         const delivered = loads.filter(l => l.status === "delivered").length;
-        const inProgress = loads.filter(l => l.status === "in_progress").length;
+        const inProgress = loads.filter(l => ["in_progress", "in_transit", "arrived_pickup", "arrived_delivery"].includes(l.status)).length;
         const unassigned = loads.filter(l => !l.driver_id).length;
         const activeDrivers = drivers.filter(d => d.status === "active").length;
-        const idleDrivers = activeDrivers - new Set(loads.filter(l => ["assigned", "in_progress"].includes(l.status)).map(l => l.driver_id)).size;
+        const activeLoadDriverIds = new Set(
+            loads
+                .filter(l => ["assigned", "in_progress", "in_transit", "arrived_pickup", "arrived_delivery"].includes(l.status))
+                .map(l => l.driver_id)
+                .filter(Boolean)
+        );
+        const idleDrivers = Math.max(0, activeDrivers - activeLoadDriverIds.size);
         const totalRevenue = loads.reduce((sum, l) => sum + Number(l.revenue), 0);
         const onTimeRate = total > 0 ? Math.round((delivered / total) * 100) : 0;
         const atRisk = loads.filter(l => l.wait_time_minutes > 30 && l.status !== "delivered").length;
@@ -501,6 +520,12 @@ export default function CommandCenter() {
     // ── Format helpers ──
     const fmtMoney = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 
+    // Format helpers for header
+    const fmtDate = (d: Date) =>
+        d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+    const fmtTime = (d: Date) =>
+        d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
     return (
         <div className="cc-layout">
             {/* ────── MAP ────── */}
@@ -510,13 +535,24 @@ export default function CommandCenter() {
 
             {/* ────── METRICS BAR (top) ────── */}
             <div className="cc-metrics-bar">
-                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    <MetricCard label="Today's Loads" value={metrics.total} icon={Package} />
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+                    {/* Header / title card */}
+                    <div className="metric-card p-3 flex flex-col justify-between col-span-2 md:col-span-1">
+                        <div>
+                            <p className="text-[11px] font-bold text-foreground tracking-tight leading-tight">Live Ops</p>
+                            <p className="text-[9px] text-muted-foreground mt-0.5">{fmtDate(clock)}</p>
+                        </div>
+                        <p className="text-data text-[13px] font-semibold text-primary tabular-nums mt-1">
+                            {fmtTime(clock)}
+                        </p>
+                    </div>
+                    <MetricCard label="Total Loads" value={metrics.total} icon={Package} compact />
                     <MetricCard
                         label="In Transit"
                         value={metrics.inProgress}
                         icon={Navigation}
                         variant="live"
+                        compact
                     />
                     <MetricCard
                         label="Delivered"
@@ -524,24 +560,28 @@ export default function CommandCenter() {
                         icon={CheckCircle2}
                         variant="success"
                         trend={{ direction: "up", label: `${metrics.onTimeRate}% on-time` }}
+                        compact
                     />
                     <MetricCard
                         label="Unassigned"
                         value={metrics.unassigned}
                         icon={AlertTriangle}
                         variant={metrics.unassigned > 0 ? "warning" : "default"}
+                        compact
                     />
                     <MetricCard
                         label="Active Drivers"
                         value={metrics.activeDrivers}
                         icon={Users}
                         trend={{ direction: "flat", label: `${metrics.idleDrivers} idle` }}
+                        compact
                     />
                     <MetricCard
-                        label="Revenue"
+                        label="Total Revenue"
                         value={fmtMoney(metrics.totalRevenue)}
                         icon={TrendingUp}
                         variant="success"
+                        compact
                     />
                 </div>
                 {/* Sidebar toggle */}
@@ -638,9 +678,10 @@ export default function CommandCenter() {
                         {!loading && sidebarView === "loads" && (
                             <>
                                 {filteredLoads.length === 0 && (
-                                    <div className="text-center py-8 text-muted-foreground">
-                                        <Layers className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                                        <p className="text-xs">No loads match filters</p>
+                                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
+                                        <Package className="h-10 w-10 opacity-20" />
+                                        <p className="text-xs font-medium">No active loads today</p>
+                                        <p className="text-[10px] opacity-60">Loads will appear here in real time</p>
                                     </div>
                                 )}
                                 {filteredLoads.map((load, i) => (
@@ -648,6 +689,7 @@ export default function CommandCenter() {
                                         <LoadRow
                                             load={load}
                                             driverName={driverName(load.driver_id)}
+                                            onClick={() => setSelectedLoad(load)}
                                         />
                                     </div>
                                 ))}
