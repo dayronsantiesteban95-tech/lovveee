@@ -13,12 +13,12 @@ export default defineConfig(({ mode }) => ({
     react(),
     sentryVitePlugin({
       org: "anika-logistics",
-      project: "anika-os",
+      project: "dispatch-app",
       authToken: process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: {
-        assets: "./dist/**",
+        filesToDeleteAfterUpload: ["./dist/**/*.map"],
       },
-      disable: !process.env.SENTRY_AUTH_TOKEN,
+      telemetry: false,
     }),
   ],
   resolve: {
