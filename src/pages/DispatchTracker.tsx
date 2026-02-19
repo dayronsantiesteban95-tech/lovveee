@@ -1359,7 +1359,7 @@ export default function DispatchTracker() {
                                                             )}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "☀️ Día" : "R" Noche"}</Badge></TableCell>
+                                                    <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "☀️ Día" : "🌙 Noche"}</Badge></TableCell>
                                                     <TableCell className="font-medium text-sm">{driverName(load.driver_id)}</TableCell>
                                                     <TableCell className="text-sm">{load.client_name || ""}</TableCell>
                                                     <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || ""}</TableCell>
@@ -2730,7 +2730,7 @@ export default function DispatchTracker() {
 
             {/* Load Detail Slide-Over */}
             {selectedLoadDetail && (
-                <Suspense fallback={<div className="fixed inset-y-0 right-0 w-[520px] bg-background border-l border-border/50 flex items-center justify-center"><span className="text-muted-foreground text-sm animate-pulse">Loading�</span></div>}>
+                <Suspense fallback={<div className="fixed inset-y-0 right-0 w-[520px] bg-background border-l border-border/50 flex items-center justify-center"><span className="text-muted-foreground text-sm animate-pulse">Loading...</span></div>}>
                     <LoadDetailPanel
                         load={selectedLoadDetail as LoadDetail}
                         driverName={driverName(selectedLoadDetail.driver_id)}
