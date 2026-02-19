@@ -1054,6 +1054,16 @@ export type Database = {
           created_by: string | null
           created_at: string
           updated_at: string
+          // Fields added 2026-02-18
+          consol_number: string | null
+          pickup_open_hours: string | null
+          pickup_contact_name: string | null
+          pickup_contact_phone: string | null
+          delivery_contact_name: string | null
+          delivery_contact_phone: string | null
+          package_type: string | null
+          weight_kg: number | null
+          bol_url: string | null
         }
         Insert: {
           id?: string
@@ -1096,6 +1106,15 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          consol_number?: string | null
+          pickup_open_hours?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          delivery_contact_name?: string | null
+          delivery_contact_phone?: string | null
+          package_type?: string | null
+          weight_kg?: number | null
+          bol_url?: string | null
         }
         Update: {
           id?: string
@@ -1138,6 +1157,15 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          consol_number?: string | null
+          pickup_open_hours?: string | null
+          pickup_contact_name?: string | null
+          pickup_contact_phone?: string | null
+          delivery_contact_name?: string | null
+          delivery_contact_phone?: string | null
+          package_type?: string | null
+          weight_kg?: number | null
+          bol_url?: string | null
         }
         Relationships: [
           {
