@@ -79,6 +79,8 @@ const App = () => (
               <Route path="/pod-manager" element={<PodManager />} />
               <Route path="/driver" element={<DriverPortal />} />
               <Route path="/time-clock" element={<TimeClock />} />
+              <Route path="/companies" element={<Companies />} />
+              <Route path="/contacts" element={<Contacts />} />
               <Route path="/" element={<Navigate to="/command-center" replace />} />
             </Route>
             <Route path="*" element={<NotFound />} />
