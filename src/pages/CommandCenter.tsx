@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useAlerts } from "@/hooks/useAlerts";
 import type { RouteAlert } from "@/hooks/useAlerts";
+import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
 import {
     Activity, AlertTriangle, CheckCircle2, Clock, Crosshair, Layers,
     MapPin, Radio, RefreshCw, Truck, Users, Zap, ChevronRight,
@@ -413,6 +414,9 @@ export default function CommandCenter() {
         loading: alertsLoading,
     } = useAlerts({ realtime: true });
 
+    // ── Singleton realtime driver locations (shared with LiveDriverMap — one subscription) ──
+    const { realtimeStatus } = useRealtimeDriverLocations();
+
     // ── Fetch ──
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -584,8 +588,36 @@ export default function CommandCenter() {
                         compact
                     />
                 </div>
-                {/* Sidebar toggle */}
-                <div className="flex items-start">
+                {/* Realtime connection indicator + Sidebar toggle */}
+                <div className="flex items-start gap-2">
+                    {/* Connection status pill */}
+                    <div className="flex items-center gap-1.5 h-9 px-3 rounded-lg glass-card text-[10px] font-medium whitespace-nowrap">
+                        {realtimeStatus === "connected" && (
+                            <>
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                                </span>
+                                <span className="text-emerald-400">Connected</span>
+                            </>
+                        )}
+                        {realtimeStatus === "reconnecting" && (
+                            <>
+                                <span className="relative flex h-2 w-2">
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400 animate-pulse" />
+                                </span>
+                                <span className="text-amber-400">Reconnecting</span>
+                            </>
+                        )}
+                        {realtimeStatus === "disconnected" && (
+                            <>
+                                <span className="relative flex h-2 w-2">
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400" />
+                                </span>
+                                <span className="text-red-400">Disconnected</span>
+                            </>
+                        )}
+                    </div>
                     <Button
                         variant="outline"
                         size="sm"

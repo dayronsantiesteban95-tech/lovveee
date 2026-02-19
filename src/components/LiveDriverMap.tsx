@@ -1,24 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
-import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Truck } from "lucide-react";
-
-// ─── Types ────────────────────────────────────────────
-
-interface DriverLocation {
-    id: string;
-    driver_id: string;
-    driver_name: string | null;
-    latitude: number;
-    longitude: number;
-    recorded_at: string;
-    active_load_id: string | null;
-}
+import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
+import type { DriverLocation } from "@/hooks/useRealtimeDriverLocations";
 
 // ─── Constants ────────────────────────────────────────
 
 const PHOENIX_CENTER = { lat: 33.4484, lng: -112.074 };
-const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
 
 // Google Maps Aubergine / Dark night theme
 const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
@@ -134,9 +122,11 @@ function DriverMarker({
 // ─── Main Component ────────────────────────────────────
 
 export default function LiveDriverMap() {
-    const [drivers, setDrivers] = useState<DriverLocation[]>([]);
     const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
     const mapRef = useRef<google.maps.Map | null>(null);
+
+    // ── Singleton realtime subscription (shared with CommandCenter) ──
+    const { drivers, realtimeStatus } = useRealtimeDriverLocations();
 
     const apiKey = (import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined) ?? "";
 
@@ -144,86 +134,6 @@ export default function LiveDriverMap() {
         googleMapsApiKey: apiKey,
         id: "anika-google-map",
     });
-
-    // ── Load active driver locations ──
-    const fetchDriverLocations = useCallback(async () => {
-        try {
-            const cutoff = new Date(Date.now() - ACTIVE_THRESHOLD_MS).toISOString();
-
-            // Use the RPC function which joins driver_name properly
-            const { data: rpcData, error: rpcError } = await supabase
-                .rpc("get_driver_positions");
-
-            if (!rpcError && rpcData) {
-                // RPC succeeded — map to DriverLocation shape
-                const deduped: DriverLocation[] = (rpcData ?? []).map((row: {
-                    driver_id: string;
-                    driver_name: string | null;
-                    latitude: number;
-                    longitude: number;
-                    recorded_at: string;
-                    active_load_id: string | null;
-                }) => ({
-                    id: row.driver_id,
-                    driver_id: row.driver_id,
-                    driver_name: row.driver_name,
-                    latitude: row.latitude,
-                    longitude: row.longitude,
-                    recorded_at: row.recorded_at,
-                    active_load_id: row.active_load_id,
-                }));
-                setDrivers(deduped);
-                return;
-            }
-
-            // Fallback: query driver_locations directly and join with drivers
-            const { data, error } = await supabase
-                .from("driver_locations")
-                .select("id, driver_id, latitude, longitude, recorded_at")
-                .gte("recorded_at", cutoff)
-                .order("recorded_at", { ascending: false });
-
-            if (error) {
-                return;
-            }
-
-            // Deduplicate: keep only most recent record per driver
-            const seen = new Set<string>();
-            const deduped: DriverLocation[] = [];
-            for (const row of (data ?? [])) {
-                if (!seen.has(row.driver_id)) {
-                    seen.add(row.driver_id);
-                    deduped.push({
-                        ...row,
-                        driver_name: null, // No join available in fallback
-                        active_load_id: null,
-                    } as DriverLocation);
-                }
-            }
-            setDrivers(deduped);
-        } catch {
-            // Never crash the map — network or other unexpected errors
-        }
-    }, []);
-
-    // Initial fetch
-    useEffect(() => {
-        fetchDriverLocations();
-    }, [fetchDriverLocations]);
-
-    // ── Supabase Realtime subscription ──
-    useEffect(() => {
-        const channel = supabase
-            .channel("driver-locations-live")
-            .on(
-                "postgres_changes" as any,
-                { event: "*", schema: "public", table: "driver_locations" },
-                () => { fetchDriverLocations(); }
-            )
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, [fetchDriverLocations]);
 
     const onMapLoad = useCallback((map: google.maps.Map) => {
         mapRef.current = map;
@@ -290,6 +200,13 @@ export default function LiveDriverMap() {
         );
     }
 
+    // Connection status dot for the live indicator
+    const statusDot = {
+        connected: { color: "bg-emerald-400", label: "Live" },
+        reconnecting: { color: "bg-amber-400", label: "Reconnecting" },
+        disconnected: { color: "bg-red-400", label: "Disconnected" },
+    }[realtimeStatus];
+
     return (
         <div className="absolute inset-0">
             <GoogleMap
@@ -324,14 +241,18 @@ export default function LiveDriverMap() {
                 </div>
             )}
 
-            {/* Live indicator */}
+            {/* Live indicator with connection status */}
             <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10 pointer-events-none">
                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                    {realtimeStatus === "connected" && (
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusDot.color} opacity-75`} />
+                    )}
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${statusDot.color}`} />
                 </span>
                 <span className="text-[10px] font-medium text-white/70">
-                    {drivers.length} driver{drivers.length !== 1 ? "s" : ""} live
+                    {realtimeStatus === "connected"
+                        ? `${drivers.length} driver${drivers.length !== 1 ? "s" : ""} live`
+                        : statusDot.label}
                 </span>
             </div>
         </div>
