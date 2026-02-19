@@ -3,10 +3,11 @@
 // Phase 2: Billing Module Integration
 // ═══════════════════════════════════════════════════════════
 
-const QB_CLIENT_ID = (import.meta.env.VITE_QB_CLIENT_ID as string)?.trim() || 'ABb6oHW55FUHeHCIQcBOGBCGX8xclESOM50VqJeJDZoWYmRODn';
-const QB_CLIENT_SECRET = (import.meta.env.VITE_QB_CLIENT_SECRET as string)?.trim() || 'HItkf0Q1jQF6UbObPRmTMcpFTQRIXWE5Cqov5ohl';
-const QB_REDIRECT_URI = (import.meta.env.VITE_QB_REDIRECT_URI as string)?.trim() || 'https://dispatch.anikalogistics.com/auth/quickbooks/callback';
-const QB_ENV = ((import.meta.env.VITE_QB_ENVIRONMENT as string)?.trim()) || 'sandbox';
+// ── Hardcoded OAuth credentials (no env var dependency — avoids \r\n corruption on Vercel) ──
+const QB_CLIENT_ID = 'ABb6oHW55FUHeHCIQcBOGBCGX8xclESOM50VqJeJDZoWYmRODn';
+const QB_CLIENT_SECRET = 'HItkf0Q1jQF6UbObPRmTMcpFTQRIXWE5Cqov5ohl';
+const QB_REDIRECT_URI = 'https://dispatch.anikalogistics.com/auth/quickbooks/callback';
+const QB_ENV = 'sandbox';
 const QB_BASE_URL =
   QB_ENV === 'sandbox'
     ? 'https://sandbox-quickbooks.api.intuit.com'

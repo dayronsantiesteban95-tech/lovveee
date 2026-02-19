@@ -54,8 +54,7 @@ export default function QuickBooksCallback() {
               refresh_token_expires_at: new Date(
                 Date.now() + 100 * 24 * 60 * 60 * 1000
               ).toISOString(),
-              environment:
-                (import.meta.env.VITE_QB_ENVIRONMENT as string) ?? 'sandbox',
+              environment: 'sandbox',
               updated_at: new Date().toISOString(),
             },
             { onConflict: 'realm_id' }
