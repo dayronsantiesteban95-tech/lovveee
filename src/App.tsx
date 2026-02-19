@@ -20,7 +20,6 @@ const DispatchTracker = lazy(() => import("@/pages/DispatchTracker"));
 const FleetTracker = lazy(() => import("@/pages/FleetTracker"));
 const PodManager = lazy(() => import("@/pages/PodManager"));
 const CommandCenter = lazy(() => import("@/pages/CommandCenter"));
-const DriverPortal = lazy(() => import("@/pages/DriverPortal"));
 const TrackDelivery = lazy(() => import("@/pages/TrackDelivery"));
 const TimeClock = lazy(() => import("@/pages/TimeClock"));
 import CommandBar from "@/components/CommandBar";
@@ -77,10 +76,7 @@ const App = () => (
               <Route path="/dispatch" element={<DispatchTracker />} />
               <Route path="/fleet" element={<FleetTracker />} />
               <Route path="/pod-manager" element={<PodManager />} />
-              <Route path="/driver" element={<DriverPortal />} />
               <Route path="/time-clock" element={<TimeClock />} />
-              <Route path="/companies" element={<Companies />} />
-              <Route path="/contacts" element={<Contacts />} />
               <Route path="/" element={<Navigate to="/command-center" replace />} />
             </Route>
             <Route path="*" element={<NotFound />} />
