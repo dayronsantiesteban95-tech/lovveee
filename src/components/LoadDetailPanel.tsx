@@ -30,7 +30,7 @@ import {
     X, MapPin, Clock, Package, DollarSign, Truck, FileText, Route,
     AlertTriangle, CheckCircle2, Timer, Copy, ExternalLink, Navigation,
     Building2, User, Hash, Ruler, Weight, Gauge, History, ReceiptText,
-    MessageSquare, Send,
+    MessageSquare, Send, Link,
 } from "lucide-react";
 import { generateInvoice } from "@/lib/generateInvoice";
 import StatusTimeline from "@/components/StatusTimeline";
@@ -90,6 +90,7 @@ export interface LoadDetail {
     sla_deadline?: string | null;
     route_distance_meters?: number | null;
     route_duration_seconds?: number | null;
+    tracking_token?: string | null;
 }
 
 interface LoadDetailPanelProps {
@@ -498,6 +499,18 @@ export default function LoadDetailPanel({
                                 <ReceiptText className="h-3 w-3" /> Generate Invoice
                             </Button>
                         )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[10px] gap-1 flex-1"
+                            onClick={() => {
+                                const trackingUrl = `${window.location.origin}/track/${load.tracking_token || load.reference_number}`;
+                                navigator.clipboard.writeText(trackingUrl);
+                                toast({ title: "🔗 Link copied!", description: "Share with your client" });
+                            }}
+                        >
+                            <Link className="h-3 w-3" /> Share Tracking Link
+                        </Button>
                     </div>
 
                     {/* Tab switcher */}

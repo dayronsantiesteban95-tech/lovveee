@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
+import { sendPushToDrivers } from "@/lib/sendPushNotification";
 import { CITY_HUBS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnreadMessageCounts } from "@/hooks/useMessages";
@@ -521,6 +522,18 @@ export default function DispatchTracker() {
                         title: "📍 Driver Arrived",
                         description: `${driverName} arrived at ${eventLabel} — Ref #${refNumber}`,
                     });
+
+                    // Send push confirmation to the driver
+                    if (loadData?.driver_id) {
+                        sendPushToDrivers(
+                            [loadData.driver_id],
+                            '📍 Arrival Confirmed',
+                            `Dispatch has been notified of your arrival at ${eventLabel} — Ref #${refNumber}`,
+                            { load_id: evt.load_id, type: 'arrival_confirmation', event: evt.new_status }
+                        ).catch((err: unknown) => {
+                            console.warn('[DispatchTracker] Arrival push failed:', err);
+                        });
+                    }
 
                     // Refresh load list so card status updates immediately
                     fetchLoads();

@@ -17,6 +17,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { sendPushToDrivers } from "@/lib/sendPushNotification";
 
 // ─── Types ─────────────────────────────────────────────
 
@@ -200,6 +201,30 @@ export function useDispatchBlast() {
                     updated_at: new Date().toISOString(),
                 })
                 .eq("id", params.loadId);
+
+            // 4. Send push notifications to all blasted drivers
+            try {
+                // Fetch load details for the notification body
+                const { data: loadData } = await (supabase as any)
+                    .from("daily_loads")
+                    .select("service_type, pickup_address, delivery_address, revenue")
+                    .eq("id", params.loadId)
+                    .single() as { data: { service_type: string; pickup_address: string; delivery_address: string; revenue: number } | null };
+
+                const loadBody = loadData
+                    ? `${loadData.service_type} — ${loadData.pickup_address} → ${loadData.delivery_address} | $${loadData.revenue}`
+                    : params.message ?? "New load available — open the app to view details.";
+
+                await sendPushToDrivers(
+                    params.driverIds,
+                    '🚨 New Load Available',
+                    loadBody,
+                    { load_id: params.loadId, blast_id: blast.id, type: 'blast' }
+                );
+            } catch (pushErr) {
+                // Non-fatal — blast was created; push may be unavailable
+                console.warn('[useDispatchBlast] Push notification failed:', pushErr);
+            }
 
             toast({
                 title: "📡 Blast Sent!",
