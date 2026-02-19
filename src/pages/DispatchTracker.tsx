@@ -310,6 +310,9 @@ const STATUSES = [
     { value: "assigned", label: "Assigned", color: "bg-blue-500" },
     { value: "blasted", label: "Blasted", color: "bg-violet-500" },
     { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
+    { value: "arrived_pickup", label: "At Pickup 📍", color: "bg-blue-400" },
+    { value: "in_transit", label: "In Transit", color: "bg-yellow-500" },
+    { value: "arrived_delivery", label: "At Delivery 📍", color: "bg-purple-400" },
     { value: "delivered", label: "Delivered", color: "bg-green-500" },
     { value: "completed", label: "Completed", color: "bg-green-600" },
     { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
@@ -474,6 +477,74 @@ export default function DispatchTracker() {
         const loadRefreshTimer = setInterval(() => fetchLoads(), 60_000);
         return () => clearInterval(loadRefreshTimer);
     }, [user, fetchLoads, fetchDrivers, fetchVehicles, fetchProfiles, fetchCompanies, fetchRateCards, fetchRecentAddresses]);
+
+    // ── Realtime: geofence arrival toasts ────────────────────────
+    useEffect(() => {
+        if (!user) return;
+
+        // Subscribe to load_status_events for arrived_* transitions
+        const geofenceChannel = supabase
+            .channel("geofence-arrivals")
+            .on(
+                "postgres_changes" as any,
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "load_status_events",
+                } as any,
+                async (payload: any) => {
+                    const evt = payload.new as {
+                        load_id: string;
+                        new_status: string;
+                        previous_status: string;
+                    };
+                    if (
+                        evt.new_status !== "arrived_pickup" &&
+                        evt.new_status !== "arrived_delivery"
+                    ) return;
+
+                    // Fetch load details for the toast
+                    const { data: loadData } = await supabase
+                        .from("daily_loads")
+                        .select("reference_number, driver_id, client_name")
+                        .eq("id", evt.load_id)
+                        .single();
+
+                    const refNumber = loadData?.reference_number ?? "—";
+                    const driverRecord = drivers.find(d => d.id === loadData?.driver_id);
+                    const driverName = driverRecord?.full_name ?? "Driver";
+                    const eventLabel = evt.new_status === "arrived_pickup" ? "pickup" : "delivery";
+
+                    toast({
+                        title: "📍 Driver Arrived",
+                        description: `${driverName} arrived at ${eventLabel} — Ref #${refNumber}`,
+                    });
+
+                    // Refresh load list so card status updates immediately
+                    fetchLoads();
+                }
+            )
+            .subscribe();
+
+        // Also subscribe to daily_loads realtime for instant card updates
+        const loadsChannel = supabase
+            .channel("dispatch-loads-realtime")
+            .on(
+                "postgres_changes" as any,
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "daily_loads",
+                } as any,
+                () => { fetchLoads(); }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(geofenceChannel);
+            supabase.removeChannel(loadsChannel);
+        };
+    }, [user, drivers, fetchLoads, toast]);
 
     // ── "X seconds ago" ticker — updates every 5 s ───────────────
     useEffect(() => {
@@ -1285,6 +1356,16 @@ export default function DispatchTracker() {
                                                                     onClick={() => handleStatusChange(load.id, "delivered")}>
                                                                     <PackageCheck className="h-3 w-3" /> Delivered
                                                                 </Button>
+                                                            )}
+                                                            {load.status === "arrived_pickup" && (
+                                                                <Badge className="bg-blue-500/15 text-blue-500 border-0 text-[9px] h-5 px-1.5">
+                                                                    <MapPin className="h-2.5 w-2.5 mr-0.5" /> At Pickup
+                                                                </Badge>
+                                                            )}
+                                                            {load.status === "arrived_delivery" && (
+                                                                <Badge className="bg-purple-500/15 text-purple-500 border-0 text-[9px] h-5 px-1.5">
+                                                                    <MapPin className="h-2.5 w-2.5 mr-0.5" /> At Delivery
+                                                                </Badge>
                                                             )}
                                                             {(load.status === "delivered" || load.status === "completed") && (
                                                                 <Badge className="bg-green-500/15 text-green-600 border-0 text-[9px] h-5 px-1.5">
