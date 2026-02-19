@@ -1194,7 +1194,7 @@ export default function DispatchTracker() {
                             <IntegrationSyncPanel
                                 onfleetConnected={false}
                                 ontime360Connected={false}
-                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management �' Integrations." })}
+                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management → Integrations." })}
                             />
                             <RouteOptimizerPanel
                                 loads={boardLoads.map(l => ({
@@ -1369,7 +1369,7 @@ export default function DispatchTracker() {
                                                         {load.wait_time_minutes > 0 ? (
                                                             <Badge className={`${waitBadgeClass(load.wait_time_minutes)} text-[10px]`}>
                                                                 {fmtWait(load.wait_time_minutes)}
-                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && " � ️"}
+                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && "⏱️"}
                                                             </Badge>
                                                         ) : <span className="text-muted-foreground text-xs">—</span>}
                                                     </TableCell>
@@ -1777,7 +1777,7 @@ export default function DispatchTracker() {
                             { label: "Total Miles", value: dailyReport.totalMiles.toFixed(0), sub: "load miles" },
                             { label: "Revenue", value: fmtMoney(dailyReport.totalRevenue), sub: "gross" },
                             { label: "Costs", value: fmtMoney(dailyReport.totalCosts), sub: "driver + fuel" },
-                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "�-�" : "�-�" },
+                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "📈" : "📉" },
                             { label: "Margin", value: `${dailyReport.margin.toFixed(1)}%`, sub: dailyReport.margin >= 30 ? "Healthy" : dailyReport.margin >= 15 ? "OK" : "Low" },
                         ].map((s) => (
                             <Card key={s.label} className="glass-card rounded-2xl">
@@ -1986,7 +1986,7 @@ export default function DispatchTracker() {
                                                         active ? "bg-primary text-primary-foreground" :
                                                         "bg-muted text-muted-foreground"
                                                     }`}>
-                                                        {done ? "�"" : step}
+                                                        {done ? "✅" : step}
                                                     </div>
                                                     <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
                                                 </button>
@@ -2210,7 +2210,7 @@ export default function DispatchTracker() {
 
                                             {/* Revenue */}
                                             <div>
-                                                <p className="form-section-label">�'� Revenue</p>
+                                                <p className="form-section-label">💰 Revenue</p>
                                                 <div className="mt-1">
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
@@ -2421,9 +2421,9 @@ export default function DispatchTracker() {
                                                     <Label className="text-xs">Dimensions (CM)</Label>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Input type="number" value={af.dim_l} onChange={(e) => setAf({ dim_l: e.target.value })} placeholder="L" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
                                                         <Input type="number" value={af.dim_w} onChange={(e) => setAf({ dim_w: e.target.value })} placeholder="W" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
                                                         <Input type="number" value={af.dim_h} onChange={(e) => setAf({ dim_h: e.target.value })} placeholder="H" className="text-center" />
                                                     </div>
                                                     {cubic > 0 && (
@@ -2481,7 +2481,7 @@ export default function DispatchTracker() {
                                                                 <Label className="text-xs">Additional Stops (+$50 each)</Label>
                                                                 <div className="flex items-center gap-2">
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>�'</Button>
+                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>−</Button>
                                                                     <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                         onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
@@ -2522,7 +2522,7 @@ export default function DispatchTracker() {
                                                                     <Label className="text-xs">{label}</Label>
                                                                     <div className="flex items-center gap-2">
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>�'</Button>
+                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>−</Button>
                                                                         <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                             onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>
@@ -2566,7 +2566,7 @@ export default function DispatchTracker() {
 
                                             {/* Driver Assignment */}
                                             <div>
-                                                <p className="form-section-label">�- Driver Assignment <span className="text-red-500">*</span></p>
+                                                <p className="form-section-label">🚗 Driver Assignment <span className="text-red-500">*</span></p>
                                                 <div className="space-y-2 mt-1">
                                                     {drivers.length === 0 && (
                                                         <p className="text-sm text-muted-foreground">No active drivers found.</p>
