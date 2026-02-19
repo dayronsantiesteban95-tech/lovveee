@@ -75,7 +75,7 @@ export function AppSidebar() {
         <NavLink
           to={item.url}
           end={item.url === "/dashboard"}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-300"
+          className="flex items-center gap-3 px-3 py-1.5 rounded-full text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-300"
           activeClassName="bg-sidebar-primary/20 text-sidebar-primary font-semibold shadow-sm"
         >
           <div className="relative">
@@ -89,82 +89,67 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="glass-panel border-r-0">
-      <SidebarContent className="pt-5">
+      <SidebarContent className="pt-3 flex flex-col h-full overflow-hidden">
         {/* Logo */}
-        <div className="px-5 pb-4">
-          <img src={logoBlanco} alt="Anika Logistics" className="h-8 w-auto object-contain" />
+        <div className="px-5 pb-3 flex-shrink-0">
+          <img src={logoBlanco} alt="Anika Logistics" className="h-7 w-auto object-contain" />
         </div>
-        <Separator className="bg-sidebar-border/50 mb-2" />
+        <Separator className="bg-sidebar-border/50 mb-1 flex-shrink-0" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-            Operations
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+        {/* Nav — fills remaining space, no scroll */}
+        <div className="flex flex-col flex-1 justify-between min-h-0 py-1">
+          <div className="space-y-0">
+            {/* Operations */}
+            <div className="px-3 pt-1 pb-0.5">
+              <span className="text-sidebar-foreground/40 uppercase text-[9px] tracking-[0.18em] font-semibold">Operations</span>
+            </div>
+            <SidebarMenu className="space-y-0 px-1">
               {mainNav.map((item) => <NavItem key={item.title} item={item} />)}
             </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
-        <Separator className="bg-sidebar-border/30 my-2 mx-3" />
+            <Separator className="bg-sidebar-border/30 my-1 mx-3" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-            Fleet
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            {/* Fleet */}
+            <div className="px-3 pt-0.5 pb-0.5">
+              <span className="text-sidebar-foreground/40 uppercase text-[9px] tracking-[0.18em] font-semibold">Fleet</span>
+            </div>
+            <SidebarMenu className="space-y-0 px-1">
               {fleetNav.map((item) => <NavItem key={item.title} item={item} />)}
             </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
-        <Separator className="bg-sidebar-border/30 my-2 mx-3" />
+            <Separator className="bg-sidebar-border/30 my-1 mx-3" />
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-            Resources
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            {/* Resources + Admin */}
+            <SidebarMenu className="space-y-0 px-1">
               {resourcesNav.map((item) => <NavItem key={item.title} item={item} />)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <Separator className="bg-sidebar-border/30 my-2 mx-3" />
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-            Admin
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
               <NavItem item={{ title: "Team Management", url: "/team", icon: Shield }} />
             </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          </div>
+
+          {/* Footer pinned to bottom */}
+          <div className="px-3 pb-3 space-y-0.5 flex-shrink-0">
+            <Separator className="bg-sidebar-border/30 mb-2" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-full transition-all duration-300 h-8"
+              onClick={() => setDark(!dark)}
+            >
+              {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+              <span className="text-xs">{dark ? "Light Mode" : "Dark Mode"}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-full transition-all duration-300 h-8"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="text-xs">Sign Out</span>
+            </Button>
+          </div>
+        </div>
       </SidebarContent>
-      <SidebarFooter className="p-4 space-y-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-full transition-all duration-300"
-          onClick={() => setDark(!dark)}
-        >
-          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          <span className="text-sm">{dark ? "Light Mode" : "Dark Mode"}</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-full transition-all duration-300"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="text-sm">Sign Out</span>
-        </Button>
-      </SidebarFooter>
     </Sidebar>
   );
 }
