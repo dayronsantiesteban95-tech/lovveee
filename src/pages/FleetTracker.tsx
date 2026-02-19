@@ -63,6 +63,27 @@ type Driver = {
     license_expiry: string | null; hired_date: string | null;
     hourly_rate: number; notes: string | null; created_at: string;
 };
+type FleetInspectionStatus = {
+    vehicle_id: string; vehicle_name: string; plate: string | null;
+    inspection_done: boolean; inspection_status: string;
+    last_odometer: number | null; last_car_wash: string | null;
+    days_since_wash: number; car_wash_overdue: boolean;
+};
+type OdometerHistory = {
+    inspection_date: string; odometer_reading: number; driver_name: string | null;
+};
+type InspectionRecord = {
+    id: string; vehicle_id: string | null; driver_id: string | null;
+    inspection_date: string; odometer_reading: number;
+    checklist: {
+        tires_ok: boolean; lights_ok: boolean; brakes_ok: boolean;
+        fluids_ok: boolean; exterior_damage: boolean; interior_clean: boolean;
+        fuel_level: string;
+    };
+    photos: string[]; notes: string | null; car_wash_done: boolean;
+    status: string; submitted_by: string | null; reviewed_by: string | null;
+    created_at: string;
+};
 
 // ─── Constants ──────────────────────────────────────
 const VEHICLE_TYPES = [
@@ -73,9 +94,9 @@ const VEHICLE_TYPES = [
     { value: "pickup", label: "Pickup" },
 ];
 const VEHICLE_STATUSES = [
-    { value: "active", label: "Active", color: "bg-green-500", badge: "bg-green-500/15 text-green-700 dark:text-green-400" },
-    { value: "maintenance", label: "In Maintenance", color: "bg-yellow-500", badge: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400" },
-    { value: "retired", label: "Retired", color: "bg-gray-500", badge: "bg-gray-500/15 text-gray-700 dark:text-gray-400" },
+    { value: "active", label: "Active", badge: "bg-green-500/15 text-green-700 dark:text-green-400" },
+    { value: "maintenance", label: "In Maintenance", badge: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400" },
+    { value: "retired", label: "Retired", badge: "bg-gray-500/15 text-gray-700 dark:text-gray-400" },
 ];
 const DRIVER_STATUSES = [
     { value: "active", label: "Active", badge: "bg-green-500/15 text-green-700 dark:text-green-400" },
@@ -92,6 +113,55 @@ const MAINT_TYPES = [
 ];
 const HUBS = CITY_HUBS;
 
+// ─── Helper Components ───────────────────────────────
+function InspectionBadge({ done, status }: { done: boolean; status: string }) {
+    if (done) {
+        if (status === "flagged") return (
+            <Badge className="bg-red-500/15 text-red-700 text-[10px] gap-1">
+                <Flag className="h-2.5 w-2.5" /> Flagged
+            </Badge>
+        );
+        if (status === "approved") return (
+            <Badge className="bg-green-500/15 text-green-700 text-[10px] gap-1">
+                <CheckCircle className="h-2.5 w-2.5" /> Approved
+            </Badge>
+        );
+        return (
+            <Badge className="bg-blue-500/15 text-blue-700 text-[10px] gap-1">
+                <CheckCircle className="h-2.5 w-2.5" /> Inspected
+            </Badge>
+        );
+    }
+    return (
+        <Badge className="bg-red-500/15 text-red-700 text-[10px] gap-1">
+            <AlertTriangle className="h-2.5 w-2.5" /> Pending
+        </Badge>
+    );
+}
+
+function CarWashBadge({ daysSince, overdue }: { daysSince: number; overdue: boolean }) {
+    if (daysSince >= 999) return (
+        <Badge className="bg-red-500/15 text-red-700 text-[10px] gap-1">
+            <Droplets className="h-2.5 w-2.5" /> Never washed
+        </Badge>
+    );
+    if (overdue) return (
+        <Badge className="bg-red-500/15 text-red-700 text-[10px] gap-1">
+            <Droplets className="h-2.5 w-2.5" /> Wash overdue ({daysSince}d)
+        </Badge>
+    );
+    if (daysSince >= 8) return (
+        <Badge className="bg-yellow-500/15 text-yellow-700 text-[10px] gap-1">
+            <Droplets className="h-2.5 w-2.5" /> Wash soon ({daysSince}d)
+        </Badge>
+    );
+    return (
+        <Badge className="bg-green-500/15 text-green-700 text-[10px] gap-1">
+            <Droplets className="h-2.5 w-2.5" /> Clean ({daysSince}d)
+        </Badge>
+    );
+}
+
 // ═══════════════════════════════════════════════════════════
 export default function FleetTracker() {
     const { user } = useAuth();
@@ -103,7 +173,18 @@ export default function FleetTracker() {
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Dialogs
+    // Inspection state
+    const [fleetStatus, setFleetStatus] = useState<FleetInspectionStatus[]>([]);
+    const [inspectionDialog, setInspectionDialog] = useState(false);
+    const [selectedVehicleForInspection, setSelectedVehicleForInspection] = useState<string | undefined>();
+    const [historySheet, setHistorySheet] = useState(false);
+    const [historyVehicle, setHistoryVehicle] = useState<Vehicle | null>(null);
+    const [odometerHistory, setOdometerHistory] = useState<OdometerHistory[]>([]);
+    const [inspectionHistory, setInspectionHistory] = useState<InspectionRecord[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+
+    // CRUD Dialogs
     const [vehDialog, setVehDialog] = useState(false);
     const [editVeh, setEditVeh] = useState<Vehicle | null>(null);
     const [maintDialog, setMaintDialog] = useState(false);
@@ -125,7 +206,81 @@ export default function FleetTracker() {
         setLoading(false);
     }, []);
 
-    useEffect(() => { if (user) fetchAll(); }, [user, fetchAll]);
+    const fetchFleetStatus = useCallback(async () => {
+        const { data, error } = await db.rpc("get_fleet_inspection_status");
+        if (error) { console.error("Fleet status error:", error); return; }
+        if (data) setFleetStatus(data as FleetInspectionStatus[]);
+    }, []);
+
+    useEffect(() => {
+        if (user) { fetchAll(); fetchFleetStatus(); }
+    }, [user, fetchAll, fetchFleetStatus]);
+
+    // ── Open inspection history ──────────────
+    const openHistory = useCallback(async (vehicle: Vehicle) => {
+        setHistoryVehicle(vehicle);
+        setHistorySheet(true);
+        setHistoryLoading(true);
+        setOdometerHistory([]);
+        setInspectionHistory([]);
+
+        const [odo, insp] = await Promise.all([
+            db.rpc("get_vehicle_odometer_history", { p_vehicle_id: vehicle.id }),
+            db.from("vehicle_inspections")
+                .select("*")
+                .eq("vehicle_id", vehicle.id)
+                .order("inspection_date", { ascending: false })
+                .limit(30),
+        ]);
+
+        if (odo.data) setOdometerHistory(odo.data as OdometerHistory[]);
+        if (insp.data) setInspectionHistory(insp.data as unknown as InspectionRecord[]);
+        setHistoryLoading(false);
+    }, []);
+
+    // ── Log car wash ─────────────────────────
+    const logCarWash = useCallback(async (vehicle: Vehicle) => {
+        const today = new Date().toISOString().split("T")[0];
+        const { error } = await db.from("vehicle_car_washes").insert({
+            vehicle_id: vehicle.id,
+            wash_date: today,
+            notes: "Logged by dispatcher",
+            recorded_by: user?.id ?? null,
+        });
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: `🚿 Car wash logged for ${vehicle.vehicle_name}` });
+            fetchFleetStatus();
+        }
+    }, [user, fetchFleetStatus, toast]);
+
+    // ── Flag / Approve inspection ────────────
+    const flagInspection = useCallback(async (inspectionId: string) => {
+        const { error } = await db.from("vehicle_inspections")
+            .update({ status: "flagged", reviewed_by: user?.id ?? null })
+            .eq("id", inspectionId);
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: "Inspection flagged" });
+            if (historyVehicle) openHistory(historyVehicle);
+            fetchFleetStatus();
+        }
+    }, [user, historyVehicle, openHistory, fetchFleetStatus, toast]);
+
+    const approveInspection = useCallback(async (inspectionId: string) => {
+        const { error } = await db.from("vehicle_inspections")
+            .update({ status: "approved", reviewed_by: user?.id ?? null })
+            .eq("id", inspectionId);
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: "Inspection approved" });
+            if (historyVehicle) openHistory(historyVehicle);
+            fetchFleetStatus();
+        }
+    }, [user, historyVehicle, openHistory, fetchFleetStatus, toast]);
 
     // ── Stats ────────────────────────────────
     const stats = useMemo(() => {
@@ -144,6 +299,17 @@ export default function FleetTracker() {
         return { active, inMaint, totalMileage, serviceDue, expiringInsurance, activeDrivers, totalMaintCost };
     }, [vehicles, maintenance, drivers]);
 
+    const inspectionStats = useMemo(() => {
+        const total = fleetStatus.length;
+        const inspected = fleetStatus.filter((f) => f.inspection_done).length;
+        const pending = total - inspected;
+        const washOverdue = fleetStatus.filter((f) => f.car_wash_overdue).length;
+        return { total, inspected, pending, washOverdue };
+    }, [fleetStatus]);
+
+    const getVehicleFleetStatus = (vehicleId: string) =>
+        fleetStatus.find((f) => f.vehicle_id === vehicleId);
+
     // ── Vehicle CRUD ─────────────────────────
     const handleVehSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -152,11 +318,9 @@ export default function FleetTracker() {
         const vType = fd.get("vehicle_type") as string || "cargo_van";
         const plateFd = (fd.get("license_plate") as string) || "N/A";
         const payload = {
-            // Canonical UI columns
             vehicle_name: vName,
             vehicle_type: vType,
             license_plate: plateFd !== "N/A" ? plateFd : null,
-            // Legacy NOT NULL columns (kept in sync)
             name: vName,
             type: vType,
             plate_number: plateFd,
@@ -182,7 +346,11 @@ export default function FleetTracker() {
             ? await db.from("vehicles").update(payload).eq("id", editVeh.id)
             : await db.from("vehicles").insert(payload);
         if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-        else { toast({ title: editVeh ? "Vehicle updated" : "Vehicle added" }); setVehDialog(false); setEditVeh(null); fetchAll(); }
+        else {
+            toast({ title: editVeh ? "Vehicle updated" : "Vehicle added" });
+            setVehDialog(false); setEditVeh(null);
+            fetchAll(); fetchFleetStatus();
+        }
     };
 
     // ── Maintenance CRUD ─────────────────────
@@ -401,7 +569,7 @@ export default function FleetTracker() {
                                                     <InspectionBadge done={fs.inspection_done} status={fs.inspection_status} />
                                                     <CarWashBadge daysSince={fs.days_since_wash} overdue={fs.car_wash_overdue} />
                                                 </div>
-                                                {fs.last_odometer && (
+                                                {fs.last_odometer != null && (
                                                     <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                                                         <Gauge className="h-2.5 w-2.5" />
                                                         Last odometer: {fs.last_odometer.toLocaleString()} mi
@@ -680,7 +848,7 @@ export default function FleetTracker() {
             </Dialog>
 
             {/* ═══ INSPECTION FORM DIALOG ═══ */}
-            <Dialog open={inspectionDialog} onOpenChange={(o) => { setInspectionDialog(o); }}>
+            <Dialog open={inspectionDialog} onOpenChange={setInspectionDialog}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
@@ -801,7 +969,6 @@ export default function FleetTracker() {
                                                     <span className="flex items-center gap-1"><Gauge className="h-3 w-3" /> {insp.odometer_reading.toLocaleString()} mi</span>
                                                     {insp.checklist.fuel_level && <span>⛽ {insp.checklist.fuel_level}</span>}
                                                 </div>
-                                                {/* Checklist summary */}
                                                 <div className="flex flex-wrap gap-1">
                                                     {insp.checklist.tires_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Tires ✓</Badge>}
                                                     {insp.checklist.lights_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Lights ✓</Badge>}
@@ -810,7 +977,6 @@ export default function FleetTracker() {
                                                     {insp.checklist.interior_clean && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Interior ✓</Badge>}
                                                     {insp.checklist.exterior_damage && <Badge variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700">Damage ⚠️</Badge>}
                                                 </div>
-                                                {/* Photos */}
                                                 {insp.photos && insp.photos.length > 0 && (
                                                     <div className="flex gap-1.5 flex-wrap">
                                                         {insp.photos.map((url, pi) => (

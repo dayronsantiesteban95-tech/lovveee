@@ -205,7 +205,7 @@ export default function InspectionForm({
                     driver_id: driverId || null,
                     inspection_date: today,
                     odometer_reading: parseInt(odometer, 10),
-                    checklist: checklist as unknown as import("@/integrations/supabase/types").Json,
+                    checklist: checklist as unknown as Record<string, unknown>,
                     photos: photoUrls,
                     notes: notes || null,
                     car_wash_done: carWashDone,
