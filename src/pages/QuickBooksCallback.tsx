@@ -29,6 +29,19 @@ export default function QuickBooksCallback() {
       return;
     }
 
+    // ── CSRF State Validation ──────────────────────────────────────────────
+    // Verify the state param returned by QB matches what we stored when
+    // initiating the OAuth flow. This prevents CSRF / open-redirect attacks.
+    const returnedState = searchParams.get('state');
+    const expectedState = sessionStorage.getItem('qb_oauth_state');
+    if (!returnedState || !expectedState || returnedState !== expectedState) {
+      setStatus('error');
+      setError('Security validation failed. Please try connecting QuickBooks again.');
+      return;
+    }
+    sessionStorage.removeItem('qb_oauth_state');
+    // ─────────────────────────────────────────────────────────────────────
+
     const handleCallback = async () => {
       try {
         // Delegate token exchange to the server-side Edge Function.

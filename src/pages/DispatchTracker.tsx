@@ -419,11 +419,15 @@ export default function DispatchTracker() {
     const db = supabase;
 
     const fetchLoads = useCallback(async () => {
-        const { data } = await db.from("daily_loads")
+        const { data, error } = await db.from("daily_loads")
             .select("*")
             .gte("load_date", dateRangeStart)
             .lte("load_date", dateRangeEnd)
             .order("load_date", { ascending: false });
+        if (error) {
+            toast({ title: "Failed to load dispatch board", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) {
             setLoads(data);
             setLastRefreshed(new Date());
@@ -432,40 +436,64 @@ export default function DispatchTracker() {
     }, [dateRangeStart, dateRangeEnd]);
 
     const fetchDrivers = useCallback(async () => {
-        const { data } = await db.from("drivers").select("id, full_name, hub, status").eq("status", "active");
+        const { data, error } = await db.from("drivers").select("id, full_name, hub, status").eq("status", "active");
+        if (error) {
+            toast({ title: "Failed to load drivers", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) setDrivers(data);
     }, []);
 
     const fetchVehicles = useCallback(async () => {
-        const { data } = await db.from("vehicles").select("id, vehicle_name, vehicle_type, hub, status").eq("status", "active");
+        const { data, error } = await db.from("vehicles").select("id, vehicle_name, vehicle_type, hub, status").eq("status", "active");
+        if (error) {
+            toast({ title: "Failed to load vehicles", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) setVehicles(data);
     }, []);
 
     const fetchProfiles = useCallback(async () => {
-        const { data } = await supabase.from("profiles").select("user_id, full_name");
+        const { data, error } = await supabase.from("profiles").select("user_id, full_name");
+        if (error) {
+            toast({ title: "Failed to load profiles", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) setProfiles(data as Profile[]);
     }, []);
 
     const fetchCompanies = useCallback(async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from("companies")
             .select("id, name, address, city, state, phone")
             .order("name");
+        if (error) {
+            toast({ title: "Failed to load companies", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) setCompanies(data as Company[]);
     }, []);
 
     const fetchRateCards = useCallback(async () => {
-        const { data } = await supabase.from("rate_cards").select("*");
+        const { data, error } = await supabase.from("rate_cards").select("*");
+        if (error) {
+            toast({ title: "Failed to load rate cards", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) setRateCards(data as RateCard[]);
     }, []);
 
     const fetchRecentAddresses = useCallback(async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from("daily_loads")
             .select("pickup_address, delivery_address, pickup_company, delivery_company")
             .not("pickup_address", "is", null)
             .order("created_at", { ascending: false })
             .limit(60);
+        if (error) {
+            toast({ title: "Failed to load recent addresses", description: error.message, variant: "destructive" });
+            return;
+        }
         if (data) {
             const addrs = [...new Set([
                 ...data.map((d: any) => d.pickup_address),

@@ -11,19 +11,30 @@
 // ═══════════════════════════════════════════════════════════
 
 // Client ID is safe to expose (it's like a public app identifier)
-const QB_CLIENT_ID = 'ABb6oHW55FUHeHCIQcBOGBCGX8xclESOM50VqJeJDZoWYmRODn';
-const QB_REDIRECT_URI = 'https://dispatch.anikalogistics.com/auth/quickbooks/callback';
+// Read from env var; fallback keeps existing deployments working.
+const QB_CLIENT_ID =
+  import.meta.env.VITE_QB_CLIENT_ID ??
+  'ABb6oHW55FUHeHCIQcBOGBCGX8xclESOM50VqJeJDZoWYmRODn';
+const QB_REDIRECT_URI =
+  import.meta.env.VITE_QB_REDIRECT_URI ??
+  'https://dispatch.anikalogistics.com/auth/quickbooks/callback';
+
+const QB_SCOPE = 'com.intuit.quickbooks.accounting';
+const QB_AUTH_URL = 'https://appcenter.intuit.com/connect/oauth2';
 
 // ─── Step 1: Generate OAuth URL — redirect user to QB login ───
 // Only uses CLIENT_ID and REDIRECT_URI — both are safe to be public.
+// State is stored in sessionStorage so the callback can validate it (CSRF protection).
 
 export function getQBAuthUrl(): string {
+  const state = crypto.randomUUID();
+  sessionStorage.setItem('qb_oauth_state', state);
   const params = new URLSearchParams({
     client_id: QB_CLIENT_ID,
-    response_type: 'code',
-    scope: 'com.intuit.quickbooks.accounting',
+    scope: QB_SCOPE,
     redirect_uri: QB_REDIRECT_URI,
-    state: crypto.randomUUID(),
+    response_type: 'code',
+    state,
   });
-  return `https://appcenter.intuit.com/connect/oauth2?${params.toString()}`;
+  return `${QB_AUTH_URL}?${params.toString()}`;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 import ETABadge from "@/components/ETABadge";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney, todayISO, daysAgoISO } from "@/lib/formatters";
@@ -110,6 +111,7 @@ function SkeletonKPI() {
 
 export default function Dashboard() {
   const today = todayISO();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [loads, setLoads] = useState<DailyLoad[]>([]);
   const [kpis, setKpis] = useState<KPIs>({ totalLoads: 0, inTransit: 0, delivered: 0, unassigned: 0, onTimePct: null, revenue: 0 });
@@ -260,8 +262,17 @@ export default function Dashboard() {
   useEffect(() => {
     async function init() {
       setLoading(true);
-      await Promise.all([fetchLoads(), fetchDrivers(), fetchActivity(), fetchWeekStats()]);
-      setLoading(false);
+      try {
+        await Promise.all([fetchLoads(), fetchDrivers(), fetchActivity(), fetchWeekStats()]);
+      } catch (err) {
+        toast({
+          title: "Dashboard load failed",
+          description: err instanceof Error ? err.message : "Unknown error",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
     init();
 
