@@ -389,7 +389,11 @@ export default function Dashboard() {
               ))}
             </div>
           ) : loads.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">No loads today</div>
+            <div className="flex flex-col items-center justify-center py-14 text-muted-foreground gap-3">
+              <Truck className="h-10 w-10 opacity-30" />
+              <p className="text-sm font-medium">No loads today</p>
+              <p className="text-xs opacity-60">Add your first load in Dispatch Tracker to get started.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -472,7 +476,11 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : drivers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">No drivers found</div>
+              <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
+                <Clock className="h-8 w-8 opacity-30" />
+                <p className="text-sm font-medium">No drivers found</p>
+                <p className="text-xs opacity-60">Add drivers in Fleet Tracker to see their status here.</p>
+              </div>
             ) : (
               <div className="divide-y divide-border/30">
                 {drivers.map((d) => (
@@ -518,7 +526,11 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : activity.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">No recent activity</div>
+              <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
+                <Activity className="h-8 w-8 opacity-30" />
+                <p className="text-sm font-medium">No recent activity</p>
+                <p className="text-xs opacity-60">Load status changes will appear here in real time.</p>
+              </div>
             ) : (
               <div className="divide-y divide-border/20 max-h-72 overflow-y-auto">
                 {activity.map((ev) => (

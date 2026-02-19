@@ -1161,6 +1161,7 @@ export default function DispatchTracker() {
                         {/* Load Table */}
                         <div className={toolsOpen ? "lg:col-span-2" : ""}>
                             <Card className="glass-card rounded-2xl overflow-hidden">
+                                <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -1181,22 +1182,28 @@ export default function DispatchTracker() {
                                     <TableBody>
                                         {boardLoads.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={12} className="text-center text-muted-foreground py-12">
+                                                <TableCell colSpan={12}>
                                                     {rawBoardLoads.length > 0 ? (
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <p className="text-base">No loads match your search</p>
+                                                        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+                                                            <Layers className="h-10 w-10 opacity-30" />
+                                                            <p className="text-sm font-medium">No loads match your filters</p>
+                                                            <p className="text-xs opacity-60">Try adjusting your search or clear all filters.</p>
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() => setLoadFilters(EMPTY_LOAD_FILTERS)}
-                                                                className="gap-1.5"
+                                                                className="gap-1.5 mt-1"
                                                             >
                                                                 <X className="h-3.5 w-3.5" />
                                                                 Clear filters
                                                             </Button>
                                                         </div>
                                                     ) : (
-                                                        `No loads for ${selectedDate}. Click "New Load" to add one.`
+                                                        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+                                                            <Package className="h-10 w-10 opacity-30" />
+                                                            <p className="text-sm font-medium">No loads for {selectedDate}</p>
+                                                            <p className="text-xs opacity-60">Click &quot;New Load&quot; to add the first load for this date.</p>
+                                                        </div>
                                                     )}
                                                 </TableCell>
                                             </TableRow>
@@ -1391,6 +1398,7 @@ export default function DispatchTracker() {
                                         })}
                                     </TableBody>
                                 </Table>
+                                </div>
                             </Card>
                         </div>
 

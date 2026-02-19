@@ -39,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
   Plus,
@@ -590,8 +591,15 @@ export default function TeamManagement() {
           <Card className="glass-card border-0">
             <CardContent className="p-0">
               {loading ? (
-                <div className="flex items-center justify-center h-40">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="p-4 space-y-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-48 hidden sm:block" />
+                      <Skeleton className="h-5 w-20 ml-auto" />
+                    </div>
+                  ))}
                 </div>
               ) : team.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-3">
@@ -606,6 +614,7 @@ export default function TeamManagement() {
                   </Button>
                 </div>
               ) : (
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
@@ -728,6 +737,7 @@ export default function TeamManagement() {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -746,6 +756,7 @@ export default function TeamManagement() {
               </p>
             </CardHeader>
             <CardContent className="p-0">
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
@@ -810,6 +821,7 @@ export default function TeamManagement() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

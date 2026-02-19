@@ -677,6 +677,7 @@ export default function PodManager() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
+                    <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -693,9 +694,12 @@ export default function PodManager() {
                         <TableBody>
                             {loads.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                                        <Package className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                                        No loads found
+                                    <TableCell colSpan={8}>
+                                        <div className="flex flex-col items-center justify-center py-14 gap-3 text-muted-foreground">
+                                            <Package className="h-10 w-10 opacity-30" />
+                                            <p className="text-sm font-medium">No loads found</p>
+                                            <p className="text-xs opacity-60">Load documents will appear here once dispatchers add loads.</p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -749,6 +753,7 @@ export default function PodManager() {
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </CardContent>
             </Card>
         </div>

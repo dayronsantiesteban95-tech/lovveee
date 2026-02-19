@@ -249,9 +249,15 @@ export default function FleetTracker() {
     const vehName = (id: string) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "—";
 
     if (loading) return (
-        <div className="space-y-4 animate-in">
-            <Skeleton className="h-8 w-48" />
-            <div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
+        <div className="space-y-6 p-6 animate-in">
+            <div>
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-4 w-72" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+            </div>
+            <Skeleton className="h-10 w-96" />
             <Skeleton className="h-96 rounded-2xl" />
         </div>
     );
@@ -265,7 +271,7 @@ export default function FleetTracker() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
                 {[
                     { label: "Active Vehicles", value: stats.active, icon: Truck, color: "text-green-500" },
                     { label: "In Maintenance", value: stats.inMaint, icon: Wrench, color: "text-yellow-500" },
@@ -370,6 +376,7 @@ export default function FleetTracker() {
                         </Button>
                     </div>
                     <Card className="glass-card rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -385,7 +392,15 @@ export default function FleetTracker() {
                             </TableHeader>
                             <TableBody>
                                 {maintenance.length === 0 && (
-                                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">No maintenance records yet.</TableCell></TableRow>
+                                    <TableRow>
+                                        <TableCell colSpan={8}>
+                                            <div className="flex flex-col items-center justify-center py-14 gap-3 text-muted-foreground">
+                                                <Wrench className="h-10 w-10 opacity-30" />
+                                                <p className="text-sm font-medium">No maintenance records yet</p>
+                                                <p className="text-xs opacity-60">Log your first service record to start tracking vehicle health.</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
                                 {maintenance.map((m) => (
                                     <TableRow key={m.id}>
@@ -406,6 +421,7 @@ export default function FleetTracker() {
                                 ))}
                             </TableBody>
                         </Table>
+                        </div>
                     </Card>
                 </TabsContent>
 
@@ -417,6 +433,7 @@ export default function FleetTracker() {
                         </Button>
                     </div>
                     <Card className="glass-card rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -432,7 +449,15 @@ export default function FleetTracker() {
                             </TableHeader>
                             <TableBody>
                                 {drivers.length === 0 && (
-                                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">No drivers yet.</TableCell></TableRow>
+                                    <TableRow>
+                                        <TableCell colSpan={8}>
+                                            <div className="flex flex-col items-center justify-center py-14 gap-3 text-muted-foreground">
+                                                <Users className="h-10 w-10 opacity-30" />
+                                                <p className="text-sm font-medium">No drivers yet</p>
+                                                <p className="text-xs opacity-60">Add your first driver to start assigning loads and tracking shifts.</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
                                 {drivers.map((d) => {
                                     const dBadge = drvStatusBadge(d.status);
@@ -461,6 +486,7 @@ export default function FleetTracker() {
                                 })}
                             </TableBody>
                         </Table>
+                        </div>
                     </Card>
                 </TabsContent>
             </Tabs>
