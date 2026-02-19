@@ -1,42 +1,14 @@
-// OneSignal REST API — called from Dispatcher App when blasting loads
+import { supabase } from '@/integrations/supabase/client';
+
 export async function sendPushToDrivers(
-  driverIds: string[],
+  playerIds: string[],
   title: string,
   body: string,
-  data?: Record<string, string>
-) {
-  const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
-  const apiKey = import.meta.env.VITE_ONESIGNAL_API_KEY;
-
-  if (!appId || !apiKey) {
-    console.warn('OneSignal not configured — push notification skipped');
-    return;
-  }
-
-  const payload = {
-    app_id: appId,
-    filters: driverIds.map((id, i) => [
-      ...(i > 0 ? [{ operator: 'OR' }] : []),
-      { field: 'tag', key: 'driver_id', relation: '=', value: id }
-    ]).flat(),
-    headings: { en: title },
-    contents: { en: body },
-    data: data ?? {},
-  };
-
-  const res = await fetch('https://onesignal.com/api/v1/notifications', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
+  data?: Record<string, unknown>
+): Promise<void> {
+  if (!playerIds.length) return;
+  const { error } = await supabase.functions.invoke('send-push-notification', {
+    body: { playerIds, title, body, data },
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => 'unknown');
-    throw new Error(`OneSignal error ${res.status}: ${body}`);
-  }
-
-  return res.json();
+  if (error) throw new Error(`Push notification failed: ${error.message}`);
 }

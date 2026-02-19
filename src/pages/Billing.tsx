@@ -6,6 +6,7 @@
 // QB: QuickBooks Online sync integration
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -157,15 +158,50 @@ export default function Billing() {
   // ── Tab state ──────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("uninvoiced");
 
-  // ── Data ───────────────────────────────────────────────
-  const [uninvoicedLoads, setUninvoicedLoads] = useState<UninvoicedLoad[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [profiles, setProfiles] = useState<ClientBillingProfile[]>([]);
+  // ── React Query ────────────────────────────────────────
+  const queryClient = useQueryClient();
 
-  // ── Loading ────────────────────────────────────────────
-  const [loadingUninvoiced, setLoadingUninvoiced] = useState(false);
-  const [loadingInvoices, setLoadingInvoices] = useState(false);
-  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const { data: uninvoicedLoads = [], isLoading: loadingUninvoiced } = useQuery({
+    queryKey: ["billing-uninvoiced"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_uninvoiced_loads");
+      if (error) throw error;
+      return (data as UninvoicedLoad[]) ?? [];
+    },
+    staleTime: 30_000,
+    retry: 3,
+    enabled: !!user,
+  });
+
+  const { data: invoices = [], isLoading: loadingInvoices } = useQuery({
+    queryKey: ["billing-invoices"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data as Invoice[]) ?? [];
+    },
+    staleTime: 30_000,
+    retry: 3,
+    enabled: !!user,
+  });
+
+  const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
+    queryKey: ["billing-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_billing_profiles")
+        .select("*")
+        .order("client_name");
+      if (error) throw error;
+      return (data as ClientBillingProfile[]) ?? [];
+    },
+    staleTime: 30_000,
+    retry: 3,
+    enabled: !!user,
+  });
 
   // ── Selections ────────────────────────────────────────
   const [selectedLoadIds, setSelectedLoadIds] = useState<Set<string>>(new Set());
@@ -210,57 +246,10 @@ export default function Billing() {
   });
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // ─── Fetch functions ───────────────────────────────────
-  const fetchUninvoiced = useCallback(async () => {
-    setLoadingUninvoiced(true);
-    try {
-      const { data, error } = await supabase.rpc("get_uninvoiced_loads");
-      if (error) throw error;
-      setUninvoicedLoads((data as UninvoicedLoad[]) ?? []);
-    } catch (err) {
-            toast({ title: "Error", description: "Could not load uninvoiced loads", variant: "destructive" });
-    } finally {
-      setLoadingUninvoiced(false);
-    }
-  }, [toast]);
-
-  const fetchInvoices = useCallback(async () => {
-    setLoadingInvoices(true);
-    try {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setInvoices((data as Invoice[]) ?? []);
-    } catch (err) {
-            toast({ title: "Error", description: "Could not load invoices", variant: "destructive" });
-    } finally {
-      setLoadingInvoices(false);
-    }
-  }, [toast]);
-
-  const fetchProfiles = useCallback(async () => {
-    setLoadingProfiles(true);
-    try {
-      const { data, error } = await supabase
-        .from("client_billing_profiles")
-        .select("*")
-        .order("client_name");
-      if (error) throw error;
-      setProfiles((data as ClientBillingProfile[]) ?? []);
-    } catch (err) {
-            toast({ title: "Error", description: "Could not load client profiles", variant: "destructive" });
-    } finally {
-      setLoadingProfiles(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchUninvoiced();
-    fetchInvoices();
-    fetchProfiles();
-  }, [fetchUninvoiced, fetchInvoices, fetchProfiles]);
+  // ─── Helpers to refetch after mutations ───────────────
+  const fetchUninvoiced = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-uninvoiced"] }), [queryClient]);
+  const fetchInvoices = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-invoices"] }), [queryClient]);
+  const fetchProfiles = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-profiles"] }), [queryClient]);
 
   // ─── Load detail on invoice open ─────────────────────
   const openInvoiceDetail = useCallback(async (inv: Invoice) => {

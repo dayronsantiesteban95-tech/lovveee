@@ -6,6 +6,7 @@
 // + Walk-Around Inspection System + Car Wash Tracking
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/formatters";
 import { CITY_HUBS } from "@/lib/constants";
@@ -168,13 +169,71 @@ export default function FleetTracker() {
     const { toast } = useToast();
     const db = supabase;
 
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
-    const [drivers, setDrivers] = useState<Driver[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+
+    const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
+        queryKey: ["fleet-vehicles"],
+        queryFn: async () => {
+            const { data, error } = await db.from("vehicles").select("*").order("vehicle_name");
+            if (error) throw error;
+            return (data ?? []) as Vehicle[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: maintenance = [], isLoading: maintLoading } = useQuery({
+        queryKey: ["fleet-maintenance"],
+        queryFn: async () => {
+            const { data, error } = await db.from("vehicle_maintenance").select("*").order("service_date", { ascending: false });
+            if (error) throw error;
+            return (data ?? []) as MaintenanceRecord[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: drivers = [], isLoading: driversLoading } = useQuery({
+        queryKey: ["fleet-drivers"],
+        queryFn: async () => {
+            const { data, error } = await db.from("drivers").select("*").order("full_name");
+            if (error) throw error;
+            return (data ?? []) as Driver[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: fleetStatus = [], isLoading: fleetStatusLoading } = useQuery({
+        queryKey: ["fleet-inspection-status"],
+        queryFn: async () => {
+            const { data, error } = await db.rpc("get_fleet_inspection_status");
+            if (error) throw error;
+            return (data ?? []) as FleetInspectionStatus[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const loading = vehiclesLoading || maintLoading || driversLoading || fleetStatusLoading;
+
+    // Helpers to invalidate fleet queries after mutations
+    const refetchAll = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["fleet-vehicles"] });
+        queryClient.invalidateQueries({ queryKey: ["fleet-maintenance"] });
+        queryClient.invalidateQueries({ queryKey: ["fleet-drivers"] });
+    }, [queryClient]);
+
+    const refetchFleetStatus = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["fleet-inspection-status"] });
+    }, [queryClient]);
 
     // Inspection state
-    const [fleetStatus, setFleetStatus] = useState<FleetInspectionStatus[]>([]);
+    // (fleetStatus now comes from useQuery above)
     const [inspectionDialog, setInspectionDialog] = useState(false);
     const [selectedVehicleForInspection, setSelectedVehicleForInspection] = useState<string | undefined>();
     const [historySheet, setHistorySheet] = useState(false);
@@ -193,28 +252,7 @@ export default function FleetTracker() {
     const [editDrv, setEditDrv] = useState<Driver | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: string } | null>(null);
 
-    // ── Fetch ────────────────────────────────
-    const fetchAll = useCallback(async () => {
-        const [v, m, d] = await Promise.all([
-            db.from("vehicles").select("*").order("vehicle_name"),
-            db.from("vehicle_maintenance").select("*").order("service_date", { ascending: false }),
-            db.from("drivers").select("*").order("full_name"),
-        ]);
-        if (v.data) setVehicles(v.data);
-        if (m.data) setMaintenance(m.data);
-        if (d.data) setDrivers(d.data);
-        setLoading(false);
-    }, []);
-
-    const fetchFleetStatus = useCallback(async () => {
-        const { data, error } = await db.rpc("get_fleet_inspection_status");
-        if (error) { return; }
-        if (data) setFleetStatus(data as FleetInspectionStatus[]);
-    }, []);
-
-    useEffect(() => {
-        if (user) { fetchAll(); fetchFleetStatus(); }
-    }, [user, fetchAll, fetchFleetStatus]);
+    // fetchAll / fetchFleetStatus replaced by React Query above
 
     // ── Open inspection history ──────────────
     const openHistory = useCallback(async (vehicle: Vehicle) => {
@@ -251,9 +289,9 @@ export default function FleetTracker() {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } else {
             toast({ title: `🚿 Car wash logged for ${vehicle.vehicle_name}` });
-            fetchFleetStatus();
+            refetchFleetStatus();
         }
-    }, [user, fetchFleetStatus, toast]);
+    }, [user, refetchFleetStatus, toast]);
 
     // ── Flag / Approve inspection ────────────
     const flagInspection = useCallback(async (inspectionId: string) => {
@@ -265,9 +303,9 @@ export default function FleetTracker() {
         } else {
             toast({ title: "Inspection flagged" });
             if (historyVehicle) openHistory(historyVehicle);
-            fetchFleetStatus();
+            refetchFleetStatus();
         }
-    }, [user, historyVehicle, openHistory, fetchFleetStatus, toast]);
+    }, [user, historyVehicle, openHistory, refetchFleetStatus, toast]);
 
     const approveInspection = useCallback(async (inspectionId: string) => {
         const { error } = await db.from("vehicle_inspections")
@@ -278,9 +316,9 @@ export default function FleetTracker() {
         } else {
             toast({ title: "Inspection approved" });
             if (historyVehicle) openHistory(historyVehicle);
-            fetchFleetStatus();
+            refetchFleetStatus();
         }
-    }, [user, historyVehicle, openHistory, fetchFleetStatus, toast]);
+    }, [user, historyVehicle, openHistory, refetchFleetStatus, toast]);
 
     // ── Stats ────────────────────────────────
     const stats = useMemo(() => {
@@ -349,7 +387,7 @@ export default function FleetTracker() {
         else {
             toast({ title: editVeh ? "Vehicle updated" : "Vehicle added" });
             setVehDialog(false); setEditVeh(null);
-            fetchAll(); fetchFleetStatus();
+            refetchAll(); refetchFleetStatus();
         }
     };
 
@@ -374,7 +412,7 @@ export default function FleetTracker() {
             ? await db.from("vehicle_maintenance").update(payload).eq("id", editMaint.id)
             : await db.from("vehicle_maintenance").insert(payload);
         if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-        else { toast({ title: editMaint ? "Record updated" : "Maintenance logged" }); setMaintDialog(false); setEditMaint(null); fetchAll(); }
+        else { toast({ title: editMaint ? "Record updated" : "Maintenance logged" }); setMaintDialog(false); setEditMaint(null); refetchAll(); }
     };
 
     // ── Driver CRUD ──────────────────────────
@@ -399,7 +437,7 @@ export default function FleetTracker() {
             ? await db.from("drivers").update(payload).eq("id", editDrv.id)
             : await db.from("drivers").insert(payload);
         if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-        else { toast({ title: editDrv ? "Driver updated" : "Driver added" }); setDrvDialog(false); setEditDrv(null); fetchAll(); }
+        else { toast({ title: editDrv ? "Driver updated" : "Driver added" }); setDrvDialog(false); setEditDrv(null); refetchAll(); }
     };
 
     // ── Delete ───────────────────────────────
@@ -412,7 +450,7 @@ export default function FleetTracker() {
             toast({ title: "Delete failed", description: error.message, variant: "destructive" });
         } else {
             toast({ title: "Deleted" });
-            fetchAll();
+            refetchAll();
         }
     };
 
@@ -865,7 +903,7 @@ export default function FleetTracker() {
                         defaultVehicleId={selectedVehicleForInspection}
                         onSuccess={() => {
                             setInspectionDialog(false);
-                            fetchFleetStatus();
+                            refetchFleetStatus();
                         }}
                         onCancel={() => setInspectionDialog(false)}
                     />

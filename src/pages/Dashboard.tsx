@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import ETABadge from "@/components/ETABadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,181 +108,200 @@ function SkeletonKPI() {
   );
 }
 
+// ─── Query functions ──────────────────────────────────────────────────────────
+
+async function fetchLoadsData(today: string): Promise<DailyLoad[]> {
+  const { data, error } = await supabase
+    .from("daily_loads")
+    .select("id,reference_number,client_name,pickup_address,delivery_address,driver_id,status,estimated_delivery,revenue,end_time")
+    .eq("load_date", today)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as DailyLoad[];
+}
+
+async function fetchDriversData(today: string): Promise<Driver[]> {
+  const [driversRes, shiftsRes, locRes, loadsActiveRes] = await Promise.all([
+    supabase.from("drivers").select("id,full_name,hub").order("full_name"),
+    supabase.from("driver_shifts").select("driver_id,status").gte("start_time", today + "T00:00:00").lte("start_time", today + "T23:59:59"),
+    supabase.from("driver_locations").select("driver_id,recorded_at").order("recorded_at", { ascending: false }),
+    supabase.from("daily_loads").select("driver_id,reference_number").eq("load_date", today).eq("status", "in_progress"),
+  ]);
+
+  if (driversRes.error) throw driversRes.error;
+
+  const allDrivers = driversRes.data ?? [];
+  const shiftMap: Record<string, boolean> = {};
+  for (const s of (shiftsRes.data ?? [])) {
+    if (s.status === "on_duty") shiftMap[s.driver_id] = true;
+  }
+
+  const pingMap: Record<string, string> = {};
+  for (const loc of (locRes.data ?? [])) {
+    if (!pingMap[loc.driver_id]) pingMap[loc.driver_id] = loc.recorded_at;
+  }
+
+  const activeLoadMap: Record<string, string> = {};
+  for (const l of (loadsActiveRes.data ?? [])) {
+    if (l.driver_id) activeLoadMap[l.driver_id] = l.reference_number ?? l.driver_id;
+  }
+
+  return allDrivers.map(d => ({
+    id: d.id,
+    full_name: d.full_name,
+    hub: d.hub,
+    onDuty: !!shiftMap[d.id],
+    lastPing: pingMap[d.id] ?? null,
+    activeLoadRef: activeLoadMap[d.id] ?? null,
+  }));
+}
+
+async function fetchActivityData(): Promise<ActivityEvent[]> {
+  const { data, error } = await supabase
+    .from("load_status_events")
+    .select("id,created_at,new_status,changed_by,load_id,daily_loads(reference_number)")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) throw error;
+
+  const changedByIds = [...new Set((data ?? []).map((e: any) => e.changed_by).filter(Boolean))];
+  const driverNameMap: Record<string, string> = {};
+  if (changedByIds.length > 0) {
+    const { data: driverRows } = await supabase
+      .from("drivers")
+      .select("id,full_name")
+      .in("id", changedByIds);
+    for (const d of (driverRows ?? [])) driverNameMap[d.id] = d.full_name;
+  }
+
+  return (data ?? []).map((e: any) => ({
+    id: e.id,
+    created_at: e.created_at,
+    new_status: e.new_status,
+    driverName: (e.changed_by ? driverNameMap[e.changed_by] : null) ?? "System",
+    loadRef: e.daily_loads?.reference_number ?? e.load_id ?? "—",
+  }));
+}
+
+async function fetchWeekStatsData(today: string): Promise<WeekStats> {
+  const weekAgo = daysAgoISO(6);
+  const { data, error } = await supabase
+    .from("daily_loads")
+    .select("status,revenue,client_name,driver_id,estimated_delivery,end_time")
+    .gte("load_date", weekAgo)
+    .lte("load_date", today);
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s: number, r: any) => s + (r.revenue ?? 0), 0);
+  const loads = rows.length;
+
+  const withETA = rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
+  const onTime = withETA.filter((r: any) => r.end_time && r.end_time <= r.estimated_delivery).length;
+  const onTimePct = withETA.length > 0 ? Math.round((onTime / withETA.length) * 100) : null;
+
+  const clientCounts: Record<string, number> = {};
+  for (const r of rows) { if (r.client_name) clientCounts[r.client_name] = (clientCounts[r.client_name] ?? 0) + 1; }
+  const topClient = Object.entries(clientCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+  const { data: driverRows } = await supabase.from("drivers").select("id,full_name");
+  const dMap: Record<string, string> = {};
+  for (const d of (driverRows ?? [])) dMap[d.id] = d.full_name;
+
+  const driverCounts: Record<string, number> = {};
+  for (const r of rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.driver_id)) {
+    const id = (r as any).driver_id;
+    driverCounts[id] = (driverCounts[id] ?? 0) + 1;
+  }
+  const topDriverId = Object.entries(driverCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const topDriver = topDriverId ? (dMap[topDriverId] ?? topDriverId) : null;
+
+  return { revenue, loads, onTimePct, topClient, topDriver };
+}
+
+function computeKPIs(loads: DailyLoad[]): KPIs {
+  const total = loads.length;
+  const inTransit = loads.filter(r => r.status === "in_progress").length;
+  const delivered = loads.filter(r => r.status === "delivered" || r.status === "completed").length;
+  const unassigned = loads.filter(r => r.status === "pending" && !r.driver_id).length;
+  const revenue = loads.filter(r => r.status === "delivered" || r.status === "completed").reduce((s, r) => s + (r.revenue ?? 0), 0);
+  const deliveredWithETA = loads.filter(r => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
+  const onTime = deliveredWithETA.filter(r => r.end_time && r.end_time <= r.estimated_delivery!).length;
+  const onTimePct = deliveredWithETA.length > 0 ? Math.round((onTime / deliveredWithETA.length) * 100) : null;
+  return { totalLoads: total, inTransit, delivered, unassigned, onTimePct, revenue };
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const today = todayISO();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [loads, setLoads] = useState<DailyLoad[]>([]);
-  const [kpis, setKpis] = useState<KPIs>({ totalLoads: 0, inTransit: 0, delivered: 0, unassigned: 0, onTimePct: null, revenue: 0 });
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [activity, setActivity] = useState<ActivityEvent[]>([]);
-  const [weekStats, setWeekStats] = useState<WeekStats>({ revenue: 0, loads: 0, onTimePct: null, topClient: null, topDriver: null });
-  const [driverNames, setDriverNames] = useState<Record<string, string>>({});
+  const queryClient = useQueryClient();
 
-  // ── Fetch today's loads ───────────────────────────────────────────────────
-  const fetchLoads = useCallback(async () => {
-    const { data } = await supabase
-      .from("daily_loads")
-      .select("id,reference_number,client_name,pickup_address,delivery_address,driver_id,status,estimated_delivery,revenue,end_time")
-      .eq("load_date", today)
-      .order("created_at", { ascending: true });
+  // ── React Query fetches ───────────────────────────────────────────────────
+  const { data: loads = [], isLoading: loadsLoading, error: loadsError } = useQuery({
+    queryKey: ["dashboard-loads", today],
+    queryFn: () => fetchLoadsData(today),
+    staleTime: 30_000,
+    retry: 3,
+  });
 
-    const rows = (data ?? []) as DailyLoad[];
-    setLoads(rows);
+  const { data: drivers = [], isLoading: driversLoading } = useQuery({
+    queryKey: ["dashboard-drivers", today],
+    queryFn: () => fetchDriversData(today),
+    staleTime: 30_000,
+    retry: 3,
+  });
 
-    const total = rows.length;
-    const inTransit = rows.filter(r => r.status === "in_progress").length;
-    const delivered = rows.filter(r => r.status === "delivered" || r.status === "completed").length;
-    const unassigned = rows.filter(r => r.status === "pending" && !r.driver_id).length;
-    const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s, r) => s + (r.revenue ?? 0), 0);
-    // On-time: delivered/completed and end_time <= estimated_delivery (both present)
-    const deliveredWithETA = rows.filter(r => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
-    const onTime = deliveredWithETA.filter(r => r.end_time && r.end_time <= r.estimated_delivery!).length;
-    const onTimePct = deliveredWithETA.length > 0 ? Math.round((onTime / deliveredWithETA.length) * 100) : null;
+  const { data: activity = [], isLoading: activityLoading } = useQuery({
+    queryKey: ["dashboard-activity"],
+    queryFn: fetchActivityData,
+    staleTime: 30_000,
+    retry: 3,
+    refetchInterval: 30_000,
+  });
 
-    setKpis({ totalLoads: total, inTransit, delivered, unassigned, onTimePct, revenue });
-  }, [today]);
+  const { data: weekStats = { revenue: 0, loads: 0, onTimePct: null, topClient: null, topDriver: null }, isLoading: weekLoading } = useQuery({
+    queryKey: ["dashboard-week-stats", today],
+    queryFn: () => fetchWeekStatsData(today),
+    staleTime: 30_000,
+    retry: 3,
+  });
 
-  // ── Fetch drivers + shifts + last location ────────────────────────────────
-  const fetchDrivers = useCallback(async () => {
-    const [driversRes, shiftsRes, locRes, loadsActiveRes] = await Promise.all([
-      supabase.from("drivers").select("id,full_name,hub").order("full_name"),
-      supabase.from("driver_shifts").select("driver_id,status").gte("start_time", today + "T00:00:00").lte("start_time", today + "T23:59:59"),
-      supabase.from("driver_locations").select("driver_id,recorded_at").order("recorded_at", { ascending: false }),
-      supabase.from("daily_loads").select("driver_id,reference_number").eq("load_date", today).eq("status", "in_progress"),
-    ]);
+  const loading = loadsLoading || driversLoading || activityLoading || weekLoading;
 
-    const allDrivers = driversRes.data ?? [];
-    const shiftMap: Record<string, boolean> = {};
-    for (const s of (shiftsRes.data ?? [])) {
-      if (s.status === "on_duty") shiftMap[s.driver_id] = true;
-    }
-
-    // Last ping per driver
-    const pingMap: Record<string, string> = {};
-    for (const loc of (locRes.data ?? [])) {
-      if (!pingMap[loc.driver_id]) pingMap[loc.driver_id] = loc.recorded_at;
-    }
-
-    // Active load per driver
-    const activeLoadMap: Record<string, string> = {};
-    for (const l of (loadsActiveRes.data ?? [])) {
-      if (l.driver_id) activeLoadMap[l.driver_id] = l.reference_number ?? l.driver_id;
-    }
-
-    const names: Record<string, string> = {};
-    const driverList: Driver[] = allDrivers.map(d => {
-      names[d.id] = d.full_name;
-      return {
-        id: d.id,
-        full_name: d.full_name,
-        hub: d.hub,
-        onDuty: !!shiftMap[d.id],
-        lastPing: pingMap[d.id] ?? null,
-        activeLoadRef: activeLoadMap[d.id] ?? null,
-      };
-    });
-
-    setDriverNames(names);
-    setDrivers(driverList);
-  }, [today]);
-
-  // ── Fetch recent activity ─────────────────────────────────────────────────
-  const fetchActivity = useCallback(async () => {
-    const { data } = await supabase
-      .from("load_status_events")
-      .select("id,created_at,new_status,changed_by,load_id,daily_loads(reference_number)")
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    // Collect unique changed_by IDs to resolve names
-    const changedByIds = [...new Set((data ?? []).map((e: any) => e.changed_by).filter(Boolean))];
-    const driverNameMap: Record<string, string> = {};
-    if (changedByIds.length > 0) {
-      const { data: driverRows } = await supabase
-        .from("drivers")
-        .select("id,full_name")
-        .in("id", changedByIds);
-      for (const d of (driverRows ?? [])) driverNameMap[d.id] = d.full_name;
-    }
-
-    const events: ActivityEvent[] = (data ?? []).map((e: any) => ({
-      id: e.id,
-      created_at: e.created_at,
-      new_status: e.new_status,
-      driverName: (e.changed_by ? driverNameMap[e.changed_by] : null) ?? "System",
-      loadRef: e.daily_loads?.reference_number ?? e.load_id ?? "—",
-    }));
-    setActivity(events);
-  }, []);
-
-  // ── Fetch week stats ──────────────────────────────────────────────────────
-  const fetchWeekStats = useCallback(async () => {
-    const weekAgo = daysAgoISO(6);
-    const { data } = await supabase
-      .from("daily_loads")
-      .select("status,revenue,client_name,driver_id,estimated_delivery,end_time")
-      .gte("load_date", weekAgo)
-      .lte("load_date", today);
-
-    const rows = data ?? [];
-    const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s: number, r: any) => s + (r.revenue ?? 0), 0);
-    const loads = rows.length;
-
-    // On-time this week
-    const withETA = rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
-    const onTime = withETA.filter((r: any) => r.end_time && r.end_time <= r.estimated_delivery).length;
-    const onTimePct = withETA.length > 0 ? Math.round((onTime / withETA.length) * 100) : null;
-
-    // Top client
-    const clientCounts: Record<string, number> = {};
-    for (const r of rows) { if (r.client_name) clientCounts[r.client_name] = (clientCounts[r.client_name] ?? 0) + 1; }
-    const topClient = Object.entries(clientCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-
-    // Top driver (by deliveries)
-    const { data: driverRows } = await supabase
-      .from("drivers")
-      .select("id,full_name");
-    const dMap: Record<string, string> = {};
-    for (const d of (driverRows ?? [])) dMap[d.id] = d.full_name;
-
-    const driverCounts: Record<string, number> = {};
-    for (const r of rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.driver_id)) {
-      const id = (r as any).driver_id;
-      driverCounts[id] = (driverCounts[id] ?? 0) + 1;
-    }
-    const topDriverId = Object.entries(driverCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-    const topDriver = topDriverId ? (dMap[topDriverId] ?? topDriverId) : null;
-
-    setWeekStats({ revenue, loads, onTimePct, topClient, topDriver });
-  }, [today]);
-
-  // ── Initial load ──────────────────────────────────────────────────────────
+  // Surface load errors via toast
   useEffect(() => {
-    async function init() {
-      setLoading(true);
-      try {
-        await Promise.all([fetchLoads(), fetchDrivers(), fetchActivity(), fetchWeekStats()]);
-      } catch (err) {
-        toast({
-          title: "Dashboard load failed",
-          description: err instanceof Error ? err.message : "Unknown error",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
+    if (loadsError) {
+      toast({
+        title: "Dashboard load failed",
+        description: loadsError instanceof Error ? loadsError.message : "Unknown error",
+        variant: "destructive",
+      });
     }
-    init();
+  }, [loadsError, toast]);
+
+  // ── Computed KPIs from loads ──────────────────────────────────────────────
+  const kpis = computeKPIs(loads);
+
+  // Build a driverNames lookup from the drivers query result
+  const driverNames: Record<string, string> = {};
+  for (const d of drivers) driverNames[d.id] = d.full_name;
+
+  // ── Realtime subscriptions — keep as-is, invalidate React Query cache ─────
+  useEffect(() => {
+    // Auto-refresh loads every 60s
+    const loadRefreshTimer = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-loads", today] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-week-stats", today] });
+    }, 60_000);
 
     // Realtime: daily_loads
     const loadsChannel = supabase
       .channel("dashboard-loads")
       .on("postgres_changes", { event: "*", schema: "public", table: "daily_loads" }, () => {
-        fetchLoads();
-        fetchWeekStats();
+        queryClient.invalidateQueries({ queryKey: ["dashboard-loads", today] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-week-stats", today] });
       })
       .subscribe();
 
@@ -289,24 +309,17 @@ export default function Dashboard() {
     const eventsChannel = supabase
       .channel("dashboard-events")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "load_status_events" }, () => {
-        fetchActivity();
-        fetchDrivers();
+        queryClient.invalidateQueries({ queryKey: ["dashboard-activity"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-drivers", today] });
       })
       .subscribe();
-
-    // Activity refresh every 30s
-    const activityTimer = setInterval(fetchActivity, 30_000);
-
-    // Load refresh every 60s — keeps live ETA badges current
-    const loadRefreshTimer = setInterval(fetchLoads, 60_000);
 
     return () => {
       supabase.removeChannel(loadsChannel);
       supabase.removeChannel(eventsChannel);
-      clearInterval(activityTimer);
       clearInterval(loadRefreshTimer);
     };
-  }, [fetchLoads, fetchDrivers, fetchActivity, fetchWeekStats]);
+  }, [today, queryClient]);
 
   // ─── KPI card data ────────────────────────────────────────────────────────
   const kpiCards = [
@@ -480,7 +493,7 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-2">
-            {loading ? (
+            {driversLoading ? (
               <div className="px-5 space-y-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="h-10 bg-muted/30 rounded animate-pulse opacity-50" />
@@ -530,7 +543,7 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-2">
-            {loading ? (
+            {activityLoading ? (
               <div className="px-5 space-y-2">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="h-8 bg-muted/30 rounded animate-pulse opacity-50" />
@@ -582,31 +595,31 @@ export default function Dashboard() {
               <div>
                 <span className="text-muted-foreground text-xs">Revenue</span>
                 <div className="font-mono font-semibold text-green-400">
-                  {loading ? <span className="animate-pulse opacity-50">—</span> : fmtMoney(weekStats.revenue)}
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : fmtMoney(weekStats.revenue)}
                 </div>
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Loads</span>
                 <div className="font-semibold">
-                  {loading ? <span className="animate-pulse opacity-50">—</span> : weekStats.loads}
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : weekStats.loads}
                 </div>
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Avg On-Time</span>
                 <div className={`font-semibold ${weekStats.onTimePct !== null ? (weekStats.onTimePct >= 80 ? "text-green-400" : weekStats.onTimePct >= 60 ? "text-yellow-400" : "text-red-400") : ""}`}>
-                  {loading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.onTimePct !== null ? `${weekStats.onTimePct}%` : "—")}
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.onTimePct !== null ? `${weekStats.onTimePct}%` : "—")}
                 </div>
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Top Client</span>
                 <div className="font-semibold truncate max-w-[120px]">
-                  {loading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topClient ?? "—")}
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topClient ?? "—")}
                 </div>
               </div>
               <div>
                 <span className="text-muted-foreground text-xs">Top Driver</span>
                 <div className="font-semibold truncate max-w-[120px]">
-                  {loading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topDriver ?? "—")}
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topDriver ?? "—")}
                 </div>
               </div>
             </div>

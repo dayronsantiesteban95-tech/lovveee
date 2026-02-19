@@ -4,6 +4,7 @@
 // Full 4-section layout: Search → Selected Load → Upload → All PODs
 // ═══════════════════════════════════════════════════════════
 import { useEffect, useState, useCallback, useRef, useDeferredValue } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -184,11 +185,53 @@ export default function PodManager() {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    // ── Data ─────────────────────────────────────────
-    const [loads, setLoads] = useState<Load[]>([]);
-    const [drivers, setDrivers] = useState<Driver[]>([]);
-    const [submissions, setSubmissions] = useState<PodSubmission[]>([]);
-    const [loading, setLoading] = useState(true);
+    // ── React Query ──────────────────────────────────
+    const queryClient = useQueryClient();
+
+    const { data: loads = [], isLoading: loadsLoading } = useQuery({
+        queryKey: ["pod-loads"],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("daily_loads")
+                .select("id, load_date, reference_number, client_name, pickup_address, delivery_address, driver_id, vehicle_id, status, hub, packages, pod_confirmed, bol_url, signature_url, signer_name")
+                .order("load_date", { ascending: false })
+                .limit(300);
+            if (error) throw error;
+            return (data ?? []) as Load[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: drivers = [] } = useQuery({
+        queryKey: ["pod-drivers"],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("drivers").select("id, full_name, hub");
+            if (error) throw error;
+            return (data ?? []) as Driver[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: submissions = [], isLoading: subsLoading } = useQuery({
+        queryKey: ["pod-submissions"],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("pod_submissions")
+                .select("id, load_id, driver_id, photo_url, signature_url, signer_name, signed_at, notes, lat, lng, captured_at, created_at")
+                .order("created_at", { ascending: false });
+            if (error) throw error;
+            return (data ?? []) as PodSubmission[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const loading = loadsLoading || subsLoading;
 
     // ── Search / Selection ────────────────────────────
     const [search, setSearch] = useState("");
@@ -205,29 +248,11 @@ export default function PodManager() {
     const [dragOver, setDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ── Fetch ─────────────────────────────────────────
-    const fetchData = useCallback(async () => {
-        if (!user) return;
-        setLoading(true);
-        const [loadsRes, driversRes, subsRes] = await Promise.all([
-            supabase
-                .from("daily_loads")
-                .select("id, load_date, reference_number, client_name, pickup_address, delivery_address, driver_id, vehicle_id, status, hub, packages, pod_confirmed, bol_url, signature_url, signer_name")
-                .order("load_date", { ascending: false })
-                .limit(300),
-            supabase.from("drivers").select("id, full_name, hub"),
-            supabase
-                .from("pod_submissions")
-                .select("id, load_id, driver_id, photo_url, signature_url, signer_name, signed_at, notes, lat, lng, captured_at, created_at")
-                .order("created_at", { ascending: false }),
-        ]);
-        if (loadsRes.data) setLoads(loadsRes.data as Load[]);
-        if (driversRes.data) setDrivers(driversRes.data as Driver[]);
-        if (subsRes.data) setSubmissions(subsRes.data as PodSubmission[]);
-        setLoading(false);
-    }, [user]);
-
-    useEffect(() => { fetchData(); }, [fetchData]);
+    // ── Refetch helper for mutations ──────────────────
+    const fetchData = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["pod-loads"] });
+        queryClient.invalidateQueries({ queryKey: ["pod-submissions"] });
+    }, [queryClient]);
 
     // Close dropdown on outside click
     useEffect(() => {

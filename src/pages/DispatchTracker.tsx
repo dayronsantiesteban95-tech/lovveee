@@ -1,11 +1,12 @@
 ﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// DISPATCH TRACKER â€” Daily Load Tracking & Analytics
-// Tab 1: Load Board   â€” CRUD (full OnTime 360 parity)
-// Tab 2: Live Ops     â€” Real-time GPS feed
-// Tab 3: Wait Time    â€” Analytics & detention tracking
-// Tab 4: Daily Report â€” Operations summary / export
+// DISPATCH TRACKER â€" Daily Load Tracking & Analytics
+// Tab 1: Load Board   â€" CRUD (full OnTime 360 parity)
+// Tab 2: Live Ops     â€" Real-time GPS feed
+// Tab 3: Wait Time    â€" Analytics & detention tracking
+// Tab 4: Daily Report â€" Operations summary / export
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
@@ -68,7 +69,7 @@ import LoadSearchFilters, {
     type LoadFilters,
 } from "@/components/LoadSearchFilters";
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Types â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 type Driver = { id: string; full_name: string; hub: string; status: string };
 type Vehicle = { id: string; vehicle_name: string; vehicle_type: string; hub: string; status: string };
 type Load = {
@@ -109,7 +110,7 @@ type Load = {
 };
 type Profile = { user_id: string; full_name: string };
 
-// â”€â”€â”€ Add Load Form Type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Add Load Form Type â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 type AddLoadForm = {
     // Step 1: Load Info
     reference_number: string;
@@ -182,8 +183,8 @@ type RateCard = {
     fuel_surcharge_pct: number;
 };
 
-// â”€â”€â”€ Anika Rate Calculator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Hardcoded Anika rate sheet â€” do NOT pull from DB
+// â"€â"€â"€ Anika Rate Calculator â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// Hardcoded Anika rate sheet â€" do NOT pull from DB
 const ANIKA_RATES = {
     cargo_van: { base: 105, perMile: 2.0, deadheadPerMile: 2.0, weightThreshold: 100, weightRate: 0.10 },
     box_truck:  { base: 170, perMile: 2.5, deadheadPerMile: 2.5, weightThreshold: 600, weightRate: 0.15 },
@@ -299,7 +300,7 @@ const EMPTY_ADD_FORM: AddLoadForm = {
 const AOG_SERVICE_TYPES = [
     { value: "AOG",      label: "âœˆï¸ AOG",      hub_key: "hotshot" },
     { value: "Courier",  label: "âš¡ Courier",   hub_key: "courier" },
-    { value: "Standard", label: "ðŸ“¦ Standard",  hub_key: "last_mile" },
+    { value: "Standard", label: "ðŸ"¦ Standard",  hub_key: "last_mile" },
 ];
 const PKG_TYPES = ["PLT", "CTN", "BOX", "OTHER"];
 const VEHICLE_TYPES_DISPATCH = [
@@ -309,16 +310,16 @@ const VEHICLE_TYPES_DISPATCH = [
     { value: "box_truck",  label: "Box Truck" },
 ];
 
-// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Constants â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 const SHIFTS = [{ value: "day", label: "DÃ­a" }, { value: "night", label: "Noche" }];
 const STATUSES = [
     { value: "pending", label: "Pending", color: "bg-gray-500" },
     { value: "assigned", label: "Assigned", color: "bg-blue-500" },
     { value: "blasted", label: "Blasted", color: "bg-violet-500" },
     { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_pickup", label: "At Pickup ðŸ“", color: "bg-blue-400" },
+    { value: "arrived_pickup", label: "At Pickup ðŸ"", color: "bg-blue-400" },
     { value: "in_transit", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_delivery", label: "At Delivery ðŸ“", color: "bg-purple-400" },
+    { value: "arrived_delivery", label: "At Delivery ðŸ"", color: "bg-purple-400" },
     { value: "delivered", label: "Delivered", color: "bg-green-500" },
     { value: "completed", label: "Completed", color: "bg-green-600" },
     { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
@@ -331,7 +332,7 @@ const WAIT_COLORS = [
     { max: 60, label: "High", class: "bg-orange-500/15 text-orange-700 dark:text-orange-400" },
     { max: Infinity, label: "Critical", class: "bg-red-500/15 text-red-700 dark:text-red-400" },
 ];
-const DETENTION_THRESHOLD = 30; // minutes â€” industry standard
+const DETENTION_THRESHOLD = 30; // minutes â€" industry standard
 
 function waitBadgeClass(mins: number) {
     return (WAIT_COLORS.find((w) => mins <= w.max) ?? WAIT_COLORS[3]).class;
@@ -343,29 +344,131 @@ export default function DispatchTracker() {
     const { unreadMap } = useUnreadMessageCounts(user?.id ?? null);
     const { toast } = useToast();
 
-    // â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const [loads, setLoads] = useState<Load[]>([]);
-    const [drivers, setDrivers] = useState<Driver[]>([]);
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [profiles, setProfiles] = useState<Profile[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    // â”€â”€ Live GPS (own tracking â€” replaces Onfleet/OT360) â”€â”€
-    const { drivers: liveDrivers, loading: liveDriversLoading, connected: liveDriversConnected, refresh: refreshLiveDrivers } = useRealtimeDriverMap();
-
-    // â”€â”€ Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Date range (must be declared before React Query) ────────────────
     const [selectedDate, setSelectedDate] = useState(todayISO());
     const [dateRangeStart, setDateRangeStart] = useState(daysAgoISO(7));
     const [dateRangeEnd, setDateRangeEnd] = useState(todayISO());
 
-    // â”€â”€ Load Board Search + Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ React Query ───────────────────────────────────────
+    const queryClient = useQueryClient();
+
+    const { data: loads = [], isLoading: loadsLoading, dataUpdatedAt: loadsUpdatedAt } = useQuery({
+        queryKey: ["dispatch-loads", dateRangeStart, dateRangeEnd],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("daily_loads")
+                .select("*")
+                .gte("load_date", dateRangeStart)
+                .lte("load_date", dateRangeEnd)
+                .order("load_date", { ascending: false });
+            if (error) throw error;
+            return (data ?? []) as Load[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: drivers = [] } = useQuery({
+        queryKey: ["dispatch-drivers"],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("drivers").select("id, full_name, hub, status").eq("status", "active");
+            if (error) throw error;
+            return (data ?? []) as Driver[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: vehicles = [] } = useQuery({
+        queryKey: ["dispatch-vehicles"],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("vehicles").select("id, vehicle_name, vehicle_type, hub, status").eq("status", "active");
+            if (error) throw error;
+            return (data ?? []) as Vehicle[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: profiles = [] } = useQuery({
+        queryKey: ["dispatch-profiles"],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("profiles").select("user_id, full_name");
+            if (error) throw error;
+            return (data ?? []) as Profile[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: companies = [] } = useQuery({
+        queryKey: ["dispatch-companies"],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("companies").select("id, name, address, city, state, phone").order("name");
+            if (error) throw error;
+            return (data ?? []) as Company[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: rateCards = [] } = useQuery({
+        queryKey: ["dispatch-rate-cards"],
+        queryFn: async () => {
+            const { data, error } = await supabase.from("rate_cards").select("*");
+            if (error) throw error;
+            return (data ?? []) as RateCard[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const { data: recentAddresses = [] } = useQuery({
+        queryKey: ["dispatch-recent-addresses"],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("daily_loads")
+                .select("pickup_address, delivery_address, pickup_company, delivery_company")
+                .not("pickup_address", "is", null)
+                .order("created_at", { ascending: false })
+                .limit(60);
+            if (error) throw error;
+            return [...new Set([
+                ...(data ?? []).map((d: any) => d.pickup_address),
+                ...(data ?? []).map((d: any) => d.delivery_address),
+            ].filter(Boolean))].slice(0, 20) as string[];
+        },
+        staleTime: 30_000,
+        retry: 3,
+        enabled: !!user,
+    });
+
+    const loading = loadsLoading;
+
+    // Helper to refetch loads (used by realtime + mutations)
+    const fetchLoads = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["dispatch-loads", dateRangeStart, dateRangeEnd] });
+    }, [queryClient, dateRangeStart, dateRangeEnd]);
+
+    // â"€â"€ Data â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+    // (loads, drivers, vehicles, profiles, companies, rateCards, recentAddresses now come from useQuery above)
+
+    // â"€â"€ Live GPS (own tracking â€" replaces Onfleet/OT360) â"€â"€
+    const { drivers: liveDrivers, loading: liveDriversLoading, connected: liveDriversConnected, refresh: refreshLiveDrivers } = useRealtimeDriverMap();
+
+    // â"€â"€ Load Board Search + Filters â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [loadFilters, setLoadFilters] = useState<LoadFilters>(EMPTY_LOAD_FILTERS);
 
-    // â”€â”€ Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Dialog â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLoad, setEditLoad] = useState<Load | null>(null);
 
-    // â”€â”€ Add Load multi-step form state â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Add Load multi-step form state â"€â"€â"€â"€â"€â"€â"€
     const [addStep, setAddStep] = useState(1); // 1=Load Info, 2=Pickup/Delivery, 3=Cargo+Driver
     const [addForm, setAddForm] = useState<AddLoadForm>(EMPTY_ADD_FORM);
     const [bolFile, setBolFile] = useState<File | null>(null);
@@ -373,11 +476,9 @@ export default function DispatchTracker() {
     const [suggestedDriverId, setSuggestedDriverId] = useState<string | null>(null);
     const bolInputRef = useRef<HTMLInputElement>(null);
 
-    // â”€â”€ CRM & rate card data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const [companies, setCompanies] = useState<Company[]>([]);
+    // â"€â"€ CRM & rate card data â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+    // companies, rateCards, recentAddresses come from useQuery above
     const [companyContacts, setCompanyContacts] = useState<CompanyContact[]>([]);
-    const [rateCards, setRateCards] = useState<RateCard[]>([]);
-    const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
     const [clientSearch, setClientSearch] = useState("");
     const [pickupSearch, setPickupSearch] = useState("");
     const [deliverySearch, setDeliverySearch] = useState("");
@@ -385,7 +486,7 @@ export default function DispatchTracker() {
     const [showPickupDropdown, setShowPickupDropdown] = useState(false);
     const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
 
-    // â”€â”€ New-client inline form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ New-client inline form â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [showNewClient, setShowNewClient] = useState(false);
     const [newClientName, setNewClientName] = useState("");
     const [newClientPhone, setNewClientPhone] = useState("");
@@ -394,126 +495,29 @@ export default function DispatchTracker() {
     const [newClientState, setNewClientState] = useState("");
     const [savingNewClient, setSavingNewClient] = useState(false);
 
-    // â”€â”€ Computed revenue from rate card â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Computed revenue from rate card â"€â"€â"€â"€â"€â"€
     const [computedRevenue, setComputedRevenue] = useState<number | null>(null);
-    // â”€â”€ Anika rate calculator state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Anika rate calculator state â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [anikaModifiers, setAnikaModifiers] = useState<AnikaModifiers>(EMPTY_ANIKA_MODIFIERS);
-    // â”€â”€ Tools sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Tools sidebar â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [toolsOpen, setToolsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState<"quick" | "import" | "history" | "log" | "blast" | null>("quick");
     const [autoDispatchLoadId, setAutoDispatchLoadId] = useState<string | null>(null);
     const [blastDialogLoad, setBlastDialogLoad] = useState<Load | null>(null);
     const [clonePrefill, setClonePrefill] = useState<ReturnType<typeof cloneLoadData> | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
-    // â”€â”€ Detail panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Detail panel â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [selectedLoadDetail, setSelectedLoadDetail] = useState<Load | null>(null);
 
-    // â”€â”€ Auto-refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Auto-refresh â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [secondsAgo, setSecondsAgo] = useState(0);
 
-    // â”€â”€ Status action hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Status action hook â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const { updateStatus } = useLoadStatusActions();
-
-    // â”€â”€ Fetch helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const db = supabase;
 
-    const fetchLoads = useCallback(async () => {
-        const { data, error } = await db.from("daily_loads")
-            .select("*")
-            .gte("load_date", dateRangeStart)
-            .lte("load_date", dateRangeEnd)
-            .order("load_date", { ascending: false });
-        if (error) {
-            toast({ title: "Failed to load dispatch board", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) {
-            setLoads(data);
-            setLastRefreshed(new Date());
-            setSecondsAgo(0);
-        }
-    }, [dateRangeStart, dateRangeEnd]);
-
-    const fetchDrivers = useCallback(async () => {
-        const { data, error } = await db.from("drivers").select("id, full_name, hub, status").eq("status", "active");
-        if (error) {
-            toast({ title: "Failed to load drivers", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) setDrivers(data);
-    }, []);
-
-    const fetchVehicles = useCallback(async () => {
-        const { data, error } = await db.from("vehicles").select("id, vehicle_name, vehicle_type, hub, status").eq("status", "active");
-        if (error) {
-            toast({ title: "Failed to load vehicles", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) setVehicles(data);
-    }, []);
-
-    const fetchProfiles = useCallback(async () => {
-        const { data, error } = await supabase.from("profiles").select("user_id, full_name");
-        if (error) {
-            toast({ title: "Failed to load profiles", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) setProfiles(data as Profile[]);
-    }, []);
-
-    const fetchCompanies = useCallback(async () => {
-        const { data, error } = await supabase
-            .from("companies")
-            .select("id, name, address, city, state, phone")
-            .order("name");
-        if (error) {
-            toast({ title: "Failed to load companies", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) setCompanies(data as Company[]);
-    }, []);
-
-    const fetchRateCards = useCallback(async () => {
-        const { data, error } = await supabase.from("rate_cards").select("*");
-        if (error) {
-            toast({ title: "Failed to load rate cards", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) setRateCards(data as RateCard[]);
-    }, []);
-
-    const fetchRecentAddresses = useCallback(async () => {
-        const { data, error } = await supabase
-            .from("daily_loads")
-            .select("pickup_address, delivery_address, pickup_company, delivery_company")
-            .not("pickup_address", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(60);
-        if (error) {
-            toast({ title: "Failed to load recent addresses", description: error.message, variant: "destructive" });
-            return;
-        }
-        if (data) {
-            const addrs = [...new Set([
-                ...data.map((d: any) => d.pickup_address),
-                ...data.map((d: any) => d.delivery_address),
-            ].filter(Boolean))].slice(0, 20);
-            setRecentAddresses(addrs);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!user) return;
-        Promise.all([fetchLoads(), fetchDrivers(), fetchVehicles(), fetchProfiles(), fetchCompanies(), fetchRateCards(), fetchRecentAddresses()])
-            .finally(() => setLoading(false));
-
-        // Auto-refresh loads every 60 s so dispatchers always see current status
-        const loadRefreshTimer = setInterval(() => fetchLoads(), 60_000);
-        return () => clearInterval(loadRefreshTimer);
-    }, [user, fetchLoads, fetchDrivers, fetchVehicles, fetchProfiles, fetchCompanies, fetchRateCards, fetchRecentAddresses]);
-
-    // â”€â”€ Realtime: geofence arrival toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Realtime: geofence arrival toasts â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     useEffect(() => {
         if (!user) return;
 
@@ -545,22 +549,22 @@ export default function DispatchTracker() {
                         .eq("id", evt.load_id)
                         .single();
 
-                    const refNumber = loadData?.reference_number ?? "â€”";
+                    const refNumber = loadData?.reference_number ?? "â€"";
                     const driverRecord = drivers.find(d => d.id === loadData?.driver_id);
                     const driverName = driverRecord?.full_name ?? "Driver";
                     const eventLabel = evt.new_status === "arrived_pickup" ? "pickup" : "delivery";
 
                     toast({
-                        title: "ðŸ“ Driver Arrived",
-                        description: `${driverName} arrived at ${eventLabel} â€” Ref #${refNumber}`,
+                        title: "ðŸ" Driver Arrived",
+                        description: `${driverName} arrived at ${eventLabel} â€" Ref #${refNumber}`,
                     });
 
                     // Send push confirmation to the driver
                     if (loadData?.driver_id) {
                         sendPushToDrivers(
                             [loadData.driver_id],
-                            'ðŸ“ Arrival Confirmed',
-                            `Dispatch has been notified of your arrival at ${eventLabel} â€” Ref #${refNumber}`,
+                            'ðŸ" Arrival Confirmed',
+                            `Dispatch has been notified of your arrival at ${eventLabel} â€" Ref #${refNumber}`,
                             { load_id: evt.load_id, type: 'arrival_confirmation', event: evt.new_status }
                         ).catch((err: unknown) => {
                             console.warn('[DispatchTracker] Arrival push failed:', err);
@@ -587,13 +591,25 @@ export default function DispatchTracker() {
             )
             .subscribe();
 
+        // Auto-refresh loads every 60 s
+        const loadRefreshTimer = setInterval(() => fetchLoads(), 60_000);
+
         return () => {
             supabase.removeChannel(geofenceChannel);
             supabase.removeChannel(loadsChannel);
+            clearInterval(loadRefreshTimer);
         };
     }, [user, drivers, fetchLoads, toast]);
 
-    // â”€â”€ "X seconds ago" ticker â€” updates every 5 s â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Keep lastRefreshed in sync with React Query data updates â"€â"€
+    useEffect(() => {
+        if (loadsUpdatedAt) {
+            setLastRefreshed(new Date(loadsUpdatedAt));
+            setSecondsAgo(0);
+        }
+    }, [loadsUpdatedAt]);
+
+    // â"€â"€ "X seconds ago" ticker â€" updates every 5 s â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     useEffect(() => {
         const ticker = setInterval(() => {
             setSecondsAgo(Math.floor((Date.now() - lastRefreshed.getTime()) / 1000));
@@ -601,7 +617,7 @@ export default function DispatchTracker() {
         return () => clearInterval(ticker);
     }, [lastRefreshed]);
 
-    // â”€â”€ AI driver suggestion: pick driver whose hub matches pickup city â”€â”€
+    // â"€â"€ AI driver suggestion: pick driver whose hub matches pickup city â"€â"€
     const suggestDriver = useCallback((pickupAddress: string, driverList: Driver[]) => {
         if (!pickupAddress || driverList.length === 0) return;
         const addr = pickupAddress.toLowerCase();
@@ -620,14 +636,14 @@ export default function DispatchTracker() {
         if (match) setSuggestedDriverId(match.id);
     }, []);
 
-    // â”€â”€ When pickup address changes, run AI suggestion â”€â”€â”€â”€â”€â”€
+    // â"€â"€ When pickup address changes, run AI suggestion â"€â"€â"€â"€â"€â"€
     useEffect(() => {
         if (addForm.pickup_address && drivers.length > 0) {
             suggestDriver(addForm.pickup_address, drivers);
         }
     }, [addForm.pickup_address, drivers, suggestDriver]);
 
-    // â”€â”€ Fetch contacts when client company changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Fetch contacts when client company changes â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     useEffect(() => {
         if (!addForm.client_id) { setCompanyContacts([]); return; }
         supabase
@@ -637,7 +653,7 @@ export default function DispatchTracker() {
             .then(({ data }) => { if (data) setCompanyContacts(data as CompanyContact[]); });
     }, [addForm.client_id]);
 
-    // â”€â”€ Auto-compute revenue from rate card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Auto-compute revenue from rate card â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     useEffect(() => {
         if (!rateCards.length) return;
         const svcMap: Record<string, string> = { AOG: "aog", Courier: "courier", Standard: "standard" };
@@ -656,7 +672,7 @@ export default function DispatchTracker() {
         setComputedRevenue(Math.max(withFuel, card.min_charge));
     }, [addForm.service_type, addForm.vehicle_type, addForm.distance_miles, addForm.weight_kg, rateCards]);
 
-    // â”€â”€ Auto-update dimensions_text when L/W/H change â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Auto-update dimensions_text when L/W/H change â"€â"€â"€â"€â"€â"€â"€
     useEffect(() => {
         const { dim_l, dim_w, dim_h } = addForm;
         if (dim_l && dim_w && dim_h) {
@@ -664,7 +680,7 @@ export default function DispatchTracker() {
         }
     }, [addForm.dim_l, addForm.dim_w, addForm.dim_h]);
 
-    // â”€â”€ Save new client company inline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Save new client company inline â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const saveNewClient = async () => {
         if (!newClientName.trim() || !user) return;
         setSavingNewClient(true);
@@ -684,7 +700,7 @@ export default function DispatchTracker() {
         if (error) {
             toast({ title: "Failed to save client", description: error.message, variant: "destructive" });
         } else if (data) {
-            setCompanies((prev) => [...prev, data as Company].sort((a, b) => a.name.localeCompare(b.name)));
+            queryClient.invalidateQueries({ queryKey: ["dispatch-companies"] });
             setAddForm((f) => ({ ...f, client_id: data.id, client_name: data.name }));
             setClientSearch(data.name);
             setShowNewClient(false);
@@ -693,7 +709,7 @@ export default function DispatchTracker() {
         }
     };
 
-    // â”€â”€ Upload BOL to Supabase Storage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Upload BOL to Supabase Storage â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const uploadBol = async (file: File): Promise<string | null> => {
         setBolUploading(true);
         try {
@@ -711,7 +727,7 @@ export default function DispatchTracker() {
         }
     };
 
-    // â”€â”€ Submit new Add Load form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Submit new Add Load form â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const handleAddLoad = async () => {
         if (!user) return;
 
@@ -813,7 +829,7 @@ export default function DispatchTracker() {
         }
     };
 
-    // â”€â”€ Reset add form when dialog closes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Reset add form when dialog closes â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const openAddDialog = useCallback(() => {
         setEditLoad(null);
         setAddForm(EMPTY_ADD_FORM);
@@ -830,7 +846,7 @@ export default function DispatchTracker() {
         setDialogOpen(true);
     }, []);
 
-    // â”€â”€ CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ CRUD â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -911,13 +927,13 @@ export default function DispatchTracker() {
         });
     };
 
-    // â”€â”€ Lookups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "â€”";
-    const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "â€”";
-    const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "â€”";
+    // â"€â"€ Lookups â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "â€"";
+    const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "â€"";
+    const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "â€"";
     const statusInfo = (s: string) => STATUSES.find((st) => st.value === s) ?? STATUSES[0];
 
-    // â”€â”€ Computed / Analytics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Computed / Analytics â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const todayLoads = useMemo(() => loads.filter((l) => l.load_date === todayISO()), [loads]);
     const todayStats = useMemo(() => ({
         count: todayLoads.length,
@@ -932,7 +948,7 @@ export default function DispatchTracker() {
         [loads, selectedDate],
     );
 
-    // â”€â”€ Helper: date range from loadFilters.dateRange â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Helper: date range from loadFilters.dateRange â"€â"€â"€â"€â"€â"€
     const filterDateMatches = useCallback((loadDate: string, dateRange: LoadFilters["dateRange"]) => {
         if (!dateRange) return true;
         const today = todayISO();
@@ -944,7 +960,7 @@ export default function DispatchTracker() {
         return true;
     }, []);
 
-    // â”€â”€ Filtered + sorted board loads â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Filtered + sorted board loads â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     const boardLoads = useMemo(() => {
         let result = rawBoardLoads;
         const { search, status, driverId, serviceType, dateRange, sort } = loadFilters;
@@ -979,7 +995,7 @@ export default function DispatchTracker() {
             result = result.filter((l) => l.service_type === serviceType);
         }
 
-        // Date range filter (applies on top of selectedDate â€” narrows further)
+        // Date range filter (applies on top of selectedDate â€" narrows further)
         if (dateRange) {
             result = result.filter((l) => filterDateMatches(l.load_date, dateRange));
         }
@@ -1071,7 +1087,7 @@ export default function DispatchTracker() {
 
     const copyReport = () => {
         const r = dailyReport;
-        const text = `ðŸ“‹ DAILY OPS REPORT â€” ${selectedDate}\n${"â•".repeat(40)}\n` +
+        const text = `ðŸ"‹ DAILY OPS REPORT â€" ${selectedDate}\n${"â•".repeat(40)}\n` +
             `Loads: ${r.total} (${r.delivered} delivered)\nMiles: ${r.totalMiles}\n` +
             `Revenue: ${fmtMoney(r.totalRevenue)}\nCosts: ${fmtMoney(r.totalCosts)}\n` +
             `Profit: ${fmtMoney(r.profit)} (${r.margin.toFixed(1)}%)\n\n` +
@@ -1081,7 +1097,7 @@ export default function DispatchTracker() {
         toast({ title: "Report copied to clipboard" });
     };
 
-    // â”€â”€ Skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â"€â"€ Skeleton â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
     if (loading) return (
         <div className="space-y-4 animate-in">
             <Skeleton className="h-8 w-64" />
@@ -1150,7 +1166,7 @@ export default function DispatchTracker() {
                     <TabsTrigger value="report" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Daily Report</TabsTrigger>
                 </TabsList>
 
-                {/* â”€â”€â”€â”€â”€â”€â”€â”€ TAB: LIVE OPS â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* â"€â"€â"€â"€â"€â"€â"€â"€ TAB: LIVE OPS â"€â"€â"€â"€â"€â"€â"€â"€ */}
                 <TabsContent value="live">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2">
@@ -1178,7 +1194,7 @@ export default function DispatchTracker() {
                             <IntegrationSyncPanel
                                 onfleetConnected={false}
                                 ontime360Connected={false}
-                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management â†’ Integrations." })}
+                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management â†' Integrations." })}
                             />
                             <RouteOptimizerPanel
                                 loads={boardLoads.map(l => ({
@@ -1269,7 +1285,7 @@ export default function DispatchTracker() {
                         </div>
                     </div>
 
-                    {/* â”€â”€ Search + Filter Bar â”€â”€ */}
+                    {/* â"€â"€ Search + Filter Bar â"€â"€ */}
                     <LoadSearchFilters
                         filters={loadFilters}
                         onFiltersChange={setLoadFilters}
@@ -1335,7 +1351,7 @@ export default function DispatchTracker() {
                                                 <TableRow key={load.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLoadDetail(load)}>
                                                     <TableCell className="font-mono text-xs">
                                                         <div className="flex items-center gap-1.5">
-                                                            {load.reference_number || "â€”"}
+                                                            {load.reference_number || "â€""}
                                                             {unreadMap[load.id] > 0 && (
                                                                 <span className="inline-flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] px-0.5">
                                                                     {unreadMap[load.id] > 99 ? '99+' : unreadMap[load.id]}
@@ -1345,17 +1361,17 @@ export default function DispatchTracker() {
                                                     </TableCell>
                                                     <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "â˜€ï¸ DÃ­a" : "ðŸŒ™ Noche"}</Badge></TableCell>
                                                     <TableCell className="font-medium text-sm">{driverName(load.driver_id)}</TableCell>
-                                                    <TableCell className="text-sm">{load.client_name || "â€”"}</TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "â€”"}</TableCell>
+                                                    <TableCell className="text-sm">{load.client_name || "â€""}</TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "â€""}</TableCell>
                                                     <TableCell className="text-right font-mono text-sm">{Number(load.miles).toFixed(0)}</TableCell>
-                                                    <TableCell className="text-right font-mono text-sm">{Number(load.revenue) > 0 ? fmtMoney(Number(load.revenue)) : "â€”"}</TableCell>
+                                                    <TableCell className="text-right font-mono text-sm">{Number(load.revenue) > 0 ? fmtMoney(Number(load.revenue)) : "â€""}</TableCell>
                                                     <TableCell>
                                                         {load.wait_time_minutes > 0 ? (
                                                             <Badge className={`${waitBadgeClass(load.wait_time_minutes)} text-[10px]`}>
                                                                 {fmtWait(load.wait_time_minutes)}
-                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && " âš ï¸"}
+                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && " âš ï¸"}
                                                             </Badge>
-                                                        ) : <span className="text-muted-foreground text-xs">â€”</span>}
+                                                        ) : <span className="text-muted-foreground text-xs">â€"</span>}
                                                     </TableCell>
                                                     <TableCell>
                                                         <ETABadge
@@ -1374,10 +1390,10 @@ export default function DispatchTracker() {
                                                             </span>
                                                         )}
                                                         {load.status !== "in_progress" && (!load.eta_status || load.eta_status === "unknown") && (
-                                                            <span className="text-muted-foreground text-xs">â€”</span>
+                                                            <span className="text-muted-foreground text-xs">â€"</span>
                                                         )}
                                                     </TableCell>
-                                                    {/* â”€â”€ Status cell: badge + next-action button â”€â”€ */}
+                                                    {/* â"€â"€ Status cell: badge + next-action button â"€â"€ */}
                                                     <TableCell onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex flex-col gap-1 items-start">
                                                             {/* Status badge */}
@@ -1439,7 +1455,7 @@ export default function DispatchTracker() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground">
-                                                        {load.start_time && load.end_time ? `${load.start_time}â€“${load.end_time}` : load.start_time || "â€”"}
+                                                        {load.start_time && load.end_time ? `${load.start_time}â€"${load.end_time}` : load.start_time || "â€""}
                                                     </TableCell>
                                                     <TableCell onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex gap-1">
@@ -1447,7 +1463,7 @@ export default function DispatchTracker() {
                                                                 <Pencil className="h-3 w-3" />
                                                             </Button>
                                                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Clone load"
-                                                                onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "ðŸ“‹ Load cloned", description: "Edit and save the cloned load" }); }}>
+                                                                onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "ðŸ"‹ Load cloned", description: "Edit and save the cloned load" }); }}>
                                                                 <Copy className="h-3 w-3" />
                                                             </Button>
                                                             {!load.driver_id && (
@@ -1499,7 +1515,7 @@ export default function DispatchTracker() {
                                                                                         },
                                                                                         driverName(load.driver_id),
                                                                                     );
-                                                                                    toast({ title: "ðŸ“„ Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                                    toast({ title: "ðŸ"" Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
                                                                                 }}
                                                                             >
                                                                                 <ReceiptText className="h-3.5 w-3.5" />
@@ -1636,7 +1652,7 @@ export default function DispatchTracker() {
                     </div>
                 </TabsContent>
 
-                {/* â”€â”€â”€â”€â”€â”€â”€â”€ TAB: WAIT TIME INTELLIGENCE â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* â"€â"€â"€â"€â"€â"€â"€â"€ TAB: WAIT TIME INTELLIGENCE â"€â"€â"€â"€â"€â"€â"€â"€ */}
                 <TabsContent value="wait" className="space-y-6">
                     {/* Wait Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1730,8 +1746,8 @@ export default function DispatchTracker() {
                                         {waitAnalytics.detentionEligible.map((l) => (
                                             <TableRow key={l.id}>
                                                 <TableCell className="text-sm">{l.load_date}</TableCell>
-                                                <TableCell className="font-mono text-xs">{l.reference_number || "â€”"}</TableCell>
-                                                <TableCell className="text-sm">{l.client_name || "â€”"}</TableCell>
+                                                <TableCell className="font-mono text-xs">{l.reference_number || "â€""}</TableCell>
+                                                <TableCell className="text-sm">{l.client_name || "â€""}</TableCell>
                                                 <TableCell className="text-sm">{driverName(l.driver_id)}</TableCell>
                                                 <TableCell><Badge className={`${waitBadgeClass(l.wait_time_minutes)} text-xs`}>{fmtWait(l.wait_time_minutes)}</Badge></TableCell>
                                                 <TableCell className="text-right font-mono">{l.detention_billed > 0 ? fmtMoney(l.detention_billed) : <span className="text-red-500 text-xs">Not billed</span>}</TableCell>
@@ -1744,7 +1760,7 @@ export default function DispatchTracker() {
                     </Card>
                 </TabsContent>
 
-                {/* â”€â”€â”€â”€â”€â”€â”€â”€ TAB: DAILY REPORT â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* â"€â"€â"€â"€â"€â"€â"€â"€ TAB: DAILY REPORT â"€â"€â"€â"€â"€â"€â"€â"€ */}
                 <TabsContent value="report" className="space-y-6">
                     <div className="flex items-center gap-3">
                         <Label className="text-xs text-muted-foreground">Report Date</Label>
@@ -1761,7 +1777,7 @@ export default function DispatchTracker() {
                             { label: "Total Miles", value: dailyReport.totalMiles.toFixed(0), sub: "load miles" },
                             { label: "Revenue", value: fmtMoney(dailyReport.totalRevenue), sub: "gross" },
                             { label: "Costs", value: fmtMoney(dailyReport.totalCosts), sub: "driver + fuel" },
-                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "â–²" : "â–¼" },
+                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "â-²" : "â-¼" },
                             { label: "Margin", value: `${dailyReport.margin.toFixed(1)}%`, sub: dailyReport.margin >= 30 ? "Healthy" : dailyReport.margin >= 15 ? "OK" : "Low" },
                         ].map((s) => (
                             <Card key={s.label} className="glass-card rounded-2xl">
@@ -1799,7 +1815,7 @@ export default function DispatchTracker() {
                                                 <TableCell className="text-center">{d.loads}</TableCell>
                                                 <TableCell className="text-right font-mono">{d.miles.toFixed(0)}</TableCell>
                                                 <TableCell className="text-right font-mono">{fmtMoney(d.revenue)}</TableCell>
-                                                <TableCell className="text-right font-mono text-xs">{d.miles > 0 ? fmtMoney(d.revenue / d.miles) : "â€”"}</TableCell>
+                                                <TableCell className="text-right font-mono text-xs">{d.miles > 0 ? fmtMoney(d.revenue / d.miles) : "â€""}</TableCell>
                                                 <TableCell><Badge className={`${waitBadgeClass(d.avgWait)} text-xs`}>{fmtWait(d.avgWait)}</Badge></TableCell>
                                             </TableRow>
                                         ))}
@@ -1837,7 +1853,7 @@ export default function DispatchTracker() {
             }}>
                 <DialogContent className={editLoad ? "max-w-2xl max-h-[90vh] overflow-y-auto" : "max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0"}>
 
-                    {/* â”€â”€ EDIT MODE: existing compact form â”€â”€ */}
+                    {/* â"€â"€ EDIT MODE: existing compact form â"€â"€ */}
                     {editLoad && (
                         <>
                             <DialogHeader className="px-6 pt-6">
@@ -1900,9 +1916,9 @@ export default function DispatchTracker() {
                         </>
                     )}
 
-                    {/* â”€â”€ ADD MODE: full multi-step form â”€â”€ */}
+                    {/* â"€â"€ ADD MODE: full multi-step form â"€â"€ */}
                     {!editLoad && (() => {
-                        // â”€â”€ helpers scoped to render â”€â”€
+                        // â"€â"€ helpers scoped to render â"€â"€
                         const af = addForm;
                         const setAf = (patch: Partial<AddLoadForm>) => setAddForm((f) => ({ ...f, ...patch }));
 
@@ -1970,7 +1986,7 @@ export default function DispatchTracker() {
                                                         active ? "bg-primary text-primary-foreground" :
                                                         "bg-muted text-muted-foreground"
                                                     }`}>
-                                                        {done ? "âœ“" : step}
+                                                        {done ? "âœ"" : step}
                                                     </div>
                                                     <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
                                                 </button>
@@ -1990,7 +2006,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* Reference & Consol */}
                                             <div>
-                                                <p className="form-section-label">ðŸ“‹ Load Reference</p>
+                                                <p className="form-section-label">ðŸ"‹ Load Reference</p>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
                                                         <Label className="text-xs">Reference Number <span className="text-red-500">*</span></Label>
@@ -2011,7 +2027,7 @@ export default function DispatchTracker() {
                                                     <div className="col-span-2">
                                                         <Label className="text-xs">Cutoff Time (optional)</Label>
                                                         <Input type="datetime-local" value={af.cutoff_time} onChange={(e) => setAf({ cutoff_time: e.target.value })} className="mt-1" />
-                                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff â€” maximum delivery time before flight is missed</p>
+                                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff â€" maximum delivery time before flight is missed</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2146,7 +2162,7 @@ export default function DispatchTracker() {
                                                 </div>
                                             </div>
 
-                                            {/* â”€â”€ Anika Live Rate Card â”€â”€ */}
+                                            {/* â"€â"€ Anika Live Rate Card â"€â"€ */}
                                             {(() => {
                                                 const miles = parseFloat(af.distance_miles) || 0;
                                                 const wKg = parseFloat(af.weight_kg) || 0;
@@ -2194,7 +2210,7 @@ export default function DispatchTracker() {
 
                                             {/* Revenue */}
                                             <div>
-                                                <p className="form-section-label">ðŸ’µ Revenue</p>
+                                                <p className="form-section-label">ðŸ'µ Revenue</p>
                                                 <div className="mt-1">
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
@@ -2228,7 +2244,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* PICKUP */}
                                             <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/5">
-                                                <p className="form-section-label text-green-700 dark:text-green-400">ðŸ“ Pickup Location</p>
+                                                <p className="form-section-label text-green-700 dark:text-green-400">ðŸ" Pickup Location</p>
 
                                                 {/* Address search */}
                                                 <div className="relative mt-2">
@@ -2283,7 +2299,7 @@ export default function DispatchTracker() {
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <div>
                                                             <Label className="text-xs">Open Hours</Label>
-                                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00â€“17:00 Monâ€“Fri" className="mt-1" />
+                                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00â€"17:00 Monâ€"Fri" className="mt-1" />
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
@@ -2381,7 +2397,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* Cargo */}
                                             <div>
-                                                <p className="form-section-label">ðŸ“¦ Cargo Details</p>
+                                                <p className="form-section-label">ðŸ"¦ Cargo Details</p>
                                                 <div className="grid grid-cols-3 gap-3 mt-1">
                                                     <div>
                                                         <Label className="text-xs">Packages *</Label>
@@ -2405,9 +2421,9 @@ export default function DispatchTracker() {
                                                     <Label className="text-xs">Dimensions (CM)</Label>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Input type="number" value={af.dim_l} onChange={(e) => setAf({ dim_l: e.target.value })} placeholder="L" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">Ã—</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">Ã-</span>
                                                         <Input type="number" value={af.dim_w} onChange={(e) => setAf({ dim_w: e.target.value })} placeholder="W" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">Ã—</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">Ã-</span>
                                                         <Input type="number" value={af.dim_h} onChange={(e) => setAf({ dim_h: e.target.value })} placeholder="H" className="text-center" />
                                                     </div>
                                                     {cubic > 0 && (
@@ -2421,11 +2437,11 @@ export default function DispatchTracker() {
 
                                                 <div className="mt-3">
                                                     <Label className="text-xs">Cargo Description</Label>
-                                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART â€” LH ENGINE SEAL" className="mt-1" />
+                                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART â€" LH ENGINE SEAL" className="mt-1" />
                                                 </div>
                                             </div>
 
-                                            {/* â”€â”€ Anika Price Modifiers â”€â”€ */}
+                                            {/* â"€â"€ Anika Price Modifiers â"€â"€ */}
                                             {(af.vehicle_type === "cargo_van" || af.vehicle_type === "box_truck") && (() => {
                                                 const miles = parseFloat(af.distance_miles) || 0;
                                                 const wKg = parseFloat(af.weight_kg) || 0;
@@ -2444,7 +2460,7 @@ export default function DispatchTracker() {
                                                             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">â° Time &amp; Access</p>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                 {[
-                                                                    { key: "afterHours" as const, label: "After Hours (20:00â€“07:59)", price: 25 },
+                                                                    { key: "afterHours" as const, label: "After Hours (20:00â€"07:59)", price: 25 },
                                                                     { key: "weekend" as const, label: "Weekend (Sat & Sun)", price: 25 },
                                                                     { key: "holiday" as const, label: "Holiday", price: 50 },
                                                                     { key: "tenderingFee" as const, label: "Tendering Fee (airport)", price: 15 },
@@ -2465,7 +2481,7 @@ export default function DispatchTracker() {
                                                                 <Label className="text-xs">Additional Stops (+$50 each)</Label>
                                                                 <div className="flex items-center gap-2">
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>âˆ’</Button>
+                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>âˆ'</Button>
                                                                     <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                         onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
@@ -2477,7 +2493,7 @@ export default function DispatchTracker() {
 
                                                         {/* Accessorial Services */}
                                                         <div className="space-y-2">
-                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">ðŸ“‹ Accessorial Services</p>
+                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">ðŸ"‹ Accessorial Services</p>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                 {[
                                                                     { key: "specialHandling" as const, label: "Special Handling", price: 20 },
@@ -2506,7 +2522,7 @@ export default function DispatchTracker() {
                                                                     <Label className="text-xs">{label}</Label>
                                                                     <div className="flex items-center gap-2">
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>âˆ’</Button>
+                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>âˆ'</Button>
                                                                         <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                             onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>
@@ -2550,7 +2566,7 @@ export default function DispatchTracker() {
 
                                             {/* Driver Assignment */}
                                             <div>
-                                                <p className="form-section-label">ðŸš— Driver Assignment <span className="text-red-500">*</span></p>
+                                                <p className="form-section-label">ðŸš- Driver Assignment <span className="text-red-500">*</span></p>
                                                 <div className="space-y-2 mt-1">
                                                     {drivers.length === 0 && (
                                                         <p className="text-sm text-muted-foreground">No active drivers found.</p>
@@ -2594,7 +2610,7 @@ export default function DispatchTracker() {
 
                                             {/* BOL Upload */}
                                             <div>
-                                                <p className="form-section-label">ðŸ“„ BOL Document</p>
+                                                <p className="form-section-label">ðŸ"" BOL Document</p>
                                                 <div className="mt-1">
                                                     <input ref={bolInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
                                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) setBolFile(f); }} />
@@ -2603,7 +2619,7 @@ export default function DispatchTracker() {
                                                             className="w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all flex flex-col items-center gap-2 text-muted-foreground">
                                                             <Upload className="h-5 w-5" />
                                                             <p className="text-sm">Click to upload BOL (PDF / image)</p>
-                                                            <p className="text-xs">Optional â€” can be added later</p>
+                                                            <p className="text-xs">Optional â€" can be added later</p>
                                                         </button>
                                                     ) : (
                                                         <div className="flex items-center gap-3 p-3 rounded-xl border bg-muted/20">
@@ -2625,17 +2641,17 @@ export default function DispatchTracker() {
                                             <div className="p-4 rounded-xl bg-muted/30 border space-y-2 text-sm">
                                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Summary</p>
                                                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "â€”"}</span>
-                                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "â€”"}</span>
+                                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "â€""}</span>
+                                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "â€""}</span>
                                                     <span className="text-muted-foreground">Service</span><span>{af.service_type}</span>
                                                     <span className="text-muted-foreground">Revenue</span>
                                                     <span className="font-semibold text-green-600">
                                                         ${af.revenue ? parseFloat(af.revenue).toFixed(2) : computedRevenue ? computedRevenue.toFixed(2) : "0.00"}
                                                     </span>
-                                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "â€”"}</span>
-                                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "â€”"}</span>
+                                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "â€""}</span>
+                                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "â€""}</span>
                                                     <span className="text-muted-foreground">Driver</span><span>{drivers.find(d => d.id === af.driver_id)?.full_name || <span className="text-red-500">Not assigned</span>}</span>
-                                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "â€”"}</span>
+                                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "â€""}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -2688,7 +2704,7 @@ export default function DispatchTracker() {
                     service_type: blastDialogLoad.service_type ?? "",
                 } : null}
                 onBlastSent={(_blastId, driverCount) => {
-                    toast({ title: `ðŸ“¡ Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
+                    toast({ title: `ðŸ"¡ Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
                     fetchLoads();
                     setBlastDialogLoad(null);
                 }}
