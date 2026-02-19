@@ -3,6 +3,24 @@
  *
  * Handles updating daily_loads.status and inserting a load_status_events row.
  * Also updates actual_pickup / actual_delivery timestamps when status transitions occur.
+ *
+ * ── DESIGN INPUT NEEDED ──────────────────────────────────────────────────────
+ * RACE CONDITION: Two dispatchers can assign the same driver to two loads
+ * simultaneously. There is no DB-level lock or "is driver already active?"
+ * check. Options:
+ *   A) Add a DB trigger/unique partial index: driver_id WHERE status IN
+ *      ('assigned','in_progress','arrived_pickup','in_transit','arrived_delivery')
+ *   B) Add a Supabase edge function with a serializable transaction that checks
+ *      driver availability before updating the load.
+ *   C) Soft-warn: query for active loads by driver_id before assigning, show
+ *      a confirmation dialog if a conflict is found.
+ * Recommended: Option C (immediate, no DB migration) + Option A long-term.
+ *
+ * STALE DETAIL PANEL: LoadDetailPanel captures a snapshot of the load at open
+ * time. Realtime updates (other dispatchers changing status) don't propagate to
+ * the open panel unless onRefresh() is called. Consider subscribing to a
+ * Supabase realtime channel on `load.id` inside the panel.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";

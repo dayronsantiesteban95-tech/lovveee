@@ -206,7 +206,7 @@ const DEFAULT_FORM: InviteForm = {
 
 export default function TeamManagement() {
   const { user } = useAuth();
-  const { loading: roleLoading } = useUserRole();
+  const { isOwner, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
 
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -444,19 +444,12 @@ export default function TeamManagement() {
           updated = true;
         }
       } catch {
-        // Edge Function unavailable — try updating user_roles table directly
-        try {
-          const { error } = await supabase
-            .from("user_roles")
-            .upsert({ user_id: editTarget.id, role: dbRole }, { onConflict: "user_id,role" });
-          if (error) {
-            toast({ title: "Error", description: "Failed to update role: " + error.message, variant: "destructive" });
-          } else {
-            updated = true;
-          }
-        } catch (fallbackErr) {
-          toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
-        }
+        // Edge Function unavailable — role changes require owner auth via server, cannot fall back to client
+        toast({
+          title: "Role update unavailable",
+          description: "The user management service is offline. Please try again later.",
+          variant: "destructive",
+        });
       }
 
       if (updated) {
@@ -525,6 +518,19 @@ export default function TeamManagement() {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // 🔒 Security guard: only owners can access Team Management
+  if (!isOwner) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4 text-muted-foreground">
+        <Shield className="h-12 w-12 opacity-30" />
+        <p className="text-lg font-semibold">Access Denied</p>
+        <p className="text-sm text-center max-w-xs">
+          You don&apos;t have permission to view this page. Contact your account owner.
+        </p>
       </div>
     );
   }
