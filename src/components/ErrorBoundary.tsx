@@ -26,6 +26,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
     render() {
         if (this.state.hasError) {
+            const isDev = import.meta.env.DEV;
             return (
                 <div style={{
                     minHeight: "100vh",
@@ -51,21 +52,27 @@ export class ErrorBoundary extends React.Component<Props, State> {
                         <p style={{ color: "#94a3b8", marginBottom: "1rem", fontSize: "0.875rem" }}>
                             The app encountered an error. Check the browser console (F12) for details.
                         </p>
-                        <pre style={{
-                            background: "#0f172a",
-                            padding: "1rem",
-                            borderRadius: "8px",
-                            fontSize: "0.75rem",
-                            overflow: "auto",
-                            maxHeight: "300px",
-                            color: "#fbbf24",
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                        }}>
-                            {this.state.error?.message}
-                            {"\n\n"}
-                            {this.state.error?.stack}
-                        </pre>
+                        {isDev ? (
+                            <pre style={{
+                                background: "#0f172a",
+                                padding: "1rem",
+                                borderRadius: "8px",
+                                fontSize: "0.75rem",
+                                overflow: "auto",
+                                maxHeight: "300px",
+                                color: "#fbbf24",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                            }}>
+                                {this.state.error?.message}
+                                {"\n\n"}
+                                {this.state.error?.stack}
+                            </pre>
+                        ) : (
+                            <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>
+                                Error ID has been reported to our team.
+                            </p>
+                        )}
                         <button
                             onClick={() => window.location.reload()}
                             style={{

@@ -75,10 +75,10 @@ export function useAlerts(options: UseAlertsOptions = {}) {
     const prevAlertIdsRef = useRef<Set<string>>(new Set());
     const autoPingedRef = useRef<Set<string>>(new Set());
 
-    const today = new Date().toISOString().slice(0, 10);
-
     // ── Fetch alerts from route_alerts table ──
     const fetchAlerts = useCallback(async () => {
+        // Computed fresh each call so it's always today's date even after midnight
+        const today = new Date().toISOString().slice(0, 10);
         try {
         const { data, error } = await (supabase as any)
             .from("route_alerts")

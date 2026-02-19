@@ -24,7 +24,7 @@ export async function sendPushToDrivers(
     data: data ?? {},
   };
 
-  await fetch('https://onesignal.com/api/v1/notifications', {
+  const res = await fetch('https://onesignal.com/api/v1/notifications', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,4 +32,11 @@ export async function sendPushToDrivers(
     },
     body: JSON.stringify(payload),
   });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => 'unknown');
+    throw new Error(`OneSignal error ${res.status}: ${body}`);
+  }
+
+  return res.json();
 }
