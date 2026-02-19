@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+export type UserRole = "owner" | "dispatcher" | "driver";
+
 export function useUserRole() {
   const { user, loading: authLoading } = useAuth();
-  const [role, setRole] = useState<"owner" | "dispatcher" | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function useUserRole() {
           // No role row yet (new user) — default to dispatcher
           setRole("dispatcher");
         } else {
-          setRole((data.role as "owner" | "dispatcher") ?? "dispatcher");
+          setRole((data.role as UserRole) ?? "dispatcher");
         }
         setLoading(false);
       })

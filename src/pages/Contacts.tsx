@@ -141,7 +141,8 @@ export default function Contacts() {
     const { data } = await supabase
       .from("contacts")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
     if (data) setContacts(data as Contact[]);
     setLoading(false);
   }, []);

@@ -60,8 +60,8 @@ export default function TaskBoard() {
 
   const fetchTasks = useCallback(async () => {
     const [{ data: tasksData }, { data: linksData }] = await Promise.all([
-      supabase.from("tasks").select("*").order("created_at", { ascending: false }),
-      supabase.from("task_lead_links").select("task_id, lead_id, leads(company_name)"),
+      supabase.from("tasks").select("*").order("created_at", { ascending: false }).limit(500),
+      supabase.from("task_lead_links").select("task_id, lead_id, leads(company_name)").limit(500),
     ]);
     if (tasksData) setTasks(tasksData as Task[]);
     if (linksData) setTaskLeadLinks(linksData as TaskLeadLink[]);
@@ -71,7 +71,7 @@ export default function TaskBoard() {
   useEffect(() => {
     fetchTasks();
     supabase.from("profiles").select("user_id, full_name").then(({ data }) => { if (data) setProfiles(data); });
-    supabase.from("leads").select("id, company_name").then(({ data }) => { if (data) setLeads(data); });
+    supabase.from("leads").select("id, company_name").limit(500).then(({ data }) => { if (data) setLeads(data); });
   }, [fetchTasks]);
 
   useEffect(() => {

@@ -124,7 +124,7 @@ async function fetchDriversData(today: string): Promise<Driver[]> {
   const [driversRes, shiftsRes, locRes, loadsActiveRes] = await Promise.all([
     supabase.from("drivers").select("id,full_name,hub").order("full_name"),
     supabase.from("driver_shifts").select("driver_id,status").gte("start_time", today + "T00:00:00").lte("start_time", today + "T23:59:59"),
-    supabase.from("driver_locations").select("driver_id,recorded_at").order("recorded_at", { ascending: false }),
+    supabase.from("driver_locations").select("driver_id,recorded_at").order("recorded_at", { ascending: false }).limit(500),
     supabase.from("daily_loads").select("driver_id,reference_number").eq("load_date", today).eq("status", "in_progress"),
   ]);
 
@@ -204,7 +204,7 @@ async function fetchWeekStatsData(today: string): Promise<WeekStats> {
   for (const r of rows) { if (r.client_name) clientCounts[r.client_name] = (clientCounts[r.client_name] ?? 0) + 1; }
   const topClient = Object.entries(clientCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  const { data: driverRows } = await supabase.from("drivers").select("id,full_name");
+  const { data: driverRows } = await supabase.from("drivers").select("id,full_name").limit(500);
   const dMap: Record<string, string> = {};
   for (const d of (driverRows ?? [])) dMap[d.id] = d.full_name;
 

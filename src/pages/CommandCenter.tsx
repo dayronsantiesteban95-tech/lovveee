@@ -417,8 +417,8 @@ export default function CommandCenter() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         const [loadsRes, driversRes] = await Promise.all([
-            supabase.from("daily_loads").select("*").eq("load_date", today).order("created_at", { ascending: false }),
-            supabase.from("drivers").select("*").order("full_name"),
+            supabase.from("daily_loads").select("*").eq("load_date", today).order("created_at", { ascending: false }).limit(500),
+            supabase.from("drivers").select("*").order("full_name").limit(200),
         ]);
         if (loadsRes.data) setLoads(loadsRes.data);
         if (driversRes.data) setDrivers(driversRes.data);

@@ -104,7 +104,7 @@ export default function Pipeline() {
   const { toast } = useToast();
 
   const fetchLeads = useCallback(async () => {
-    const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(500);
     if (data) setLeads(data as Lead[]);
     setLoading(false);
   }, []);

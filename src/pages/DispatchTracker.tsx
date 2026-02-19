@@ -300,7 +300,7 @@ const EMPTY_ADD_FORM: AddLoadForm = {
 const AOG_SERVICE_TYPES = [
     { value: "AOG",      label: "✈️ AOG",      hub_key: "hotshot" },
     { value: "Courier",  label: "⚡ Courier",   hub_key: "courier" },
-    { value: "Standard", label: "?? Standard",  hub_key: "last_mile" },
+    { value: "Standard", label: "📦 Standard",  hub_key: "last_mile" },
 ];
 const PKG_TYPES = ["PLT", "CTN", "BOX", "OTHER"];
 const VEHICLE_TYPES_DISPATCH = [
@@ -317,9 +317,9 @@ const STATUSES = [
     { value: "assigned", label: "Assigned", color: "bg-blue-500" },
     { value: "blasted", label: "Blasted", color: "bg-violet-500" },
     { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_pickup", label: "At Pickup ??", color: "bg-blue-400" },
+    { value: "arrived_pickup", label: "At Pickup 📍", color: "bg-blue-400" },
     { value: "in_transit", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_delivery", label: "At Delivery ??", color: "bg-purple-400" },
+    { value: "arrived_delivery", label: "At Delivery 📍", color: "bg-purple-400" },
     { value: "delivered", label: "Delivered", color: "bg-green-500" },
     { value: "completed", label: "Completed", color: "bg-green-600" },
     { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
@@ -473,7 +473,6 @@ export default function DispatchTracker() {
     const [addForm, setAddForm] = useState<AddLoadForm>(EMPTY_ADD_FORM);
     const [bolFile, setBolFile] = useState<File | null>(null);
     const [bolUploading, setBolUploading] = useState(false);
-    const [isSubmittingLoad, setIsSubmittingLoad] = useState(false);
     const [suggestedDriverId, setSuggestedDriverId] = useState<string | null>(null);
     const bolInputRef = useRef<HTMLInputElement>(null);
 
@@ -556,7 +555,7 @@ export default function DispatchTracker() {
                     const eventLabel = evt.new_status === "arrived_pickup" ? "pickup" : "delivery";
 
                     toast({
-                        title: "?? Driver Arrived",
+                        title: "📍 Driver Arrived",
                         description: `${driverName} arrived at ${eventLabel} — Ref #${refNumber}`,
                     });
 
@@ -564,7 +563,7 @@ export default function DispatchTracker() {
                     if (loadData?.driver_id) {
                         sendPushToDrivers(
                             [loadData.driver_id],
-                            '? Arrival Confirmed',
+                            '📍 Arrival Confirmed',
                             `Dispatch has been notified of your arrival at ${eventLabel} — Ref #${refNumber}`,
                             { load_id: evt.load_id, type: 'arrival_confirmation', event: evt.new_status }
                         ).catch((err: unknown) => {
@@ -731,10 +730,7 @@ export default function DispatchTracker() {
     // �"��"� Submit new Add Load form �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
     const handleAddLoad = async () => {
         if (!user) return;
-        if (isSubmittingLoad) return; // prevent double-submit
 
-        setIsSubmittingLoad(true);
-        try {
         // Validate required fields
         if (!addForm.reference_number.trim()) {
             toast({ title: "Reference number required", variant: "destructive" }); return;
@@ -752,32 +748,10 @@ export default function DispatchTracker() {
             toast({ title: "Delivery address required", variant: "destructive" }); return;
         }
 
-        // Check for duplicate reference_number
-        const trimmedRef = addForm.reference_number.trim();
-        if (trimmedRef) {
-            const { data: existing, error: dupErr } = await supabase
-                .from("daily_loads")
-                .select("id")
-                .eq("reference_number", trimmedRef)
-                .limit(1);
-            if (!dupErr && existing && existing.length > 0) {
-                toast({
-                    title: "Duplicate reference number",
-                    description: `A load with reference "${trimmedRef}" already exists.`,
-                    variant: "destructive",
-                });
-                return;
-            }
-        }
-
-        // Upload BOL if provided — abort if upload fails
+        // Upload BOL if provided
         let bolUrl = addForm.bol_url || null;
         if (bolFile) {
             bolUrl = await uploadBol(bolFile);
-            if (bolUrl === null) {
-                // uploadBol already showed an error toast; abort load creation
-                return;
-            }
         }
 
         // Revenue: use manual if entered, else computed from rate card
@@ -787,7 +761,7 @@ export default function DispatchTracker() {
 
         const payload: Record<string, any> = {
             load_date: todayISO(),
-            reference_number: addForm.reference_number.trim() || null,
+            reference_number: addForm.reference_number || null,
             consol_number: addForm.consol_number || null,
             client_name: addForm.client_name || null,
             service_type: addForm.service_type || "AOG",
@@ -852,9 +826,6 @@ export default function DispatchTracker() {
             setCompanyContacts([]);
             setAnikaModifiers(EMPTY_ANIKA_MODIFIERS);
             fetchLoads();
-        }
-        } finally {
-            setIsSubmittingLoad(false);
         }
     };
 
@@ -1116,7 +1087,7 @@ export default function DispatchTracker() {
 
     const copyReport = () => {
         const r = dailyReport;
-        const text = `?? DAILY OPS REPORT — ${selectedDate}\n${"═".repeat(40)}\n` +
+        const text = `📋 DAILY OPS REPORT — ${selectedDate}\n${"═".repeat(40)}\n` +
             `Loads: ${r.total} (${r.delivered} delivered)\nMiles: ${r.totalMiles}\n` +
             `Revenue: ${fmtMoney(r.totalRevenue)}\nCosts: ${fmtMoney(r.totalCosts)}\n` +
             `Profit: ${fmtMoney(r.profit)} (${r.margin.toFixed(1)}%)\n\n` +
@@ -1223,7 +1194,7 @@ export default function DispatchTracker() {
                             <IntegrationSyncPanel
                                 onfleetConnected={false}
                                 ontime360Connected={false}
-                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management →' Integrations." })}
+                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management �' Integrations." })}
                             />
                             <RouteOptimizerPanel
                                 loads={boardLoads.map(l => ({
@@ -1398,7 +1369,7 @@ export default function DispatchTracker() {
                                                         {load.wait_time_minutes > 0 ? (
                                                             <Badge className={`${waitBadgeClass(load.wait_time_minutes)} text-[10px]`}>
                                                                 {fmtWait(load.wait_time_minutes)}
-                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && "⏱️"}
+                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && " � ️"}
                                                             </Badge>
                                                         ) : <span className="text-muted-foreground text-xs">—</span>}
                                                     </TableCell>
@@ -1492,7 +1463,7 @@ export default function DispatchTracker() {
                                                                 <Pencil className="h-3 w-3" />
                                                             </Button>
                                                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Clone load"
-                                                                onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "?? Load cloned", description: "Edit and save the cloned load" }); }}>
+                                                                onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "📋 Load cloned", description: "Edit and save the cloned load" }); }}>
                                                                 <Copy className="h-3 w-3" />
                                                             </Button>
                                                             {!load.driver_id && (
@@ -1544,7 +1515,7 @@ export default function DispatchTracker() {
                                                                                         },
                                                                                         driverName(load.driver_id),
                                                                                     );
-                                                                                    toast({ title: "?? Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                                    toast({ title: "📔 Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
                                                                                 }}
                                                                             >
                                                                                 <ReceiptText className="h-3.5 w-3.5" />
@@ -1806,7 +1777,7 @@ export default function DispatchTracker() {
                             { label: "Total Miles", value: dailyReport.totalMiles.toFixed(0), sub: "load miles" },
                             { label: "Revenue", value: fmtMoney(dailyReport.totalRevenue), sub: "gross" },
                             { label: "Costs", value: fmtMoney(dailyReport.totalCosts), sub: "driver + fuel" },
-                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "📈" : "📉" },
+                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "�-�" : "�-�" },
                             { label: "Margin", value: `${dailyReport.margin.toFixed(1)}%`, sub: dailyReport.margin >= 30 ? "Healthy" : dailyReport.margin >= 15 ? "OK" : "Low" },
                         ].map((s) => (
                             <Card key={s.label} className="glass-card rounded-2xl">
@@ -2015,7 +1986,7 @@ export default function DispatchTracker() {
                                                         active ? "bg-primary text-primary-foreground" :
                                                         "bg-muted text-muted-foreground"
                                                     }`}>
-                                                        {done ? "?" : step}
+                                                        {done ? "�"" : step}
                                                     </div>
                                                     <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
                                                 </button>
@@ -2035,7 +2006,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* Reference & Consol */}
                                             <div>
-                                                <p className="form-section-label">?? Load Reference</p>
+                                                <p className="form-section-label">📋 Load Reference</p>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
                                                         <Label className="text-xs">Reference Number <span className="text-red-500">*</span></Label>
@@ -2239,7 +2210,7 @@ export default function DispatchTracker() {
 
                                             {/* Revenue */}
                                             <div>
-                                                <p className="form-section-label">💰 Revenue</p>
+                                                <p className="form-section-label">�'� Revenue</p>
                                                 <div className="mt-1">
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
@@ -2273,7 +2244,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* PICKUP */}
                                             <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/5">
-                                                <p className="form-section-label text-green-700 dark:text-green-400">?? Pickup Location</p>
+                                                <p className="form-section-label text-green-700 dark:text-green-400">📍 Pickup Location</p>
 
                                                 {/* Address search */}
                                                 <div className="relative mt-2">
@@ -2426,7 +2397,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* Cargo */}
                                             <div>
-                                                <p className="form-section-label">?? Cargo Details</p>
+                                                <p className="form-section-label">📦 Cargo Details</p>
                                                 <div className="grid grid-cols-3 gap-3 mt-1">
                                                     <div>
                                                         <Label className="text-xs">Packages *</Label>
@@ -2450,9 +2421,9 @@ export default function DispatchTracker() {
                                                     <Label className="text-xs">Dimensions (CM)</Label>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Input type="number" value={af.dim_l} onChange={(e) => setAf({ dim_l: e.target.value })} placeholder="L" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
                                                         <Input type="number" value={af.dim_w} onChange={(e) => setAf({ dim_w: e.target.value })} placeholder="W" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
                                                         <Input type="number" value={af.dim_h} onChange={(e) => setAf({ dim_h: e.target.value })} placeholder="H" className="text-center" />
                                                     </div>
                                                     {cubic > 0 && (
@@ -2510,7 +2481,7 @@ export default function DispatchTracker() {
                                                                 <Label className="text-xs">Additional Stops (+$50 each)</Label>
                                                                 <div className="flex items-center gap-2">
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>−</Button>
+                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>�'</Button>
                                                                     <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                         onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
@@ -2522,7 +2493,7 @@ export default function DispatchTracker() {
 
                                                         {/* Accessorial Services */}
                                                         <div className="space-y-2">
-                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">?? Accessorial Services</p>
+                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">📋 Accessorial Services</p>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                 {[
                                                                     { key: "specialHandling" as const, label: "Special Handling", price: 20 },
@@ -2551,7 +2522,7 @@ export default function DispatchTracker() {
                                                                     <Label className="text-xs">{label}</Label>
                                                                     <div className="flex items-center gap-2">
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>−</Button>
+                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>�'</Button>
                                                                         <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                             onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>
@@ -2595,7 +2566,7 @@ export default function DispatchTracker() {
 
                                             {/* Driver Assignment */}
                                             <div>
-                                                <p className="form-section-label">👤 Driver Assignment <span className="text-red-500">*</span></p>
+                                                <p className="form-section-label">�- Driver Assignment <span className="text-red-500">*</span></p>
                                                 <div className="space-y-2 mt-1">
                                                     {drivers.length === 0 && (
                                                         <p className="text-sm text-muted-foreground">No active drivers found.</p>
@@ -2639,7 +2610,7 @@ export default function DispatchTracker() {
 
                                             {/* BOL Upload */}
                                             <div>
-                                                <p className="form-section-label">?? BOL Document</p>
+                                                <p className="form-section-label">📔 BOL Document</p>
                                                 <div className="mt-1">
                                                     <input ref={bolInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
                                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) setBolFile(f); }} />
@@ -2703,8 +2674,8 @@ export default function DispatchTracker() {
                                                 Next <ChevronRight className="h-4 w-4" />
                                             </Button>
                                         ) : (
-                                            <Button className="btn-gradient gap-1.5" disabled={!canSubmit || bolUploading || isSubmittingLoad} onClick={handleAddLoad}>
-                                                {(bolUploading || isSubmittingLoad) ? "Uploading…" : <><Plus className="h-4 w-4" /> Create Load</>}
+                                            <Button className="btn-gradient gap-1.5" disabled={!canSubmit || bolUploading} onClick={handleAddLoad}>
+                                                {bolUploading ? "Uploading…" : <><Plus className="h-4 w-4" /> Create Load</>}
                                             </Button>
                                         )}
                                     </div>
@@ -2733,7 +2704,7 @@ export default function DispatchTracker() {
                     service_type: blastDialogLoad.service_type ?? "",
                 } : null}
                 onBlastSent={(_blastId, driverCount) => {
-                    toast({ title: `?? Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
+                    toast({ title: `📡 Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
                     fetchLoads();
                     setBlastDialogLoad(null);
                 }}

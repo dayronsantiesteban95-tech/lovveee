@@ -396,7 +396,8 @@ export default function Companies() {
     const { data } = await supabase
       .from("companies")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
     if (data) {
       const typed = data as Company[];
       setCompanies(typed);
@@ -405,7 +406,8 @@ export default function Companies() {
         const { data: loads } = await supabase
           .from("daily_loads")
           .select("client_name,revenue,status")
-          .in("client_name", names);
+          .in("client_name", names)
+          .limit(2000);
         if (loads) {
           const stats: Record<string, LoadSummary> = {};
           for (const l of loads) {
