@@ -355,6 +355,9 @@ export default function FleetTracker() {
         const vName = fd.get("vehicle_name") as string;
         const vType = fd.get("vehicle_type") as string || "cargo_van";
         const plateFd = (fd.get("license_plate") as string) || "N/A";
+        const rawNextSvcMi = fd.get("next_service_mileage") as string;
+        const rawYear = fd.get("year") as string;
+        const rawAvgMpg = fd.get("avg_mpg") as string;
         const payload = {
             vehicle_name: vName,
             vehicle_type: vType,
@@ -364,17 +367,17 @@ export default function FleetTracker() {
             plate_number: plateFd,
             make: fd.get("make") as string || null,
             model: fd.get("model") as string || null,
-            year: Number(fd.get("year")) || null,
+            year: rawYear !== "" ? Number(rawYear) : null,
             vin: fd.get("vin") as string || null,
             hub: fd.get("hub") as string || "phoenix",
             status: fd.get("status") as string || "active",
             current_mileage: Number(fd.get("current_mileage")) || 0,
-            next_service_mileage: Number(fd.get("next_service_mileage")) || null,
+            next_service_mileage: rawNextSvcMi !== "" ? Number(rawNextSvcMi) : null,
             next_service_date: fd.get("next_service_date") as string || null,
             insurance_expiry: fd.get("insurance_expiry") as string || null,
             registration_expiry: fd.get("registration_expiry") as string || null,
             fuel_type: fd.get("fuel_type") as string || "gasoline",
-            avg_mpg: Number(fd.get("avg_mpg")) || null,
+            avg_mpg: rawAvgMpg !== "" ? Number(rawAvgMpg) : null,
             daily_rate: Number(fd.get("daily_rate")) || 0,
             notes: fd.get("notes") as string || null,
             updated_at: new Date().toISOString(),
@@ -395,15 +398,17 @@ export default function FleetTracker() {
     const handleMaintSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
+        const rawMileageAtService = fd.get("mileage_at_service") as string;
+        const rawNextServiceMileage = fd.get("next_service_mileage") as string;
         const payload = {
             vehicle_id: (fd.get("vehicle_id") as string) || null,
             maintenance_type: fd.get("maintenance_type") as string,
             description: fd.get("description") as string || null,
             cost: Number(fd.get("cost")) || 0,
-            mileage_at_service: Number(fd.get("mileage_at_service")) || null,
+            mileage_at_service: rawMileageAtService !== "" ? Number(rawMileageAtService) : null,
             service_date: fd.get("service_date") as string || new Date().toISOString().split("T")[0],
             next_service_date: fd.get("next_service_date") as string || null,
-            next_service_mileage: Number(fd.get("next_service_mileage")) || null,
+            next_service_mileage: rawNextServiceMileage !== "" ? Number(rawNextServiceMileage) : null,
             vendor: fd.get("vendor") as string || null,
             notes: fd.get("notes") as string || null,
             ...(editMaint ? {} : { created_by: user!.id }),

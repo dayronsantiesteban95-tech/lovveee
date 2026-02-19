@@ -130,7 +130,10 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
       : "11431 NW 107th St, Ste 24, Medley, FL 33178";
 
   // ── Breakdown ──────────────────────────────────────────
-  const breakdown = breakdownRevenue(Number(load.revenue) || 131.25, Number(load.miles) || 0);
+  const breakdown = breakdownRevenue(
+    load.revenue != null && Number(load.revenue) > 0 ? Number(load.revenue) : 131.25,
+    Number(load.miles) || 0,
+  );
 
   // ── Background: full-page white ───────────────────────
   doc.setFillColor(...COLORS.white);

@@ -307,7 +307,6 @@ export default function PodManager() {
         setUploadProgress(10);
 
         try {
-            const ext = uploadFile.name.split(".").pop() || "bin";
             const ts = Date.now();
             const bucket = uploadType === "bol" ? DOC_BUCKET : POD_BUCKET;
             const path = `loads/${selectedLoad.id}/${uploadType}/${ts}_${uploadFile.name}`;
@@ -352,11 +351,9 @@ export default function PodManager() {
             if (fileInputRef.current) fileInputRef.current.value = "";
             await fetchData();
 
-            // Re-select refreshed load
-            setSelectedLoad(prev => {
-                if (!prev) return null;
-                return loads.find(l => l.id === prev.id) ?? prev;
-            });
+            // Re-select: clear and let the re-rendered loads update it.
+            // selectedLoad stays as-is (identity unchanged); new pod_submissions
+            // data will refresh the doc cards automatically via react-query.
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             toast({ title: "Upload failed", description: msg, variant: "destructive" });
@@ -540,7 +537,7 @@ export default function PodManager() {
                                 {selSig?.signature_url ? (
                                     <div className="space-y-1.5">
                                         <button
-                                            onClick={() => setSigDialogUrl(selSig.signature_url)}
+                                            onClick={() => setSigDialogUrl(selSig.signature_url ?? null)}
                                             className="w-full"
                                         >
                                             <img
@@ -559,7 +556,7 @@ export default function PodManager() {
                                                 {format(new Date(selSig.signed_at), "MMM d, yyyy h:mm a")}
                                             </p>
                                         )}
-                                        <Button variant="outline" size="sm" className="w-full h-7 text-xs gap-1" onClick={() => setSigDialogUrl(selSig.signature_url)}>
+                                        <Button variant="outline" size="sm" className="w-full h-7 text-xs gap-1" onClick={() => setSigDialogUrl(selSig.signature_url ?? null)}>
                                             <Eye className="h-3 w-3" /> View Full Size
                                         </Button>
                                     </div>

@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════
-// DISPATCH TRACKER � Daily Load Tracking & Analytics
-// Tab 1: Load Board   � CRUD (full OnTime 360 parity)
-// Tab 2: Live Ops     � Real-time GPS feed
-// Tab 3: Wait Time    � Analytics & detention tracking
-// Tab 4: Daily Report � Operations summary / export
+// DISPATCH TRACKER — Daily Load Tracking & Analytics
+// Tab 1: Load Board   — CRUD (full OnTime 360 parity)
+// Tab 2: Live Ops     — Real-time GPS feed
+// Tab 3: Wait Time    — Analytics & detention tracking
+// Tab 4: Daily Report — Operations summary / export
 // ═══════════════════════════════════════════════════════════
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -184,7 +184,7 @@ type RateCard = {
 };
 
 // �"��"��"� Anika Rate Calculator �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
-// Hardcoded Anika rate sheet � do NOT pull from DB
+// Hardcoded Anika rate sheet — do NOT pull from DB
 const ANIKA_RATES = {
     cargo_van: { base: 105, perMile: 2.0, deadheadPerMile: 2.0, weightThreshold: 100, weightRate: 0.10 },
     box_truck:  { base: 170, perMile: 2.5, deadheadPerMile: 2.5, weightThreshold: 600, weightRate: 0.15 },
@@ -300,7 +300,7 @@ const EMPTY_ADD_FORM: AddLoadForm = {
 const AOG_SERVICE_TYPES = [
     { value: "AOG",      label: "✈️ AOG",      hub_key: "hotshot" },
     { value: "Courier",  label: "⚡ Courier",   hub_key: "courier" },
-    { value: "Standard", label: "�"� Standard",  hub_key: "last_mile" },
+    { value: "Standard", label: "?? Standard",  hub_key: "last_mile" },
 ];
 const PKG_TYPES = ["PLT", "CTN", "BOX", "OTHER"];
 const VEHICLE_TYPES_DISPATCH = [
@@ -317,9 +317,9 @@ const STATUSES = [
     { value: "assigned", label: "Assigned", color: "bg-blue-500" },
     { value: "blasted", label: "Blasted", color: "bg-violet-500" },
     { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_pickup", label: "At Pickup �"�", color: "bg-blue-400" },
+    { value: "arrived_pickup", label: "At Pickup ??", color: "bg-blue-400" },
     { value: "in_transit", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_delivery", label: "At Delivery �"�", color: "bg-purple-400" },
+    { value: "arrived_delivery", label: "At Delivery ??", color: "bg-purple-400" },
     { value: "delivered", label: "Delivered", color: "bg-green-500" },
     { value: "completed", label: "Completed", color: "bg-green-600" },
     { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
@@ -332,7 +332,7 @@ const WAIT_COLORS = [
     { max: 60, label: "High", class: "bg-orange-500/15 text-orange-700 dark:text-orange-400" },
     { max: Infinity, label: "Critical", class: "bg-red-500/15 text-red-700 dark:text-red-400" },
 ];
-const DETENTION_THRESHOLD = 30; // minutes � industry standard
+const DETENTION_THRESHOLD = 30; // minutes — industry standard
 
 function waitBadgeClass(mins: number) {
     return (WAIT_COLORS.find((w) => mins <= w.max) ?? WAIT_COLORS[3]).class;
@@ -458,7 +458,7 @@ export default function DispatchTracker() {
     // �"��"� Data �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
     // (loads, drivers, vehicles, profiles, companies, rateCards, recentAddresses now come from useQuery above)
 
-    // �"��"� Live GPS (own tracking � replaces Onfleet/OT360) �"��"�
+    // �"��"� Live GPS (own tracking — replaces Onfleet/OT360) �"��"�
     const { drivers: liveDrivers, loading: liveDriversLoading, connected: liveDriversConnected, refresh: refreshLiveDrivers } = useRealtimeDriverMap();
 
     // �"��"� Load Board Search + Filters �"��"��"��"��"��"��"��"��"��"��"�
@@ -473,6 +473,7 @@ export default function DispatchTracker() {
     const [addForm, setAddForm] = useState<AddLoadForm>(EMPTY_ADD_FORM);
     const [bolFile, setBolFile] = useState<File | null>(null);
     const [bolUploading, setBolUploading] = useState(false);
+    const [isSubmittingLoad, setIsSubmittingLoad] = useState(false);
     const [suggestedDriverId, setSuggestedDriverId] = useState<string | null>(null);
     const bolInputRef = useRef<HTMLInputElement>(null);
 
@@ -549,22 +550,22 @@ export default function DispatchTracker() {
                         .eq("id", evt.load_id)
                         .single();
 
-                    const refNumber = loadData?.reference_number ?? "�";
+                    const refNumber = loadData?.reference_number ?? "—";
                     const driverRecord = drivers.find(d => d.id === loadData?.driver_id);
                     const driverName = driverRecord?.full_name ?? "Driver";
                     const eventLabel = evt.new_status === "arrived_pickup" ? "pickup" : "delivery";
 
                     toast({
-                        title: "�"� Driver Arrived",
-                        description: `${driverName} arrived at ${eventLabel} � Ref #${refNumber}`,
+                        title: "?? Driver Arrived",
+                        description: `${driverName} arrived at ${eventLabel} — Ref #${refNumber}`,
                     });
 
                     // Send push confirmation to the driver
                     if (loadData?.driver_id) {
                         sendPushToDrivers(
                             [loadData.driver_id],
-                            '�"� Arrival Confirmed',
-                            `Dispatch has been notified of your arrival at ${eventLabel} � Ref #${refNumber}`,
+                            '? Arrival Confirmed',
+                            `Dispatch has been notified of your arrival at ${eventLabel} — Ref #${refNumber}`,
                             { load_id: evt.load_id, type: 'arrival_confirmation', event: evt.new_status }
                         ).catch((err: unknown) => {
                             console.warn('[DispatchTracker] Arrival push failed:', err);
@@ -609,7 +610,7 @@ export default function DispatchTracker() {
         }
     }, [loadsUpdatedAt]);
 
-    // �"��"� "X seconds ago" ticker � updates every 5 s �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // �"��"� "X seconds ago" ticker — updates every 5 s �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
     useEffect(() => {
         const ticker = setInterval(() => {
             setSecondsAgo(Math.floor((Date.now() - lastRefreshed.getTime()) / 1000));
@@ -730,7 +731,10 @@ export default function DispatchTracker() {
     // �"��"� Submit new Add Load form �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
     const handleAddLoad = async () => {
         if (!user) return;
+        if (isSubmittingLoad) return; // prevent double-submit
 
+        setIsSubmittingLoad(true);
+        try {
         // Validate required fields
         if (!addForm.reference_number.trim()) {
             toast({ title: "Reference number required", variant: "destructive" }); return;
@@ -748,10 +752,32 @@ export default function DispatchTracker() {
             toast({ title: "Delivery address required", variant: "destructive" }); return;
         }
 
-        // Upload BOL if provided
+        // Check for duplicate reference_number
+        const trimmedRef = addForm.reference_number.trim();
+        if (trimmedRef) {
+            const { data: existing, error: dupErr } = await supabase
+                .from("daily_loads")
+                .select("id")
+                .eq("reference_number", trimmedRef)
+                .limit(1);
+            if (!dupErr && existing && existing.length > 0) {
+                toast({
+                    title: "Duplicate reference number",
+                    description: `A load with reference "${trimmedRef}" already exists.`,
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+
+        // Upload BOL if provided — abort if upload fails
         let bolUrl = addForm.bol_url || null;
         if (bolFile) {
             bolUrl = await uploadBol(bolFile);
+            if (bolUrl === null) {
+                // uploadBol already showed an error toast; abort load creation
+                return;
+            }
         }
 
         // Revenue: use manual if entered, else computed from rate card
@@ -761,7 +787,7 @@ export default function DispatchTracker() {
 
         const payload: Record<string, any> = {
             load_date: todayISO(),
-            reference_number: addForm.reference_number || null,
+            reference_number: addForm.reference_number.trim() || null,
             consol_number: addForm.consol_number || null,
             client_name: addForm.client_name || null,
             service_type: addForm.service_type || "AOG",
@@ -826,6 +852,9 @@ export default function DispatchTracker() {
             setCompanyContacts([]);
             setAnikaModifiers(EMPTY_ANIKA_MODIFIERS);
             fetchLoads();
+        }
+        } finally {
+            setIsSubmittingLoad(false);
         }
     };
 
@@ -928,9 +957,9 @@ export default function DispatchTracker() {
     };
 
     // �"��"� Lookups �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
-    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "�";
-    const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "�";
-    const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "�";
+    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "—";
+    const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "—";
+    const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "—";
     const statusInfo = (s: string) => STATUSES.find((st) => st.value === s) ?? STATUSES[0];
 
     // �"��"� Computed / Analytics �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
@@ -995,7 +1024,7 @@ export default function DispatchTracker() {
             result = result.filter((l) => l.service_type === serviceType);
         }
 
-        // Date range filter (applies on top of selectedDate � narrows further)
+        // Date range filter (applies on top of selectedDate — narrows further)
         if (dateRange) {
             result = result.filter((l) => filterDateMatches(l.load_date, dateRange));
         }
@@ -1087,7 +1116,7 @@ export default function DispatchTracker() {
 
     const copyReport = () => {
         const r = dailyReport;
-        const text = `�"� DAILY OPS REPORT � ${selectedDate}\n${"═".repeat(40)}\n` +
+        const text = `?? DAILY OPS REPORT — ${selectedDate}\n${"═".repeat(40)}\n` +
             `Loads: ${r.total} (${r.delivered} delivered)\nMiles: ${r.totalMiles}\n` +
             `Revenue: ${fmtMoney(r.totalRevenue)}\nCosts: ${fmtMoney(r.totalCosts)}\n` +
             `Profit: ${fmtMoney(r.profit)} (${r.margin.toFixed(1)}%)\n\n` +
@@ -1194,7 +1223,7 @@ export default function DispatchTracker() {
                             <IntegrationSyncPanel
                                 onfleetConnected={false}
                                 ontime360Connected={false}
-                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management �' Integrations." })}
+                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management →' Integrations." })}
                             />
                             <RouteOptimizerPanel
                                 loads={boardLoads.map(l => ({
@@ -1351,7 +1380,7 @@ export default function DispatchTracker() {
                                                 <TableRow key={load.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLoadDetail(load)}>
                                                     <TableCell className="font-mono text-xs">
                                                         <div className="flex items-center gap-1.5">
-                                                            {load.reference_number || "�"}
+                                                            {load.reference_number || "—"}
                                                             {unreadMap[load.id] > 0 && (
                                                                 <span className="inline-flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] px-0.5">
                                                                     {unreadMap[load.id] > 99 ? '99+' : unreadMap[load.id]}
@@ -1361,17 +1390,17 @@ export default function DispatchTracker() {
                                                     </TableCell>
                                                     <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "☀️ Día" : "🌙 Noche"}</Badge></TableCell>
                                                     <TableCell className="font-medium text-sm">{driverName(load.driver_id)}</TableCell>
-                                                    <TableCell className="text-sm">{load.client_name || "�"}</TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "�"}</TableCell>
+                                                    <TableCell className="text-sm">{load.client_name || "—"}</TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "—"}</TableCell>
                                                     <TableCell className="text-right font-mono text-sm">{Number(load.miles).toFixed(0)}</TableCell>
-                                                    <TableCell className="text-right font-mono text-sm">{Number(load.revenue) > 0 ? fmtMoney(Number(load.revenue)) : "�"}</TableCell>
+                                                    <TableCell className="text-right font-mono text-sm">{Number(load.revenue) > 0 ? fmtMoney(Number(load.revenue)) : "—"}</TableCell>
                                                     <TableCell>
                                                         {load.wait_time_minutes > 0 ? (
                                                             <Badge className={`${waitBadgeClass(load.wait_time_minutes)} text-[10px]`}>
                                                                 {fmtWait(load.wait_time_minutes)}
-                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && " � ️"}
+                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && "⏱️"}
                                                             </Badge>
-                                                        ) : <span className="text-muted-foreground text-xs">�</span>}
+                                                        ) : <span className="text-muted-foreground text-xs">—</span>}
                                                     </TableCell>
                                                     <TableCell>
                                                         <ETABadge
@@ -1390,7 +1419,7 @@ export default function DispatchTracker() {
                                                             </span>
                                                         )}
                                                         {load.status !== "in_progress" && (!load.eta_status || load.eta_status === "unknown") && (
-                                                            <span className="text-muted-foreground text-xs">�</span>
+                                                            <span className="text-muted-foreground text-xs">—</span>
                                                         )}
                                                     </TableCell>
                                                     {/* �"��"� Status cell: badge + next-action button �"��"� */}
@@ -1455,7 +1484,7 @@ export default function DispatchTracker() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground">
-                                                        {load.start_time && load.end_time ? `${load.start_time}�${load.end_time}` : load.start_time || "�"}
+                                                        {load.start_time && load.end_time ? `${load.start_time}—${load.end_time}` : load.start_time || "—"}
                                                     </TableCell>
                                                     <TableCell onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex gap-1">
@@ -1463,7 +1492,7 @@ export default function DispatchTracker() {
                                                                 <Pencil className="h-3 w-3" />
                                                             </Button>
                                                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Clone load"
-                                                                onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "�"� Load cloned", description: "Edit and save the cloned load" }); }}>
+                                                                onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "?? Load cloned", description: "Edit and save the cloned load" }); }}>
                                                                 <Copy className="h-3 w-3" />
                                                             </Button>
                                                             {!load.driver_id && (
@@ -1515,7 +1544,7 @@ export default function DispatchTracker() {
                                                                                         },
                                                                                         driverName(load.driver_id),
                                                                                     );
-                                                                                    toast({ title: "�"" Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                                    toast({ title: "?? Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
                                                                                 }}
                                                                             >
                                                                                 <ReceiptText className="h-3.5 w-3.5" />
@@ -1746,8 +1775,8 @@ export default function DispatchTracker() {
                                         {waitAnalytics.detentionEligible.map((l) => (
                                             <TableRow key={l.id}>
                                                 <TableCell className="text-sm">{l.load_date}</TableCell>
-                                                <TableCell className="font-mono text-xs">{l.reference_number || "�"}</TableCell>
-                                                <TableCell className="text-sm">{l.client_name || "�"}</TableCell>
+                                                <TableCell className="font-mono text-xs">{l.reference_number || "—"}</TableCell>
+                                                <TableCell className="text-sm">{l.client_name || "—"}</TableCell>
                                                 <TableCell className="text-sm">{driverName(l.driver_id)}</TableCell>
                                                 <TableCell><Badge className={`${waitBadgeClass(l.wait_time_minutes)} text-xs`}>{fmtWait(l.wait_time_minutes)}</Badge></TableCell>
                                                 <TableCell className="text-right font-mono">{l.detention_billed > 0 ? fmtMoney(l.detention_billed) : <span className="text-red-500 text-xs">Not billed</span>}</TableCell>
@@ -1777,7 +1806,7 @@ export default function DispatchTracker() {
                             { label: "Total Miles", value: dailyReport.totalMiles.toFixed(0), sub: "load miles" },
                             { label: "Revenue", value: fmtMoney(dailyReport.totalRevenue), sub: "gross" },
                             { label: "Costs", value: fmtMoney(dailyReport.totalCosts), sub: "driver + fuel" },
-                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "�-�" : "�-�" },
+                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "📈" : "📉" },
                             { label: "Margin", value: `${dailyReport.margin.toFixed(1)}%`, sub: dailyReport.margin >= 30 ? "Healthy" : dailyReport.margin >= 15 ? "OK" : "Low" },
                         ].map((s) => (
                             <Card key={s.label} className="glass-card rounded-2xl">
@@ -1815,7 +1844,7 @@ export default function DispatchTracker() {
                                                 <TableCell className="text-center">{d.loads}</TableCell>
                                                 <TableCell className="text-right font-mono">{d.miles.toFixed(0)}</TableCell>
                                                 <TableCell className="text-right font-mono">{fmtMoney(d.revenue)}</TableCell>
-                                                <TableCell className="text-right font-mono text-xs">{d.miles > 0 ? fmtMoney(d.revenue / d.miles) : "�"}</TableCell>
+                                                <TableCell className="text-right font-mono text-xs">{d.miles > 0 ? fmtMoney(d.revenue / d.miles) : "—"}</TableCell>
                                                 <TableCell><Badge className={`${waitBadgeClass(d.avgWait)} text-xs`}>{fmtWait(d.avgWait)}</Badge></TableCell>
                                             </TableRow>
                                         ))}
@@ -1986,7 +2015,7 @@ export default function DispatchTracker() {
                                                         active ? "bg-primary text-primary-foreground" :
                                                         "bg-muted text-muted-foreground"
                                                     }`}>
-                                                        {done ? "�"" : step}
+                                                        {done ? "?" : step}
                                                     </div>
                                                     <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
                                                 </button>
@@ -2006,7 +2035,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* Reference & Consol */}
                                             <div>
-                                                <p className="form-section-label">�"� Load Reference</p>
+                                                <p className="form-section-label">?? Load Reference</p>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div>
                                                         <Label className="text-xs">Reference Number <span className="text-red-500">*</span></Label>
@@ -2027,7 +2056,7 @@ export default function DispatchTracker() {
                                                     <div className="col-span-2">
                                                         <Label className="text-xs">Cutoff Time (optional)</Label>
                                                         <Input type="datetime-local" value={af.cutoff_time} onChange={(e) => setAf({ cutoff_time: e.target.value })} className="mt-1" />
-                                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff � maximum delivery time before flight is missed</p>
+                                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff — maximum delivery time before flight is missed</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2210,7 +2239,7 @@ export default function DispatchTracker() {
 
                                             {/* Revenue */}
                                             <div>
-                                                <p className="form-section-label">�'� Revenue</p>
+                                                <p className="form-section-label">💰 Revenue</p>
                                                 <div className="mt-1">
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
@@ -2244,7 +2273,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* PICKUP */}
                                             <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/5">
-                                                <p className="form-section-label text-green-700 dark:text-green-400">�"� Pickup Location</p>
+                                                <p className="form-section-label text-green-700 dark:text-green-400">?? Pickup Location</p>
 
                                                 {/* Address search */}
                                                 <div className="relative mt-2">
@@ -2299,7 +2328,7 @@ export default function DispatchTracker() {
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <div>
                                                             <Label className="text-xs">Open Hours</Label>
-                                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00�17:00 Mon�Fri" className="mt-1" />
+                                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00—17:00 Mon—Fri" className="mt-1" />
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
@@ -2397,7 +2426,7 @@ export default function DispatchTracker() {
                                         <div className="space-y-5">
                                             {/* Cargo */}
                                             <div>
-                                                <p className="form-section-label">�"� Cargo Details</p>
+                                                <p className="form-section-label">?? Cargo Details</p>
                                                 <div className="grid grid-cols-3 gap-3 mt-1">
                                                     <div>
                                                         <Label className="text-xs">Packages *</Label>
@@ -2421,9 +2450,9 @@ export default function DispatchTracker() {
                                                     <Label className="text-xs">Dimensions (CM)</Label>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Input type="number" value={af.dim_l} onChange={(e) => setAf({ dim_l: e.target.value })} placeholder="L" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
                                                         <Input type="number" value={af.dim_w} onChange={(e) => setAf({ dim_w: e.target.value })} placeholder="W" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
                                                         <Input type="number" value={af.dim_h} onChange={(e) => setAf({ dim_h: e.target.value })} placeholder="H" className="text-center" />
                                                     </div>
                                                     {cubic > 0 && (
@@ -2437,7 +2466,7 @@ export default function DispatchTracker() {
 
                                                 <div className="mt-3">
                                                     <Label className="text-xs">Cargo Description</Label>
-                                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART � LH ENGINE SEAL" className="mt-1" />
+                                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART — LH ENGINE SEAL" className="mt-1" />
                                                 </div>
                                             </div>
 
@@ -2460,7 +2489,7 @@ export default function DispatchTracker() {
                                                             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">⏰ Time &amp; Access</p>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                 {[
-                                                                    { key: "afterHours" as const, label: "After Hours (20:00�07:59)", price: 25 },
+                                                                    { key: "afterHours" as const, label: "After Hours (20:00—07:59)", price: 25 },
                                                                     { key: "weekend" as const, label: "Weekend (Sat & Sun)", price: 25 },
                                                                     { key: "holiday" as const, label: "Holiday", price: 50 },
                                                                     { key: "tenderingFee" as const, label: "Tendering Fee (airport)", price: 15 },
@@ -2481,7 +2510,7 @@ export default function DispatchTracker() {
                                                                 <Label className="text-xs">Additional Stops (+$50 each)</Label>
                                                                 <div className="flex items-center gap-2">
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>�'</Button>
+                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>−</Button>
                                                                     <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                         onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
@@ -2493,7 +2522,7 @@ export default function DispatchTracker() {
 
                                                         {/* Accessorial Services */}
                                                         <div className="space-y-2">
-                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">�"� Accessorial Services</p>
+                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">?? Accessorial Services</p>
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                                 {[
                                                                     { key: "specialHandling" as const, label: "Special Handling", price: 20 },
@@ -2522,7 +2551,7 @@ export default function DispatchTracker() {
                                                                     <Label className="text-xs">{label}</Label>
                                                                     <div className="flex items-center gap-2">
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>�'</Button>
+                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>−</Button>
                                                                         <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                             onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>
@@ -2566,7 +2595,7 @@ export default function DispatchTracker() {
 
                                             {/* Driver Assignment */}
                                             <div>
-                                                <p className="form-section-label">�- Driver Assignment <span className="text-red-500">*</span></p>
+                                                <p className="form-section-label">👤 Driver Assignment <span className="text-red-500">*</span></p>
                                                 <div className="space-y-2 mt-1">
                                                     {drivers.length === 0 && (
                                                         <p className="text-sm text-muted-foreground">No active drivers found.</p>
@@ -2610,7 +2639,7 @@ export default function DispatchTracker() {
 
                                             {/* BOL Upload */}
                                             <div>
-                                                <p className="form-section-label">�"" BOL Document</p>
+                                                <p className="form-section-label">?? BOL Document</p>
                                                 <div className="mt-1">
                                                     <input ref={bolInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
                                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) setBolFile(f); }} />
@@ -2619,7 +2648,7 @@ export default function DispatchTracker() {
                                                             className="w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all flex flex-col items-center gap-2 text-muted-foreground">
                                                             <Upload className="h-5 w-5" />
                                                             <p className="text-sm">Click to upload BOL (PDF / image)</p>
-                                                            <p className="text-xs">Optional � can be added later</p>
+                                                            <p className="text-xs">Optional — can be added later</p>
                                                         </button>
                                                     ) : (
                                                         <div className="flex items-center gap-3 p-3 rounded-xl border bg-muted/20">
@@ -2641,17 +2670,17 @@ export default function DispatchTracker() {
                                             <div className="p-4 rounded-xl bg-muted/30 border space-y-2 text-sm">
                                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Summary</p>
                                                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "�"}</span>
-                                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "�"}</span>
+                                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "—"}</span>
+                                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "—"}</span>
                                                     <span className="text-muted-foreground">Service</span><span>{af.service_type}</span>
                                                     <span className="text-muted-foreground">Revenue</span>
                                                     <span className="font-semibold text-green-600">
                                                         ${af.revenue ? parseFloat(af.revenue).toFixed(2) : computedRevenue ? computedRevenue.toFixed(2) : "0.00"}
                                                     </span>
-                                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "�"}</span>
-                                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "�"}</span>
+                                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "—"}</span>
+                                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "—"}</span>
                                                     <span className="text-muted-foreground">Driver</span><span>{drivers.find(d => d.id === af.driver_id)?.full_name || <span className="text-red-500">Not assigned</span>}</span>
-                                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "�"}</span>
+                                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "—"}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -2674,8 +2703,8 @@ export default function DispatchTracker() {
                                                 Next <ChevronRight className="h-4 w-4" />
                                             </Button>
                                         ) : (
-                                            <Button className="btn-gradient gap-1.5" disabled={!canSubmit || bolUploading} onClick={handleAddLoad}>
-                                                {bolUploading ? "Uploading…" : <><Plus className="h-4 w-4" /> Create Load</>}
+                                            <Button className="btn-gradient gap-1.5" disabled={!canSubmit || bolUploading || isSubmittingLoad} onClick={handleAddLoad}>
+                                                {(bolUploading || isSubmittingLoad) ? "Uploading…" : <><Plus className="h-4 w-4" /> Create Load</>}
                                             </Button>
                                         )}
                                     </div>
@@ -2704,7 +2733,7 @@ export default function DispatchTracker() {
                     service_type: blastDialogLoad.service_type ?? "",
                 } : null}
                 onBlastSent={(_blastId, driverCount) => {
-                    toast({ title: `�"� Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
+                    toast({ title: `?? Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
                     fetchLoads();
                     setBlastDialogLoad(null);
                 }}

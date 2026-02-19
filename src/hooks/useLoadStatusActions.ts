@@ -22,6 +22,25 @@ export type LoadStatus =
   | "cancelled"
   | "failed";
 
+// ─── Status state machine ────────────────────────────────────
+// Maps each status to the set of statuses it is allowed to transition TO.
+// Any transition not in this map is blocked.
+// Note: "completed", "cancelled", "failed" are terminal — no forward transitions.
+// Backwards transitions (reopen) are explicitly allowed from failed/cancelled.
+const ALLOWED_TRANSITIONS: Record<string, LoadStatus[]> = {
+  pending:          ["assigned", "blasted", "cancelled"],
+  assigned:         ["in_progress", "arrived_pickup", "pending", "cancelled", "failed"],
+  blasted:          ["assigned", "in_progress", "pending", "cancelled"],
+  in_progress:      ["arrived_pickup", "in_transit", "arrived_delivery", "delivered", "cancelled", "failed"],
+  arrived_pickup:   ["in_transit", "in_progress", "cancelled", "failed"],
+  in_transit:       ["arrived_delivery", "delivered", "cancelled", "failed"],
+  arrived_delivery: ["delivered", "completed", "in_transit", "failed"],
+  delivered:        ["completed", "failed"],
+  completed:        [],
+  cancelled:        ["pending"],  // allow reopen
+  failed:           ["pending"],  // allow reopen
+};
+
 interface UpdateStatusOptions {
   loadId: string;
   previousStatus: string;
@@ -36,6 +55,24 @@ export function useLoadStatusActions() {
   const updateStatus = useCallback(
     async ({ loadId, previousStatus, newStatus, onSuccess }: UpdateStatusOptions) => {
       if (!user) return;
+
+      // Guard: prevent invalid status transitions
+      if (previousStatus !== newStatus) {
+        const allowed = ALLOWED_TRANSITIONS[previousStatus] ?? [];
+        if (!allowed.includes(newStatus)) {
+          toast({
+            title: "Invalid status transition",
+            description: `Cannot move from "${previousStatus}" to "${newStatus}".`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Guard: prevent duplicate (no-op) status updates
+      if (previousStatus === newStatus) {
+        return;
+      }
 
       const now = new Date().toISOString();
 
@@ -81,7 +118,9 @@ export function useLoadStatusActions() {
         });
 
       if (evtErr) {
-        // Non-fatal — load was already updated; event record failed silently
+        // Non-fatal — load was already updated; event record failed
+        // Log so the status timeline gap is detectable in production
+        console.warn("[useLoadStatusActions] Failed to insert load_status_events:", evtErr.message);
       }
 
       const statusLabels: Record<string, string> = {

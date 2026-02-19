@@ -257,14 +257,16 @@ export default function Billing() {
     setDetailOpen(true);
     setLoadingDetail(true);
     try {
-      const [{ data: lines }, { data: payments }] = await Promise.all([
+      const [{ data: lines, error: linesErr }, { data: payments, error: paymentsErr }] = await Promise.all([
         supabase.from("invoice_line_items").select("*").eq("invoice_id", inv.id).order("service_date"),
         supabase.from("invoice_payments").select("*").eq("invoice_id", inv.id).order("payment_date"),
       ]);
+      if (linesErr || paymentsErr) throw linesErr ?? paymentsErr;
       setInvoiceLineItems((lines as InvoiceLineItem[]) ?? []);
       setInvoicePayments((payments as InvoicePayment[]) ?? []);
     } catch (err) {
-          } finally {
+      toast({ title: "Error loading invoice details", description: "Could not load line items or payments.", variant: "destructive" });
+    } finally {
       setLoadingDetail(false);
     }
   }, []);
@@ -323,6 +325,10 @@ export default function Billing() {
   const saveInvoice = async () => {
     if (selectedLoads.length === 0) {
       toast({ title: "No loads selected", description: "Select at least one load to invoice.", variant: "destructive" });
+      return;
+    }
+    if (selectedTotal <= 0) {
+      toast({ title: "Zero revenue", description: "Cannot create an invoice with $0 total. Check load revenue values.", variant: "destructive" });
       return;
     }
     setSavingInvoice(true);
