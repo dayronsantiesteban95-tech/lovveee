@@ -1,4 +1,4 @@
-﻿/**
+/**
  * useLoadStatusActions
  *
  * Handles updating daily_loads.status and inserting a load_status_events row.

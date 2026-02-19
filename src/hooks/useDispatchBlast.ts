@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * useDispatchBlast — Realtime hook for the Blast System
  *

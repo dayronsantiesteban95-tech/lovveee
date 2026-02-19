@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * LoadDetailPanel — Premium slide-over for load inspection
  *

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * BlastStatusPanel — Real-time blast response tracker
  *

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * AUTO-DISPATCH PANEL — Smart Driver Assignment (Onfleet-Style)
  *

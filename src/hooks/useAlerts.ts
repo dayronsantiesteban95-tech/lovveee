@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * useAlerts — Real-time alert system for Command Center
  *

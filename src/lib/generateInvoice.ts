@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * generateInvoice — Professional PDF Invoice Generator
  * Anika Logistics Group

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * StatusTimeline — vertical timeline of load_status_events for a given load.
  *
  * Shows: status label, timestamp (formatted "Feb 18 · 10:32 AM"), changed by (dispatcher name)

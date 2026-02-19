@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * BlastLoadDialog — Dispatcher UI to blast a load to drivers
  *

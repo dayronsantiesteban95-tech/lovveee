@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ═══════════════════════════════════════════════════════════
  * generateBillingInvoice — Billing Module PDF Generator
  * Anika Logistics Group
