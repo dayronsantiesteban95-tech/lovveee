@@ -1066,6 +1066,7 @@ export type Database = {
           bol_url: string | null
           signature_url: string | null
           signer_name: string | null
+          cutoff_time: string | null
         }
         Insert: {
           id?: string
@@ -1119,6 +1120,7 @@ export type Database = {
           bol_url?: string | null
           signature_url?: string | null
           signer_name?: string | null
+          cutoff_time?: string | null
         }
         Update: {
           id?: string
@@ -1172,6 +1174,7 @@ export type Database = {
           bol_url?: string | null
           signature_url?: string | null
           signer_name?: string | null
+          cutoff_time?: string | null
         }
         Relationships: [
           {

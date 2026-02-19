@@ -94,6 +94,7 @@ export interface LoadDetail {
     tracking_token?: string | null;
     pickup_lat?: number | null;
     pickup_lng?: number | null;
+    cutoff_time?: string | null;
 }
 
 interface LoadDetailPanelProps {
@@ -638,6 +639,7 @@ export default function LoadDetailPanel({
                                 pickup_lat: load.pickup_lat,
                                 pickup_lng: load.pickup_lng,
                                 driver_id: load.driver_id,
+                                cutoff_time: load.cutoff_time ?? null,
                             }}
                             onAssigned={() => onRefresh()}
                         />

@@ -105,6 +105,7 @@ type Load = {
     sla_deadline?: string | null;
     route_distance_meters?: number | null;
     route_duration_seconds?: number | null;
+    cutoff_time?: string | null;
 };
 type Profile = { user_id: string; full_name: string };
 
@@ -147,6 +148,8 @@ type AddLoadForm = {
     driver_id: string;
     // BOL
     bol_url: string;
+    // Airline cutoff
+    cutoff_time: string;
 };
 
 type Company = {
@@ -290,6 +293,7 @@ const EMPTY_ADD_FORM: AddLoadForm = {
     description: "",
     driver_id: "",
     bol_url: "",
+    cutoff_time: "",
 };
 
 const AOG_SERVICE_TYPES = [
@@ -719,6 +723,7 @@ export default function DispatchTracker() {
             service_type: addForm.service_type || "AOG",
             revenue: finalRevenue,
             sla_deadline: addForm.sla_deadline || null,
+            cutoff_time: addForm.cutoff_time || null,
             po_number: addForm.po_number || null,
             vehicle_required: addForm.vehicle_type || null,
             // Pickup
@@ -1974,6 +1979,11 @@ export default function DispatchTracker() {
                                                     <div>
                                                         <Label className="text-xs">SLA Deadline <span className="text-red-500">*</span></Label>
                                                         <Input type="datetime-local" value={af.sla_deadline} onChange={(e) => setAf({ sla_deadline: e.target.value })} className="mt-1" />
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <Label className="text-xs">Cutoff Time (optional)</Label>
+                                                        <Input type="datetime-local" value={af.cutoff_time} onChange={(e) => setAf({ cutoff_time: e.target.value })} className="mt-1" />
+                                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff — maximum delivery time before flight is missed</p>
                                                     </div>
                                                 </div>
                                             </div>

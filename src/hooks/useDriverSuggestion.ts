@@ -1,8 +1,8 @@
 /**
- * useDriverSuggestion — Auto-Dispatch Suggestion Hook
+ * useDriverSuggestion v2 — Auto-Dispatch Suggestion Hook
  *
- * Calls the get_driver_suggestion RPC with a load's pickup coordinates.
- * Returns the top-scored driver suggestion, or null when unavailable.
+ * Calls get_driver_suggestion RPC with pickup coords + optional cutoff_time.
+ * Returns top-scored driver suggestion (ETA-aware, cutoff-enforced) or null.
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,10 +14,13 @@ export interface DriverSuggestion {
   driver_name: string;
   distance_km: number;
   active_loads_count: number;
-  shift_hours: number;
+  eta_to_pickup_min: number;
+  eta_to_delivery_min: number;
+  estimated_arrival_at_delivery: string;
+  cutoff_margin_min: number | null;
+  can_meet_cutoff: boolean;
+  driver_status: "available" | "on_delivery";
   score: number;
-  last_lat: number;
-  last_lng: number;
 }
 
 interface LoadWithCoords {
@@ -25,12 +28,22 @@ interface LoadWithCoords {
   pickup_lat?: number | null;
   pickup_lng?: number | null;
   driver_id?: string | null;
+  cutoff_time?: string | null;
 }
 
 interface UseDriverSuggestionResult {
   suggestion: DriverSuggestion | null;
   loading: boolean;
   error: string | null;
+}
+
+// ─── RPC param shape ──────────────────────────────────────────────────────────
+
+interface GetDriverSuggestionParams {
+  p_load_id: string;
+  p_pickup_lat: number;
+  p_pickup_lng: number;
+  p_cutoff_time?: string | null;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -60,19 +73,22 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
       setLoading(true);
       setError(null);
 
-      // Use type assertion so we can call this RPC before Supabase types are regenerated
+      // Use type assertion — RPC not yet in generated types
       const client = supabase as unknown as {
         rpc: (
           fn: string,
-          params: Record<string, unknown>
+          params: GetDriverSuggestionParams
         ) => Promise<{ data: DriverSuggestion[] | null; error: { message: string } | null }>;
       };
 
-      const { data, error: rpcError } = await client.rpc("get_driver_suggestion", {
+      const params: GetDriverSuggestionParams = {
         p_load_id: load.id,
         p_pickup_lat: load.pickup_lat,
         p_pickup_lng: load.pickup_lng,
-      });
+        p_cutoff_time: load.cutoff_time ?? null,
+      };
+
+      const { data, error: rpcError } = await client.rpc("get_driver_suggestion", params);
 
       if (cancelled) return;
 
@@ -93,7 +109,7 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
     return () => {
       cancelled = true;
     };
-  }, [load?.id, load?.pickup_lat, load?.pickup_lng, load?.driver_id]);
+  }, [load?.id, load?.pickup_lat, load?.pickup_lng, load?.driver_id, load?.cutoff_time]);
 
   return { suggestion, loading, error };
 }
