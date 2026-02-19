@@ -88,9 +88,11 @@ function RouteFallback() {
 }
 
 function ProtectedRoutes() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
 
-  if (loading) {
+  // Wait for both auth and role to resolve before rendering anything
+  if (authLoading || (user && roleLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
@@ -99,6 +101,10 @@ function ProtectedRoutes() {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Drivers belong in the mobile app — show the wrong-app screen immediately,
+  // before any dispatcher page or Supabase query fires.
+  if (role === "driver") return <WrongApp />;
 
   return <AppLayout />;
 }
