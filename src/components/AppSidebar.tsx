@@ -14,8 +14,6 @@ import {
   FileCheck,
   Crosshair,
   Clock,
-  Building2,
-  Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -43,11 +41,6 @@ const mainNav = [
   { title: "Task Board", url: "/tasks", icon: CheckSquare },
   { title: "Calendar", url: "/calendar", icon: CalendarDays },
   { title: "Rate Calculator", url: "/rate-calculator", icon: Calculator },
-];
-
-const crmNav = [
-  { title: "Companies", url: "/companies", icon: Building2 },
-  { title: "Contacts", url: "/contacts", icon: Users },
 ];
 
 const resourcesNav = [
@@ -121,19 +114,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {fleetNav.map((item) => <NavItem key={item.title} item={item} />)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <Separator className="bg-sidebar-border/30 my-2 mx-3" />
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-[0.18em] font-semibold mb-2 px-3">
-            CRM
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              {crmNav.map((item) => <NavItem key={item.title} item={item} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
