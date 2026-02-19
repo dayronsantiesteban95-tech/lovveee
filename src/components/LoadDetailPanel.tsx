@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * LoadDetailPanel — Premium slide-over for load inspection
  *
@@ -399,7 +399,7 @@ export default function LoadDetailPanel({
     // Quick field update
     const quickUpdate = useCallback(async (field: string, value: any) => {
         setSaving(true);
-        const { error } = await (supabase as any)
+        const { error } = await supabase
             .from("daily_loads")
             .update({ [field]: value, updated_at: new Date().toISOString() })
             .eq("id", load.id);

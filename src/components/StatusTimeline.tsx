@@ -1,4 +1,4 @@
-/**
+﻿/**
  * StatusTimeline — vertical timeline of load_status_events for a given load.
  *
  * Shows: status label, timestamp (formatted "Feb 18 · 10:32 AM"), changed by (dispatcher name)
@@ -64,7 +64,7 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
 
     async function fetchEvents() {
       // Fetch status events for this load
-      const { data: evtData, error } = await (supabase as any)
+      const { data: evtData, error } = await supabase
         .from("load_status_events")
         .select("id, load_id, previous_status, new_status, changed_by, reason, created_at")
         .eq("load_id", loadId)

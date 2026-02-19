@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * BlastLoadDialog — Dispatcher UI to blast a load to drivers
  *
@@ -93,7 +93,7 @@ export default function BlastLoadDialog({
 
     const fetchDrivers = async () => {
         setLoadingDrivers(true);
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
             .from("drivers")
             .select("id, full_name, hub, status, phone")
             .eq("status", "active")
@@ -157,7 +157,7 @@ export default function BlastLoadDialog({
             const { data: { user } } = await supabase.auth.getUser();
 
             // 2. Insert dispatch_blast
-            const { data: blast, error: blastErr } = await (supabase as any)
+            const { data: blast, error: blastErr } = await supabase
                 .from("dispatch_blasts")
                 .insert({
                     load_id: load.id,
@@ -188,7 +188,7 @@ export default function BlastLoadDialog({
                 notified_at: now,
             }));
 
-            await (supabase as any).from("blast_responses").insert(responseRows);
+            await supabase.from("blast_responses").insert(responseRows);
 
             // 4. Insert driver_notifications for each driver
             const notifRows = driverIdsArray.map((driverId) => ({
@@ -217,10 +217,10 @@ export default function BlastLoadDialog({
                 read: false,
             }));
 
-            await (supabase as any).from("driver_notifications").insert(notifRows);
+            await supabase.from("driver_notifications").insert(notifRows);
 
             // 5. Update load status to 'blasted'
-            await (supabase as any)
+            await supabase
                 .from("daily_loads")
                 .update({ status: "blasted", updated_at: now })
                 .eq("id", load.id);

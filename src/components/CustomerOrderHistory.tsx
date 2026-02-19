@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * CUSTOMER ORDER HISTORY — Full Delivery History by Client
  *
@@ -67,7 +67,7 @@ export default function CustomerOrderHistory({
     // Fetch unique client names for autocomplete
     useEffect(() => {
         const fetchClients = async () => {
-            const { data } = await (supabase as any)
+            const { data } = await supabase
                 .from("daily_loads")
                 .select("client_name")
                 .not("client_name", "is", null)
@@ -91,7 +91,7 @@ export default function CustomerOrderHistory({
             .replace(/_/g, "\\_"); // Escape SQL single-char wildcard
         setClientName(name.trim());
 
-        const { data } = await (supabase as any)
+        const { data } = await supabase
             .from("daily_loads")
             .select(`
         id, reference_number, load_date, status,

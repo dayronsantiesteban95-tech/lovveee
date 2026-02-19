@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * DRIVER PORTAL — Mobile-First PWA
  *
@@ -107,7 +107,7 @@ export default function DriverPortal() {
     useEffect(() => {
         if (!user) return;
         (async () => {
-            const { data } = (await (supabase as any)
+            const { data } = (await supabase
                 .from("drivers")
                 .select("id, full_name, hub, status")
                 .eq("user_id", user.id)

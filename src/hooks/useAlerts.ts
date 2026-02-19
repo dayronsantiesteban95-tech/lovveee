@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * useAlerts — Real-time alert system for Command Center
  *
@@ -80,7 +80,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         // Computed fresh each call so it's always today's date even after midnight
         const today = new Date().toISOString().slice(0, 10);
         try {
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
             .from("route_alerts")
             .select("*")
             .eq("status", "active")
@@ -187,7 +187,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
 
     // ── Acknowledge alert ──
     const acknowledgeAlert = useCallback(async (alertId: string) => {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
             .from("route_alerts")
             .update({
                 status: "acknowledged",
@@ -204,7 +204,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
 
     // ── Resolve alert ──
     const resolveAlert = useCallback(async (alertId: string) => {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
             .from("route_alerts")
             .update({
                 status: "resolved",
@@ -224,7 +224,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         const ids = rawAlerts.map(a => a.id);
         if (ids.length === 0) return;
 
-        const { error } = await (supabase as any)
+        const { error } = await supabase
             .from("route_alerts")
             .update({
                 status: "acknowledged",

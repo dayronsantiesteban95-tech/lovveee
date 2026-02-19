@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+﻿import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -417,8 +417,8 @@ export default function CommandCenter() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         const [loadsRes, driversRes] = await Promise.all([
-            (supabase as any).from("daily_loads").select("*").eq("load_date", today).order("created_at", { ascending: false }),
-            (supabase as any).from("drivers").select("*").order("full_name"),
+            supabase.from("daily_loads").select("*").eq("load_date", today).order("created_at", { ascending: false }),
+            supabase.from("drivers").select("*").order("full_name"),
         ]);
         if (loadsRes.data) setLoads(loadsRes.data);
         if (driversRes.data) setDrivers(driversRes.data);

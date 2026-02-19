@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * ORDER ENTRY — Full Load Creation (OnTime 360-Style)
  *
@@ -220,13 +220,13 @@ export default function QuickLoadEntry({
     useEffect(() => {
         const fetchRecent = async () => {
             const [addrRes, clientRes] = await Promise.all([
-                (supabase as any)
+                supabase
                     .from("daily_loads")
                     .select("delivery_address, pickup_address")
                     .not("delivery_address", "is", null)
                     .order("created_at", { ascending: false })
                     .limit(80) as Promise<{ data: any[] | null }>,
-                (supabase as any)
+                supabase
                     .from("daily_loads")
                     .select("client_name")
                     .not("client_name", "is", null)
@@ -269,7 +269,7 @@ export default function QuickLoadEntry({
         const timeout = setTimeout(async () => {
             try {
                 // Join companies to find contacts by client name
-                const { data: companyData } = await (supabase as any)
+                const { data: companyData } = await supabase
                     .from("companies")
                     .select("id, name, phone, address, city, state")
                     .ilike("name", `%${form.client_name}%`)
@@ -277,7 +277,7 @@ export default function QuickLoadEntry({
 
                 if (companyData && companyData.length > 0) {
                     const company = companyData[0];
-                    const { data: contactData } = await (supabase as any)
+                    const { data: contactData } = await supabase
                         .from("contacts")
                         .select("email, phone, first_name, last_name")
                         .eq("company_id", company.id)

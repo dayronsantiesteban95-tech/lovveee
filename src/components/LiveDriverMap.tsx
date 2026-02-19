@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Truck } from "lucide-react";
@@ -151,7 +151,7 @@ export default function LiveDriverMap() {
             const cutoff = new Date(Date.now() - ACTIVE_THRESHOLD_MS).toISOString();
 
             // Use the RPC function which joins driver_name properly
-            const { data: rpcData, error: rpcError } = await (supabase as any)
+            const { data: rpcData, error: rpcError } = await supabase
                 .rpc("get_driver_positions");
 
             if (!rpcError && rpcData) {
@@ -177,7 +177,7 @@ export default function LiveDriverMap() {
             }
 
             // Fallback: query driver_locations directly and join with drivers
-            const { data, error } = await (supabase as any)
+            const { data, error } = await supabase
                 .from("driver_locations")
                 .select("id, driver_id, latitude, longitude, recorded_at")
                 .gte("recorded_at", cutoff)

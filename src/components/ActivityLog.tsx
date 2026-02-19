@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * ACTIVITY LOG — Full Audit Trail
  *
@@ -87,7 +87,7 @@ export default function ActivityLog({
 
         // 1. Status events
         try {
-            let query = (supabase as any)
+            let query = supabase
                 .from("load_status_events")
                 .select("id, load_id, new_status, old_status, note, recorded_at, changed_by")
                 .order("recorded_at", { ascending: false })
@@ -115,7 +115,7 @@ export default function ActivityLog({
 
         // 2. Recent loads (created)
         try {
-            let query = (supabase as any)
+            let query = supabase
                 .from("daily_loads")
                 .select("id, reference_number, client_name, status, created_at, driver_id, updated_at")
                 .order("created_at", { ascending: false })
@@ -152,7 +152,7 @@ export default function ActivityLog({
 
         // 3. Driver shifts
         try {
-            let query = (supabase as any)
+            let query = supabase
                 .from("driver_shifts")
                 .select("id, driver_id, started_at, ended_at")
                 .order("started_at", { ascending: false })

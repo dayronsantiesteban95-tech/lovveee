@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * AUTO-DISPATCH PANEL — Smart Driver Assignment (Onfleet-Style)
  *
@@ -76,7 +76,7 @@ export default function AutoDispatchPanel({
         setLoading(true);
 
         // 1. Get all active drivers (prefer same hub)
-        const { data: drivers } = await (supabase as any)
+        const { data: drivers } = await supabase
             .from("drivers")
             .select("id, full_name, hub, status")
             .eq("status", "active") as { data: Driver[] | null };
@@ -89,7 +89,7 @@ export default function AutoDispatchPanel({
 
         // 2. Get today's load counts per driver
         const today = new Date().toISOString().split("T")[0];
-        const { data: loadCounts } = await (supabase as any)
+        const { data: loadCounts } = await supabase
             .from("daily_loads")
             .select("driver_id")
             .eq("load_date", today)
@@ -103,7 +103,7 @@ export default function AutoDispatchPanel({
         // 3. Get latest GPS positions — graceful fallback if RPC doesn't exist
         const posMap = new Map<string, { lat: number; lng: number }>();
         try {
-            const { data: positions } = await (supabase as any)
+            const { data: positions } = await supabase
                 .rpc("get_driver_positions") as { data: any[] | null };
 
             for (const pos of positions ?? []) {

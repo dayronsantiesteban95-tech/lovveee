@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * BlastStatusPanel — Real-time blast response tracker
  *
@@ -74,7 +74,7 @@ export default function BlastStatusPanel({
 
     const fetchBlastData = useCallback(async () => {
         // Fetch blast record
-        const { data: blastData, error: blastErr } = await (supabase as any)
+        const { data: blastData, error: blastErr } = await supabase
             .from("dispatch_blasts")
             .select("id, load_id, status, drivers_notified, expires_at, blast_sent_at, accepted_by, message")
             .eq("id", blastId)
@@ -88,7 +88,7 @@ export default function BlastStatusPanel({
         setBlast(blastData as BlastRecord);
 
         // Fetch responses with driver names
-        const { data: responseData } = await (supabase as any)
+        const { data: responseData } = await supabase
             .from("blast_responses")
             .select("id, blast_id, driver_id, status, responded_at, notified_at, drivers(full_name, hub)")
             .eq("blast_id", blastId)
@@ -184,13 +184,13 @@ export default function BlastStatusPanel({
             const now = new Date().toISOString();
 
             // Cancel the blast
-            await (supabase as any)
+            await supabase
                 .from("dispatch_blasts")
                 .update({ status: "cancelled", updated_at: now })
                 .eq("id", blastId);
 
             // Expire all pending responses
-            await (supabase as any)
+            await supabase
                 .from("blast_responses")
                 .update({ status: "expired", responded_at: now })
                 .eq("blast_id", blastId)
@@ -198,7 +198,7 @@ export default function BlastStatusPanel({
 
             // Revert load to unassigned
             if (blast?.load_id) {
-                await (supabase as any)
+                await supabase
                     .from("daily_loads")
                     .update({ status: "unassigned", updated_at: now })
                     .eq("id", blast.load_id);

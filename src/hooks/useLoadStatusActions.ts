@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useLoadStatusActions
  *
  * Handles updating daily_loads.status and inserting a load_status_events row.
@@ -70,7 +70,7 @@ export function useLoadStatusActions() {
 
       // 2. Insert a load_status_events row
       // Using "any" cast because types.ts is stale vs real schema
-      const { error: evtErr } = await (supabase as any)
+      const { error: evtErr } = await supabase
         .from("load_status_events")
         .insert({
           load_id: loadId,

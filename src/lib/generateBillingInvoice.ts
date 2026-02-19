@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * generateBillingInvoice — Billing Module PDF Generator
  * Anika Logistics Group
@@ -210,7 +210,6 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
     theme: "grid",
   });
 
-  // @ts-ignore — jspdf-autotable
   y = (doc as any).lastAutoTable.finalY + 8;
 
   // ── Totals ─────────────────────────────────────────────

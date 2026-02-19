@@ -17,7 +17,6 @@ export function useQuickBooks() {
   const checkConnection = useCallback(async () => {
     try {
       // Use maybeSingle to avoid throwing on no rows
-      // @ts-ignore — dynamic table not in generated types yet
       const { data } = await supabase
         .from('quickbooks_tokens')
         .select('realm_id, access_token_expires_at')
@@ -42,7 +41,6 @@ export function useQuickBooks() {
   };
 
   const disconnect = async () => {
-    // @ts-ignore — dynamic table
     await supabase
       .from('quickbooks_tokens')
       .delete()

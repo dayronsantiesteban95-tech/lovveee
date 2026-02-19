@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * generateInvoice — Professional PDF Invoice Generator
  * Anika Logistics Group
@@ -300,7 +300,6 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     theme: "grid",
   });
 
-  // @ts-ignore — jspdf-autotable adds lastAutoTable
   y = (doc as any).lastAutoTable.finalY + 10;
 
   // ── CHARGES Table ─────────────────────────────────────
@@ -351,7 +350,6 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     theme: "grid",
   });
 
-  // @ts-ignore
   y = (doc as any).lastAutoTable.finalY + 10;
 
   // ── Payment Terms & Thank You ─────────────────────────

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LoadMessage {
@@ -27,7 +27,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
     setMessages([]);
 
     const fetchMessages = async () => {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('load_messages')
         .select('*')
         .eq('load_id', loadId)
@@ -37,7 +37,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
     };
     fetchMessages();
 
-    const channel = (supabase as any)
+    const channel = supabase
       .channel(`messages-web:${loadId}`)
       .on(
         'postgres_changes',
@@ -54,7 +54,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
       .subscribe();
 
     return () => {
-      (supabase as any).removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [loadId]);
 
@@ -65,7 +65,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
       senderRole: 'dispatcher' | 'driver'
     ) => {
       if (!loadId || !userId || !message.trim()) return;
-      await (supabase as any).from('load_messages').insert({
+      await supabase.from('load_messages').insert({
         load_id: loadId,
         sender_id: userId,
         sender_name: senderName,
@@ -79,7 +79,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
 
   const markAsRead = useCallback(async () => {
     if (!loadId || !userId) return;
-    await (supabase as any).rpc('mark_messages_read', {
+    await supabase.rpc('mark_messages_read', {
       p_load_id: loadId,
       p_user_id: userId,
     });
@@ -94,7 +94,7 @@ export function useUnreadMessageCounts(userId: string | null) {
 
   const refresh = useCallback(async () => {
     if (!userId) return;
-    const { data } = await (supabase as any).rpc('get_unread_message_counts', {
+    const { data } = await supabase.rpc('get_unread_message_counts', {
       p_user_id: userId,
     });
     if (data) {
@@ -111,7 +111,7 @@ export function useUnreadMessageCounts(userId: string | null) {
     refresh();
 
     // Subscribe to new messages to update unread counts
-    const channel = (supabase as any)
+    const channel = supabase
       .channel('unread-counts-watch')
       .on(
         'postgres_changes',
@@ -138,7 +138,7 @@ export function useUnreadMessageCounts(userId: string | null) {
       .subscribe();
 
     return () => {
-      (supabase as any).removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [userId, refresh]);
 

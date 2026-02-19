@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════
  * COMMAND BAR — ⌘K / Ctrl+K Spotlight Search
  *
@@ -161,7 +161,7 @@ export default function CommandBar() {
 
         // ── Search loads ──
         try {
-            const { data: loads } = await (supabase as any)
+            const { data: loads } = await supabase
                 .from("daily_loads")
                 .select("id, reference_number, client_name, delivery_address, status, tracking_token, load_date")
                 .or(`reference_number.ilike.%${term}%,client_name.ilike.%${term}%,delivery_address.ilike.%${term}%,tracking_token.ilike.%${term}%`)
@@ -188,7 +188,7 @@ export default function CommandBar() {
 
         // ── Search drivers ──
         try {
-            const { data: drivers } = await (supabase as any)
+            const { data: drivers } = await supabase
                 .from("drivers")
                 .select("id, full_name, hub, status, phone")
                 .or(`full_name.ilike.%${term}%,hub.ilike.%${term}%,phone.ilike.%${term}%`)
@@ -213,7 +213,7 @@ export default function CommandBar() {
 
         // ── Search contacts/companies ──
         try {
-            const { data: contacts } = await (supabase as any)
+            const { data: contacts } = await supabase
                 .from("contacts")
                 .select("id, name, email, company")
                 .or(`name.ilike.%${term}%,email.ilike.%${term}%,company.ilike.%${term}%`)
