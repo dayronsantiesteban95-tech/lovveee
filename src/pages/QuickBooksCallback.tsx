@@ -1,12 +1,15 @@
 // ═══════════════════════════════════════════════════════════
 // QuickBooks OAuth Callback Page
 // Route: /auth/quickbooks/callback (PUBLIC — no auth required)
-// QB redirects here after user authorizes the app
+// QB redirects here after user authorizes the app.
+//
+// SECURITY: Token exchange is handled server-side via the
+// qb-token-exchange Supabase Edge Function. The client secret
+// never touches the browser.
 // ═══════════════════════════════════════════════════════════
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { exchangeQBCode } from '@/lib/quickbooks';
 
 export default function QuickBooksCallback() {
   const [searchParams] = useSearchParams();
@@ -28,40 +31,24 @@ export default function QuickBooksCallback() {
 
     const handleCallback = async () => {
       try {
-        const tokens = await exchangeQBCode(code, realmId);
+        // Delegate token exchange to the server-side Edge Function.
+        // The client secret lives in Supabase secrets — never in the bundle.
+        const response = await supabase.functions.invoke('qb-token-exchange', {
+          body: { code, realmId },
+        });
 
-        if (tokens.error) {
-          throw new Error(tokens.error_description ?? tokens.error);
+        if (response.error) {
+          throw new Error(response.error.message ?? 'Token exchange failed');
         }
 
-        if (!tokens.access_token) {
-          throw new Error('No access token returned from QuickBooks.');
+        const data = response.data as { success?: boolean; error?: string } | null;
+
+        if (data?.error) {
+          throw new Error(data.error);
         }
 
-        // Store tokens in Supabase quickbooks_tokens table
-        // @ts-ignore — table added via migration
-        const { error: upsertError } = await supabase
-          .from('quickbooks_tokens')
-          .upsert(
-            {
-              realm_id: realmId,
-              access_token: tokens.access_token,
-              refresh_token: tokens.refresh_token,
-              access_token_expires_at: new Date(
-                Date.now() + tokens.expires_in * 1000
-              ).toISOString(),
-              // Refresh tokens last 100 days per Intuit spec
-              refresh_token_expires_at: new Date(
-                Date.now() + 100 * 24 * 60 * 60 * 1000
-              ).toISOString(),
-              environment: 'sandbox',
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'realm_id' }
-          );
-
-        if (upsertError) {
-          throw new Error(`Failed to store tokens: ${upsertError.message}`);
+        if (!data?.success) {
+          throw new Error('Unexpected response from token exchange function.');
         }
 
         setStatus('success');
