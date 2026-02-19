@@ -22,6 +22,7 @@ const PodManager = lazy(() => import("@/pages/PodManager"));
 const CommandCenter = lazy(() => import("@/pages/CommandCenter"));
 const TrackDelivery = lazy(() => import("@/pages/TrackDelivery"));
 const TimeClock = lazy(() => import("@/pages/TimeClock"));
+const DriverPerformance = lazy(() => import("@/pages/DriverPerformance"));
 import CommandBar from "@/components/CommandBar";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="/fleet" element={<FleetTracker />} />
               <Route path="/pod-manager" element={<PodManager />} />
               <Route path="/time-clock" element={<TimeClock />} />
+              <Route path="/performance" element={<DriverPerformance />} />
               <Route path="/" element={<Navigate to="/command-center" replace />} />
             </Route>
             <Route path="*" element={<NotFound />} />
