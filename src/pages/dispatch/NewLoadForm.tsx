@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/dialog";
 import {
     Plus, X, ChevronLeft, ChevronRight, DollarSign, Upload, FileText,
-    CheckCircle, MapPin, Clock, Zap,
+    CheckCircle, MapPin, Clock, Zap, ChevronDown,
 } from "lucide-react";
+import DriverPickerModal from "@/components/DriverPickerModal";
 import type {
     Driver, Company, RateCard, AddLoadForm, CompanyContact, AnikaModifiers, AnikaBreakdown,
 } from "./types";
@@ -152,6 +153,8 @@ export default function NewLoadForm({
     const [bolFile, setBolFile] = useState<File | null>(null);
     const [bolUploading, setBolUploading] = useState(false);
     const [suggestedDriverId, setSuggestedDriverId] = useState<string | null>(null);
+    const [driverPickerOpen, setDriverPickerOpen] = useState(false);
+    const [selectedDriverName, setSelectedDriverName] = useState<string>("");
     const bolInputRef = useRef<HTMLInputElement>(null);
 
     const [companyContacts, setCompanyContacts] = useState<CompanyContact[]>([]);
@@ -180,6 +183,8 @@ export default function NewLoadForm({
             setAddStep(1);
             setBolFile(null);
             setSuggestedDriverId(null);
+            setDriverPickerOpen(false);
+            setSelectedDriverName("");
             setClientSearch("");
             setPickupSearch("");
             setDeliverySearch("");
