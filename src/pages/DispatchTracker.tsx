@@ -464,6 +464,10 @@ export default function DispatchTracker() {
     // ════════════════════Load Board Search + Filters ===========
     const [loadFilters, setLoadFilters] = useState<LoadFilters>(EMPTY_LOAD_FILTERS);
 
+    // ════════════════════Pagination ===========================
+    const [currentPage, setCurrentPage] = useState(1);
+    const LOADS_PER_PAGE = 25;
+
     // ════════════════════Dialog ===============================
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLoad, setEditLoad] = useState<Load | null>(null);
@@ -679,6 +683,11 @@ export default function DispatchTracker() {
             setAddForm((f) => ({ ...f, dimensions_text: `${dim_l} x ${dim_w} x ${dim_h} CM` }));
         }
     }, [addForm.dim_l, addForm.dim_w, addForm.dim_h]);
+
+    // Reset to page 1 when filters or date change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [loadFilters, selectedDate]);
 
     // ════════════════════Save new client company inline ======================
     const saveNewClient = async () => {
@@ -1011,6 +1020,13 @@ export default function DispatchTracker() {
 
         return result;
     }, [rawBoardLoads, loadFilters, filterDateMatches]);
+
+    // ════════════════════Pagination (derived from boardLoads) ================
+    const totalPages = Math.ceil(boardLoads.length / LOADS_PER_PAGE);
+    const paginatedLoads = boardLoads.slice(
+        (currentPage - 1) * LOADS_PER_PAGE,
+        currentPage * LOADS_PER_PAGE
+    );
 
     // Wait time analytics
     const waitAnalytics = useMemo(() => {
@@ -1345,7 +1361,7 @@ export default function DispatchTracker() {
                                                 </TableCell>
                                             </TableRow>
                                         )}
-                                        {boardLoads.map((load) => {
+                                        {paginatedLoads.map((load) => {
                                             const si = statusInfo(load.status);
                                             return (
                                                 <TableRow key={load.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLoadDetail(load)}>
@@ -1555,6 +1571,23 @@ export default function DispatchTracker() {
                                     </TableBody>
                                 </Table>
                                 </div>
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                                        <p className="text-sm text-muted-foreground">
+                                            Showing {((currentPage - 1) * LOADS_PER_PAGE) + 1}–{Math.min(currentPage * LOADS_PER_PAGE, boardLoads.length)} of {boardLoads.length} loads
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                                                Previous
+                                            </Button>
+                                            <span className="text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                                            <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                                                Next
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </Card>
                         </div>
 
