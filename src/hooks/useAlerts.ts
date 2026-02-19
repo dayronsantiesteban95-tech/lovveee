@@ -1,5 +1,5 @@
 /**
- * ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+ * ‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï
  * useAlerts ‚Äî Real-time alert system for Command Center
  *
  * Spec (from Phase 6 Blueprint):
@@ -11,7 +11,7 @@
  *   ‚Ä¢ Scope: Today only (clear at midnight)
  *   ‚Ä¢ Blast integration: Auto-blast unassigned loads + "Blast" button on alerts
  *   ‚Ä¢ Transport: Supabase Realtime on CC, poll elsewhere
- * ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+ * ‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï‚ï
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,7 +104,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
             // Don't toast on initial load, only on new additions
             newAlerts.forEach(a => {
                 toast({
-                    title: a.severity === "critical" ? "üö® " + a.title : "‚ö†Ô∏è " + a.title,
+                    title: a.severity === "critical" ? "\uD83D\uDEA8 " + a.title : "\u26A0\uFE0F " + a.title,
                     description: a.message ?? undefined,
                     variant: a.severity === "critical" ? "destructive" : undefined,
                 });
@@ -177,7 +177,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
             if (alert.escalatedSeverity === "auto_ping" && !autoPingedRef.current.has(alert.id)) {
                 autoPingedRef.current.add(alert.id);
                 toast({
-                    title: "üî¥ ESCALATED: " + alert.title,
+                    title: "\uD83D\uDEA8 ESCALATED: " + alert.title,
                     description: "Alert unresolved for 30+ minutes. Supervisor notified.",
                     variant: "destructive",
                 });
