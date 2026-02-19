@@ -26,7 +26,7 @@ import {
     FileText, Upload, Camera, CheckCircle, XCircle,
     Clock, Download, Search, Package, Truck,
     Image as ImageIcon, X, Loader2, Shield,
-    AlertTriangle, Eye, ChevronDown,
+    AlertTriangle, Eye, ChevronDown, PenLine,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -340,6 +340,9 @@ export default function PodManager() {
         setUploading(false);
     };
 
+    // ── Signature dialog ─────────────────────────────
+    const [sigDialogUrl, setSigDialogUrl] = useState<string | null>(null);
+
     // ── Drag & Drop ──────────────────────────────────
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
@@ -496,11 +499,51 @@ export default function PodManager() {
                             />
 
                             {/* Signature */}
-                            <DocCard
-                                label="Signature"
-                                url={selSig?.signature_url ?? null}
-                                onUpload={() => setUploadType("delivery")}
-                            />
+                            <div className="border rounded-xl p-3 space-y-2 bg-muted/20 hover:bg-muted/40 transition-colors">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Signature</span>
+                                    {selSig?.signature_url ? (
+                                        <Badge variant="secondary" className="text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 gap-1">
+                                            <CheckCircle className="h-3 w-3" /> On file
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 gap-1">
+                                            <AlertTriangle className="h-3 w-3" /> Missing
+                                        </Badge>
+                                    )}
+                                </div>
+                                {selSig?.signature_url ? (
+                                    <div className="space-y-1.5">
+                                        <button
+                                            onClick={() => setSigDialogUrl(selSig.signature_url)}
+                                            className="w-full"
+                                        >
+                                            <img
+                                                src={selSig.signature_url}
+                                                alt="Signature"
+                                                className="w-full h-28 object-contain rounded-lg border bg-slate-900 cursor-pointer hover:opacity-90 transition-opacity"
+                                            />
+                                        </button>
+                                        {selSig.signer_name && (
+                                            <p className="text-xs text-center text-muted-foreground">
+                                                Signed by: <span className="font-medium text-foreground">{selSig.signer_name}</span>
+                                            </p>
+                                        )}
+                                        {selSig.signed_at && (
+                                            <p className="text-[10px] text-center text-muted-foreground">
+                                                {format(new Date(selSig.signed_at), "MMM d, yyyy h:mm a")}
+                                            </p>
+                                        )}
+                                        <Button variant="outline" size="sm" className="w-full h-7 text-xs gap-1" onClick={() => setSigDialogUrl(selSig.signature_url)}>
+                                            <Eye className="h-3 w-3" /> View Full Size
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center h-16 border-2 border-dashed rounded-lg">
+                                        <span className="text-xs text-muted-foreground">No signature yet</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Submission history */}
@@ -695,13 +738,14 @@ export default function PodManager() {
                                 <TableHead className="text-center">BOL</TableHead>
                                 <TableHead className="text-center">Pickup Photo</TableHead>
                                 <TableHead className="text-center">POD Photo</TableHead>
+                                <TableHead className="text-center">Signature</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loads.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8}>
+                                    <TableCell colSpan={9}>
                                         <div className="flex flex-col items-center justify-center py-14 gap-3 text-muted-foreground">
                                             <Package className="h-10 w-10 opacity-30" />
                                             <p className="text-sm font-medium">No loads found</p>
@@ -714,6 +758,7 @@ export default function PodManager() {
                                     const hasBol      = !!load.bol_url;
                                     const hasPickup   = !!pickupSub(load.id)?.photo_url;
                                     const hasDelivery = !!deliverySub(load.id)?.photo_url;
+                                    const hasSig      = !!signatureSub(load.id)?.signature_url;
                                     const isSelected  = selectedLoad?.id === load.id;
                                     return (
                                         <TableRow
@@ -747,6 +792,13 @@ export default function PodManager() {
                                                 <StatusIcon ok={hasDelivery} />
                                             </TableCell>
                                             <TableCell className="text-center">
+                                                {hasSig ? (
+                                                    <PenLine className="h-4 w-4 text-purple-500 mx-auto" title="Signature on file" />
+                                                ) : (
+                                                    <span className="text-muted-foreground/30 text-xs mx-auto block text-center">—</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-center">
                                                 <Badge
                                                     variant="secondary"
                                                     className={`text-[10px] ${LOAD_STATUS_COLORS[load.status] || ""}`}
@@ -763,6 +815,34 @@ export default function PodManager() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* ── Signature full-size dialog ─────────────────────────────────── */}
+            <Dialog open={!!sigDialogUrl} onOpenChange={() => setSigDialogUrl(null)}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <PenLine className="h-4 w-4 text-purple-500" />
+                            Recipient Signature
+                        </DialogTitle>
+                    </DialogHeader>
+                    {sigDialogUrl && (
+                        <div className="space-y-3">
+                            <div className="bg-slate-900 rounded-xl p-4 flex items-center justify-center min-h-[200px]">
+                                <img
+                                    src={sigDialogUrl}
+                                    alt="Signature"
+                                    className="max-w-full max-h-64 object-contain"
+                                />
+                            </div>
+                            <Button variant="outline" size="sm" className="w-full gap-2" asChild>
+                                <a href={sigDialogUrl} download target="_blank" rel="noopener noreferrer">
+                                    <Download className="h-3 w-3" /> Download Signature
+                                </a>
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
