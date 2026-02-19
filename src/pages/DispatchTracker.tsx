@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
 import { CITY_HUBS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useUnreadMessageCounts } from "@/hooks/useMessages";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +70,7 @@ import LoadSearchFilters, {
     type LoadFilters,
 } from "@/components/LoadSearchFilters";
 
-// �"��"��"� Types �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// === Types ==========================================
 type Driver = { id: string; full_name: string; hub: string; status: string };
 type Vehicle = { id: string; vehicle_name: string; vehicle_type: string; hub: string; status: string };
 type Load = {
@@ -110,7 +111,7 @@ type Load = {
 };
 type Profile = { user_id: string; full_name: string };
 
-// �"��"��"� Add Load Form Type �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// === Add Load Form Type =============================
 type AddLoadForm = {
     // Step 1: Load Info
     reference_number: string;
@@ -183,7 +184,7 @@ type RateCard = {
     fuel_surcharge_pct: number;
 };
 
-// �"��"��"� Anika Rate Calculator �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// === Anika Rate Calculator ==============================
 // Hardcoded Anika rate sheet — do NOT pull from DB
 const ANIKA_RATES = {
     cargo_van: { base: 105, perMile: 2.0, deadheadPerMile: 2.0, weightThreshold: 100, weightRate: 0.10 },
@@ -310,7 +311,7 @@ const VEHICLE_TYPES_DISPATCH = [
     { value: "box_truck",  label: "Box Truck" },
 ];
 
-// �"��"��"� Constants �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+// === Constants ======================================
 const SHIFTS = [{ value: "day", label: "Día" }, { value: "night", label: "Noche" }];
 const STATUSES = [
     { value: "pending", label: "Pending", color: "bg-gray-500" },
@@ -341,15 +342,16 @@ function waitBadgeClass(mins: number) {
 // ═══════════════════════════════════════════════════════════
 export default function DispatchTracker() {
     const { user } = useAuth();
+    const { role, isOwner } = useUserRole();
     const { unreadMap } = useUnreadMessageCounts(user?.id ?? null);
     const { toast } = useToast();
 
-    // �"��"� Date range (must be declared before React Query) ────────────────
+    // == Date range (must be declared before React Query) ────────────────
     const [selectedDate, setSelectedDate] = useState(todayISO());
     const [dateRangeStart, setDateRangeStart] = useState(daysAgoISO(7));
     const [dateRangeEnd, setDateRangeEnd] = useState(todayISO());
 
-    // �"��"� React Query ───────────────────────────────────────
+    // == React Query ───────────────────────────────────────
     const queryClient = useQueryClient();
 
     const { data: loads = [], isLoading: loadsLoading, dataUpdatedAt: loadsUpdatedAt } = useQuery({
@@ -455,20 +457,20 @@ export default function DispatchTracker() {
         queryClient.invalidateQueries({ queryKey: ["dispatch-loads", dateRangeStart, dateRangeEnd] });
     }, [queryClient, dateRangeStart, dateRangeEnd]);
 
-    // �"��"� Data �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Data =================================
     // (loads, drivers, vehicles, profiles, companies, rateCards, recentAddresses now come from useQuery above)
 
-    // �"��"� Live GPS (own tracking — replaces Onfleet/OT360) �"��"�
+    // == Live GPS (own tracking — replaces Onfleet/OT360) ==
     const { drivers: liveDrivers, loading: liveDriversLoading, connected: liveDriversConnected, refresh: refreshLiveDrivers } = useRealtimeDriverMap();
 
-    // �"��"� Load Board Search + Filters �"��"��"��"��"��"��"��"��"��"��"�
+    // == Load Board Search + Filters ===========
     const [loadFilters, setLoadFilters] = useState<LoadFilters>(EMPTY_LOAD_FILTERS);
 
-    // �"��"� Dialog �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Dialog ===============================
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLoad, setEditLoad] = useState<Load | null>(null);
 
-    // �"��"� Add Load multi-step form state �"��"��"��"��"��"��"�
+    // == Add Load multi-step form state =======
     const [addStep, setAddStep] = useState(1); // 1=Load Info, 2=Pickup/Delivery, 3=Cargo+Driver
     const [addForm, setAddForm] = useState<AddLoadForm>(EMPTY_ADD_FORM);
     const [bolFile, setBolFile] = useState<File | null>(null);
@@ -476,7 +478,7 @@ export default function DispatchTracker() {
     const [suggestedDriverId, setSuggestedDriverId] = useState<string | null>(null);
     const bolInputRef = useRef<HTMLInputElement>(null);
 
-    // �"��"� CRM & rate card data �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == CRM & rate card data =================
     // companies, rateCards, recentAddresses come from useQuery above
     const [companyContacts, setCompanyContacts] = useState<CompanyContact[]>([]);
     const [clientSearch, setClientSearch] = useState("");
@@ -486,7 +488,7 @@ export default function DispatchTracker() {
     const [showPickupDropdown, setShowPickupDropdown] = useState(false);
     const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
 
-    // �"��"� New-client inline form �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == New-client inline form ===============
     const [showNewClient, setShowNewClient] = useState(false);
     const [newClientName, setNewClientName] = useState("");
     const [newClientPhone, setNewClientPhone] = useState("");
@@ -495,29 +497,29 @@ export default function DispatchTracker() {
     const [newClientState, setNewClientState] = useState("");
     const [savingNewClient, setSavingNewClient] = useState(false);
 
-    // �"��"� Computed revenue from rate card �"��"��"��"��"��"�
+    // == Computed revenue from rate card ======
     const [computedRevenue, setComputedRevenue] = useState<number | null>(null);
-    // �"��"� Anika rate calculator state �"��"��"��"��"��"��"��"��"��"�
+    // == Anika rate calculator state ==========
     const [anikaModifiers, setAnikaModifiers] = useState<AnikaModifiers>(EMPTY_ANIKA_MODIFIERS);
-    // �"��"� Tools sidebar �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Tools sidebar =======================
     const [toolsOpen, setToolsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState<"quick" | "import" | "history" | "log" | "blast" | null>("quick");
     const [autoDispatchLoadId, setAutoDispatchLoadId] = useState<string | null>(null);
     const [blastDialogLoad, setBlastDialogLoad] = useState<Load | null>(null);
     const [clonePrefill, setClonePrefill] = useState<ReturnType<typeof cloneLoadData> | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
-    // �"��"� Detail panel �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Detail panel =========================
     const [selectedLoadDetail, setSelectedLoadDetail] = useState<Load | null>(null);
 
-    // �"��"� Auto-refresh �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Auto-refresh ==========================
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [secondsAgo, setSecondsAgo] = useState(0);
 
-    // �"��"� Status action hook �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Status action hook ====================
     const { updateStatus } = useLoadStatusActions();
     const db = supabase;
 
-    // �"��"� Realtime: geofence arrival toasts �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Realtime: geofence arrival toasts ========================
     useEffect(() => {
         if (!user) return;
 
@@ -601,7 +603,7 @@ export default function DispatchTracker() {
         };
     }, [user, drivers, fetchLoads, toast]);
 
-    // �"��"� Keep lastRefreshed in sync with React Query data updates �"��"�
+    // == Keep lastRefreshed in sync with React Query data updates ==
     useEffect(() => {
         if (loadsUpdatedAt) {
             setLastRefreshed(new Date(loadsUpdatedAt));
@@ -609,7 +611,7 @@ export default function DispatchTracker() {
         }
     }, [loadsUpdatedAt]);
 
-    // �"��"� "X seconds ago" ticker — updates every 5 s �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == "X seconds ago" ticker — updates every 5 s ===============
     useEffect(() => {
         const ticker = setInterval(() => {
             setSecondsAgo(Math.floor((Date.now() - lastRefreshed.getTime()) / 1000));
@@ -617,7 +619,7 @@ export default function DispatchTracker() {
         return () => clearInterval(ticker);
     }, [lastRefreshed]);
 
-    // �"��"� AI driver suggestion: pick driver whose hub matches pickup city �"��"�
+    // == AI driver suggestion: pick driver whose hub matches pickup city ==
     const suggestDriver = useCallback((pickupAddress: string, driverList: Driver[]) => {
         if (!pickupAddress || driverList.length === 0) return;
         const addr = pickupAddress.toLowerCase();
@@ -636,14 +638,14 @@ export default function DispatchTracker() {
         if (match) setSuggestedDriverId(match.id);
     }, []);
 
-    // �"��"� When pickup address changes, run AI suggestion �"��"��"��"��"��"�
+    // == When pickup address changes, run AI suggestion ======
     useEffect(() => {
         if (addForm.pickup_address && drivers.length > 0) {
             suggestDriver(addForm.pickup_address, drivers);
         }
     }, [addForm.pickup_address, drivers, suggestDriver]);
 
-    // �"��"� Fetch contacts when client company changes �"��"��"��"��"��"��"��"��"��"��"�
+    // == Fetch contacts when client company changes ===========
     useEffect(() => {
         if (!addForm.client_id) { setCompanyContacts([]); return; }
         supabase
@@ -653,7 +655,7 @@ export default function DispatchTracker() {
             .then(({ data }) => { if (data) setCompanyContacts(data as CompanyContact[]); });
     }, [addForm.client_id]);
 
-    // �"��"� Auto-compute revenue from rate card �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Auto-compute revenue from rate card ==================
     useEffect(() => {
         if (!rateCards.length) return;
         const svcMap: Record<string, string> = { AOG: "aog", Courier: "courier", Standard: "standard" };
@@ -672,7 +674,7 @@ export default function DispatchTracker() {
         setComputedRevenue(Math.max(withFuel, card.min_charge));
     }, [addForm.service_type, addForm.vehicle_type, addForm.distance_miles, addForm.weight_kg, rateCards]);
 
-    // �"��"� Auto-update dimensions_text when L/W/H change �"��"��"��"��"��"��"�
+    // == Auto-update dimensions_text when L/W/H change =======
     useEffect(() => {
         const { dim_l, dim_w, dim_h } = addForm;
         if (dim_l && dim_w && dim_h) {
@@ -680,7 +682,7 @@ export default function DispatchTracker() {
         }
     }, [addForm.dim_l, addForm.dim_w, addForm.dim_h]);
 
-    // �"��"� Save new client company inline �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Save new client company inline ======================
     const saveNewClient = async () => {
         if (!newClientName.trim() || !user) return;
         setSavingNewClient(true);
@@ -709,7 +711,7 @@ export default function DispatchTracker() {
         }
     };
 
-    // �"��"� Upload BOL to Supabase Storage �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Upload BOL to Supabase Storage =====================
     const uploadBol = async (file: File): Promise<string | null> => {
         setBolUploading(true);
         try {
@@ -727,7 +729,7 @@ export default function DispatchTracker() {
         }
     };
 
-    // �"��"� Submit new Add Load form �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Submit new Add Load form ============================
     const handleAddLoad = async () => {
         if (!user) return;
 
@@ -829,7 +831,7 @@ export default function DispatchTracker() {
         }
     };
 
-    // �"��"� Reset add form when dialog closes �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Reset add form when dialog closes ==================
     const openAddDialog = useCallback(() => {
         setEditLoad(null);
         setAddForm(EMPTY_ADD_FORM);
@@ -846,7 +848,7 @@ export default function DispatchTracker() {
         setDialogOpen(true);
     }, []);
 
-    // �"��"� CRUD �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == CRUD =================================
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -907,6 +909,12 @@ export default function DispatchTracker() {
 
     const handleDelete = async () => {
         if (!deleteId) return;
+        // Only owners can permanently delete loads
+        if (!isOwner) {
+            toast({ title: "Only owners can delete loads", variant: "destructive" });
+            setDeleteId(null);
+            return;
+        }
         const { error } = await db.from("daily_loads").delete().eq("id", deleteId);
         setDeleteId(null);
         if (error) {
@@ -927,13 +935,13 @@ export default function DispatchTracker() {
         });
     };
 
-    // �"��"� Lookups �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Lookups ==============================
     const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "—";
     const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "—";
     const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "—";
     const statusInfo = (s: string) => STATUSES.find((st) => st.value === s) ?? STATUSES[0];
 
-    // �"��"� Computed / Analytics �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Computed / Analytics ==================
     const todayLoads = useMemo(() => loads.filter((l) => l.load_date === todayISO()), [loads]);
     const todayStats = useMemo(() => ({
         count: todayLoads.length,
@@ -948,7 +956,7 @@ export default function DispatchTracker() {
         [loads, selectedDate],
     );
 
-    // �"��"� Helper: date range from loadFilters.dateRange �"��"��"��"��"��"�
+    // == Helper: date range from loadFilters.dateRange ======
     const filterDateMatches = useCallback((loadDate: string, dateRange: LoadFilters["dateRange"]) => {
         if (!dateRange) return true;
         const today = todayISO();
@@ -960,7 +968,7 @@ export default function DispatchTracker() {
         return true;
     }, []);
 
-    // �"��"� Filtered + sorted board loads �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Filtered + sorted board loads =====================
     const boardLoads = useMemo(() => {
         let result = rawBoardLoads;
         const { search, status, driverId, serviceType, dateRange, sort } = loadFilters;
@@ -1097,7 +1105,7 @@ export default function DispatchTracker() {
         toast({ title: "Report copied to clipboard" });
     };
 
-    // �"��"� Skeleton �"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"��"�
+    // == Skeleton =============================
     if (loading) return (
         <div className="space-y-4 animate-in">
             <Skeleton className="h-8 w-64" />
@@ -1166,7 +1174,7 @@ export default function DispatchTracker() {
                     <TabsTrigger value="report" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Daily Report</TabsTrigger>
                 </TabsList>
 
-                {/* �"��"��"��"��"��"��"��"� TAB: LIVE OPS �"��"��"��"��"��"��"��"� */}
+                {/* ======== TAB: LIVE OPS ======== */}
                 <TabsContent value="live">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2">
@@ -1194,7 +1202,7 @@ export default function DispatchTracker() {
                             <IntegrationSyncPanel
                                 onfleetConnected={false}
                                 ontime360Connected={false}
-                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management → Integrations." })}
+                                onOpenSettings={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management �' Integrations." })}
                             />
                             <RouteOptimizerPanel
                                 loads={boardLoads.map(l => ({
@@ -1285,7 +1293,7 @@ export default function DispatchTracker() {
                         </div>
                     </div>
 
-                    {/* �"��"� Search + Filter Bar �"��"� */}
+                    {/* == Search + Filter Bar == */}
                     <LoadSearchFilters
                         filters={loadFilters}
                         onFiltersChange={setLoadFilters}
@@ -1369,7 +1377,7 @@ export default function DispatchTracker() {
                                                         {load.wait_time_minutes > 0 ? (
                                                             <Badge className={`${waitBadgeClass(load.wait_time_minutes)} text-[10px]`}>
                                                                 {fmtWait(load.wait_time_minutes)}
-                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && "⏱️"}
+                                                                {load.wait_time_minutes >= DETENTION_THRESHOLD && " � ️"}
                                                             </Badge>
                                                         ) : <span className="text-muted-foreground text-xs">—</span>}
                                                     </TableCell>
@@ -1393,7 +1401,7 @@ export default function DispatchTracker() {
                                                             <span className="text-muted-foreground text-xs">—</span>
                                                         )}
                                                     </TableCell>
-                                                    {/* �"��"� Status cell: badge + next-action button �"��"� */}
+                                                    {/* == Status cell: badge + next-action button == */}
                                                     <TableCell onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex flex-col gap-1 items-start">
                                                             {/* Status badge */}
@@ -1652,7 +1660,7 @@ export default function DispatchTracker() {
                     </div>
                 </TabsContent>
 
-                {/* �"��"��"��"��"��"��"��"� TAB: WAIT TIME INTELLIGENCE �"��"��"��"��"��"��"��"� */}
+                {/* ======== TAB: WAIT TIME INTELLIGENCE ======== */}
                 <TabsContent value="wait" className="space-y-6">
                     {/* Wait Stats */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1760,7 +1768,7 @@ export default function DispatchTracker() {
                     </Card>
                 </TabsContent>
 
-                {/* �"��"��"��"��"��"��"��"� TAB: DAILY REPORT �"��"��"��"��"��"��"��"� */}
+                {/* ======== TAB: DAILY REPORT ======== */}
                 <TabsContent value="report" className="space-y-6">
                     <div className="flex items-center gap-3">
                         <Label className="text-xs text-muted-foreground">Report Date</Label>
@@ -1777,7 +1785,7 @@ export default function DispatchTracker() {
                             { label: "Total Miles", value: dailyReport.totalMiles.toFixed(0), sub: "load miles" },
                             { label: "Revenue", value: fmtMoney(dailyReport.totalRevenue), sub: "gross" },
                             { label: "Costs", value: fmtMoney(dailyReport.totalCosts), sub: "driver + fuel" },
-                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "📈" : "📉" },
+                            { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "�-�" : "�-�" },
                             { label: "Margin", value: `${dailyReport.margin.toFixed(1)}%`, sub: dailyReport.margin >= 30 ? "Healthy" : dailyReport.margin >= 15 ? "OK" : "Low" },
                         ].map((s) => (
                             <Card key={s.label} className="glass-card rounded-2xl">
@@ -1853,7 +1861,7 @@ export default function DispatchTracker() {
             }}>
                 <DialogContent className={editLoad ? "max-w-2xl max-h-[90vh] overflow-y-auto" : "max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0"}>
 
-                    {/* �"��"� EDIT MODE: existing compact form �"��"� */}
+                    {/* == EDIT MODE: existing compact form == */}
                     {editLoad && (
                         <>
                             <DialogHeader className="px-6 pt-6">
@@ -1916,9 +1924,9 @@ export default function DispatchTracker() {
                         </>
                     )}
 
-                    {/* �"��"� ADD MODE: full multi-step form �"��"� */}
+                    {/* == ADD MODE: full multi-step form == */}
                     {!editLoad && (() => {
-                        // �"��"� helpers scoped to render �"��"�
+                        // == helpers scoped to render ==
                         const af = addForm;
                         const setAf = (patch: Partial<AddLoadForm>) => setAddForm((f) => ({ ...f, ...patch }));
 
@@ -1986,7 +1994,7 @@ export default function DispatchTracker() {
                                                         active ? "bg-primary text-primary-foreground" :
                                                         "bg-muted text-muted-foreground"
                                                     }`}>
-                                                        {done ? "✅" : step}
+                                                        {done ? "�"" : step}
                                                     </div>
                                                     <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
                                                 </button>
@@ -2162,7 +2170,7 @@ export default function DispatchTracker() {
                                                 </div>
                                             </div>
 
-                                            {/* �"��"� Anika Live Rate Card �"��"� */}
+                                            {/* == Anika Live Rate Card == */}
                                             {(() => {
                                                 const miles = parseFloat(af.distance_miles) || 0;
                                                 const wKg = parseFloat(af.weight_kg) || 0;
@@ -2210,7 +2218,7 @@ export default function DispatchTracker() {
 
                                             {/* Revenue */}
                                             <div>
-                                                <p className="form-section-label">💰 Revenue</p>
+                                                <p className="form-section-label">💵 Revenue</p>
                                                 <div className="mt-1">
                                                     <div className="relative">
                                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
@@ -2421,9 +2429,9 @@ export default function DispatchTracker() {
                                                     <Label className="text-xs">Dimensions (CM)</Label>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Input type="number" value={af.dim_l} onChange={(e) => setAf({ dim_l: e.target.value })} placeholder="L" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
                                                         <Input type="number" value={af.dim_w} onChange={(e) => setAf({ dim_w: e.target.value })} placeholder="W" className="text-center" />
-                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">×</span>
+                                                        <span className="text-muted-foreground text-sm font-medium shrink-0">�-</span>
                                                         <Input type="number" value={af.dim_h} onChange={(e) => setAf({ dim_h: e.target.value })} placeholder="H" className="text-center" />
                                                     </div>
                                                     {cubic > 0 && (
@@ -2441,7 +2449,7 @@ export default function DispatchTracker() {
                                                 </div>
                                             </div>
 
-                                            {/* �"��"� Anika Price Modifiers �"��"� */}
+                                            {/* == Anika Price Modifiers == */}
                                             {(af.vehicle_type === "cargo_van" || af.vehicle_type === "box_truck") && (() => {
                                                 const miles = parseFloat(af.distance_miles) || 0;
                                                 const wKg = parseFloat(af.weight_kg) || 0;
@@ -2481,7 +2489,7 @@ export default function DispatchTracker() {
                                                                 <Label className="text-xs">Additional Stops (+$50 each)</Label>
                                                                 <div className="flex items-center gap-2">
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>−</Button>
+                                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>�'</Button>
                                                                     <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
                                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                         onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
@@ -2522,7 +2530,7 @@ export default function DispatchTracker() {
                                                                     <Label className="text-xs">{label}</Label>
                                                                     <div className="flex items-center gap-2">
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>−</Button>
+                                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>�'</Button>
                                                                         <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
                                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                                             onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>

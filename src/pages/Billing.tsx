@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { fmtMoney } from "@/lib/formatters";
 import { generateBillingInvoice } from "@/lib/generateBillingInvoice";
@@ -149,6 +150,7 @@ function addDaysISO(dateStr: string, days: number): string {
 // ═══════════════════════════════════════════════════════════
 export default function Billing() {
   const { user } = useAuth();
+  const { isOwner } = useUserRole();
   const { toast } = useToast();
 
   // ── QuickBooks integration ─────────────────────────────
@@ -596,13 +598,14 @@ export default function Billing() {
       </div>
 
       {/* ── QuickBooks Connection Banner ──────────────────── */}
+      {/* Only owners can manage QuickBooks OAuth. Dispatchers see a read-only status. */}
       {!qbLoading && (
         qbConnected ? (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
             <CheckCircle className="h-4 w-4 flex-shrink-0" />
             <span>✅ QuickBooks Connected (Sandbox)</span>
           </div>
-        ) : (
+        ) : isOwner ? (
           <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800">
             <div className="flex items-center gap-2 text-sm">
               <AlertTriangle className="h-4 w-4 flex-shrink-0 text-yellow-600" />
@@ -618,6 +621,11 @@ export default function Billing() {
               <Link2 className="h-3 w-3" />
               Connect Now
             </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 text-sm">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-gray-400" />
+            <span>QuickBooks not connected — Contact your owner to manage QuickBooks settings.</span>
           </div>
         )
       )}

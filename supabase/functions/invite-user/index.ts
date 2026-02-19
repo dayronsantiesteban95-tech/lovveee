@@ -45,17 +45,19 @@ serve(async (req) => {
       .eq("user_id", callerId)
       .maybeSingle();
 
-    const { data: userRole } = await adminClient
+    const { data: userRoleRow } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", callerId)
-      .eq("role", "owner")
       .maybeSingle();
 
-    const isOwner = profileRole?.role === "owner" || !!userRole;
+    const callerRole: string | null = userRoleRow?.role ?? profileRole?.role ?? null;
+    const isOwner = callerRole === "owner";
+    const isDispatcher = callerRole === "dispatcher";
 
-    if (!isOwner) {
-      return new Response(JSON.stringify({ error: "Forbidden: Only owners can manage users" }), {
+    // Both owners and dispatchers can manage users
+    if (!isOwner && !isDispatcher) {
+      return new Response(JSON.stringify({ error: "Forbidden: Only owners and dispatchers can manage users" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -105,6 +107,13 @@ serve(async (req) => {
       if (!user_id || !new_role || !["owner", "dispatcher", "driver"].includes(new_role)) {
         return new Response(JSON.stringify({ error: "Invalid user_id or role" }), {
           status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Dispatchers cannot promote anyone to "owner" — only owners can grant owner role
+      if (!isOwner && new_role === "owner") {
+        return new Response(JSON.stringify({ error: "Forbidden: Only owners can promote users to owner" }), {
+          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -162,6 +171,21 @@ serve(async (req) => {
         });
       }
 
+      // Dispatchers cannot remove owners
+      if (!isOwner) {
+        const { data: targetRoleRow } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (targetRoleRow?.role === "owner") {
+          return new Response(JSON.stringify({ error: "Forbidden: Only owners can remove other owners" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       // Delete role, profile, and auth user
       await adminClient.from("user_roles").delete().eq("user_id", userId);
       await adminClient.from("profiles").delete().eq("user_id", userId);
@@ -183,6 +207,14 @@ serve(async (req) => {
     if (!["owner", "dispatcher", "driver"].includes(role)) {
       return new Response(JSON.stringify({ error: "Role must be 'owner', 'dispatcher', or 'driver'" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Dispatchers cannot invite users with the owner role
+    if (!isOwner && role === "owner") {
+      return new Response(JSON.stringify({ error: "Forbidden: Only owners can invite other owners" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
