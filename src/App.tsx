@@ -13,7 +13,7 @@ import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
-// Lazy-loaded pages — these are the largest chunks
+// Lazy-loaded pages -- these are the largest chunks
 const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("@/pages/legal/TermsOfService"));
 const QuickBooksCallback = lazy(() => import("@/pages/QuickBooksCallback"));
@@ -63,7 +63,7 @@ function RouteFallback() {
         fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
-      <span style={{ fontSize: "2rem" }}>⚠️</span>
+      <span style={{ fontSize: "2rem" }}>(!)</span>
       <p style={{ fontWeight: 600 }}>This section failed to load.</p>
       <p style={{ fontSize: "0.85rem" }}>
         The error has been reported. Try refreshing the page.
@@ -102,7 +102,7 @@ function ProtectedRoutes() {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Drivers belong in the mobile app — show the wrong-app screen immediately,
+  // Drivers belong in the mobile app -- show the wrong-app screen immediately,
   // before any dispatcher page or Supabase query fires.
   if (role === "driver") return <WrongApp />;
 
