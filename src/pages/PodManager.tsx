@@ -4,6 +4,7 @@
 // Full 4-section layout: Search -> Selected Load -> Upload -> All PODs
 // -----------------------------------------------------------
 import { useEffect, useState, useCallback, useRef, useDeferredValue } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -181,7 +182,7 @@ function DocCard({
 // -----------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------
-export default function PodManager() {
+function PodManager() {
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -867,4 +868,12 @@ export default function PodManager() {
             </Dialog>
         </div>
     );
+}
+
+export default function PodManagerPage() {
+  return (
+    <ErrorBoundary>
+      <PodManager />
+    </ErrorBoundary>
+  );
 }

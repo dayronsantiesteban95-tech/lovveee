@@ -6,6 +6,7 @@
 // + Walk-Around Inspection System + Car Wash Tracking
 // -----------------------------------------------------------
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/formatters";
@@ -172,7 +173,7 @@ function CarWashBadge({ daysSince, overdue }: { daysSince: number; overdue: bool
 }
 
 // -----------------------------------------------------------
-export default function FleetTracker() {
+function FleetTracker() {
     const { user } = useAuth();
     const { toast } = useToast();
     const db = supabase;
@@ -1190,4 +1191,12 @@ export default function FleetTracker() {
             )}
         </div>
     );
+}
+
+export default function FleetTrackerPage() {
+  return (
+    <ErrorBoundary>
+      <FleetTracker />
+    </ErrorBoundary>
+  );
 }

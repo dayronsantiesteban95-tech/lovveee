@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -204,7 +205,7 @@ const DEFAULT_FORM: InviteForm = {
 
 // --- Main Component -----------------------------------------------------------
 
-export default function TeamManagement() {
+function TeamManagement() {
   const { user } = useAuth();
   const { isOwner, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
@@ -443,7 +444,7 @@ export default function TeamManagement() {
         } else {
           updated = true;
         }
-      } catch {
+      } catch (_err) {
         // Edge Function unavailable -- role changes require owner auth via server, cannot fall back to client
         toast({
           title: "Role update unavailable",
@@ -1108,3 +1109,10 @@ export default function TeamManagement() {
   );
 }
 
+export default function TeamManagementPage() {
+  return (
+    <ErrorBoundary>
+      <TeamManagement />
+    </ErrorBoundary>
+  );
+}

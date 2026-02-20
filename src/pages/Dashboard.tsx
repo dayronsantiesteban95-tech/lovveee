@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import ETABadge from "@/components/ETABadge";
@@ -164,7 +165,8 @@ async function fetchActivityData(): Promise<ActivityEvent[]> {
     .limit(20);
   if (error) throw error;
 
-  const changedByIds = [...new Set((data ?? []).map((e: any) => e.changed_by).filter(Boolean))];
+  type ActivityRow = { id: string; created_at: string; new_status: string; changed_by: string | null; load_id: string | null; daily_loads: { reference_number: string | null } | null };
+  const changedByIds = [...new Set((data ?? []).map((e: ActivityRow) => e.changed_by).filter(Boolean))];
   const driverNameMap: Record<string, string> = {};
   if (changedByIds.length > 0) {
     const { data: driverRows } = await supabase
@@ -174,7 +176,7 @@ async function fetchActivityData(): Promise<ActivityEvent[]> {
     for (const d of (driverRows ?? [])) driverNameMap[d.id] = d.full_name;
   }
 
-  return (data ?? []).map((e: any) => ({
+  return (data ?? []).map((e: ActivityRow) => ({
     id: e.id,
     created_at: e.created_at,
     new_status: e.new_status,
@@ -193,11 +195,11 @@ async function fetchWeekStatsData(today: string): Promise<WeekStats> {
   if (error) throw error;
 
   const rows = data ?? [];
-  const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s: number, r: any) => s + (r.revenue ?? 0), 0);
+  const revenue = rows.filter(r => r.status === "delivered" || r.status === "completed").reduce((s: number, r) => s + ((r.revenue as number | null) ?? 0), 0);
   const loads = rows.length;
 
-  const withETA = rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
-  const onTime = withETA.filter((r: any) => r.end_time && r.end_time <= r.estimated_delivery).length;
+  const withETA = rows.filter((r) => (r.status === "delivered" || r.status === "completed") && r.estimated_delivery);
+  const onTime = withETA.filter((r) => r.end_time && r.end_time <= r.estimated_delivery).length;
   const onTimePct = withETA.length > 0 ? Math.round((onTime / withETA.length) * 100) : null;
 
   const clientCounts: Record<string, number> = {};
@@ -209,8 +211,8 @@ async function fetchWeekStatsData(today: string): Promise<WeekStats> {
   for (const d of (driverRows ?? [])) dMap[d.id] = d.full_name;
 
   const driverCounts: Record<string, number> = {};
-  for (const r of rows.filter((r: any) => (r.status === "delivered" || r.status === "completed") && r.driver_id)) {
-    const id = (r as any).driver_id;
+  for (const r of rows.filter((r) => (r.status === "delivered" || r.status === "completed") && r.driver_id)) {
+    const id = r.driver_id as string;
     driverCounts[id] = (driverCounts[id] ?? 0) + 1;
   }
   const topDriverId = Object.entries(driverCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
@@ -233,7 +235,7 @@ function computeKPIs(loads: DailyLoad[]): KPIs {
 
 // --- Dashboard ----------------------------------------------------------------
 
-export default function Dashboard() {
+function Dashboard() {
   const today = todayISO();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -636,5 +638,13 @@ export default function Dashboard() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ErrorBoundary>
+      <Dashboard />
+    </ErrorBoundary>
   );
 }

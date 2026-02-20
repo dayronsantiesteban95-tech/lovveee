@@ -6,6 +6,7 @@
 // QB: QuickBooks Online sync integration
 // -----------------------------------------------------------
 import { useState, useEffect, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -148,7 +149,7 @@ function addDaysISO(dateStr: string, days: number): string {
 // -----------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------
-export default function Billing() {
+function Billing() {
   const { user } = useAuth();
   const { isOwner } = useUserRole();
   const { toast } = useToast();
@@ -1376,3 +1377,10 @@ export default function Billing() {
   );
 }
 
+export default function BillingPage() {
+  return (
+    <ErrorBoundary>
+      <Billing />
+    </ErrorBoundary>
+  );
+}
