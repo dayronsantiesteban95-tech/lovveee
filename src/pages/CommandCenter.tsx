@@ -1,4 +1,4 @@
-// Deploy cache bust: 2026-02-19 17:24:07
+// Deploy cache bust: 2026-02-20 rebuild — ErrorBoundary + bulletproof map init
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import LoadDetailPanel from "@/components/LoadDetailPanel";
 import type { LoadDetail } from "@/components/LoadDetailPanel";
 import LiveDriverMap from "@/components/LiveDriverMap";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // ═══════════════════════════════════════════
 // Types
@@ -393,7 +394,7 @@ function MapPlaceholder({ driverCount, loadCount }: { driverCount: number; loadC
 // ═══ MAIN: COMMAND CENTER ═══════════════
 // ═══════════════════════════════════════════
 
-export default function CommandCenter() {
+function CommandCenter() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [loads, setLoads] = useState<Load[]>([]);
@@ -869,5 +870,18 @@ export default function CommandCenter() {
                 />
             )}
         </div>
+    );
+}
+
+// ═══════════════════════════════════════════
+// Page export — wrapped in ErrorBoundary so a
+// single component crash can't kill the whole page
+// ═══════════════════════════════════════════
+
+export default function CommandCenterPage() {
+    return (
+        <ErrorBoundary>
+            <CommandCenter />
+        </ErrorBoundary>
     );
 }
