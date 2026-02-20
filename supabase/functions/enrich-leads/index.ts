@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Step 1: Authenticate with ZoomInfo ──
+    // -- Step 1: Authenticate with ZoomInfo --
     let accessToken = ZOOMINFO_API_KEY;
 
     if (!accessToken) {
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       "Content-Type": "application/json",
     };
 
-    // ── Action: Search Contacts ──
+    // -- Action: Search Contacts --
     if (action === "search") {
       const {
         jobTitle = "Logistics Manager",
@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Action: Import Contact to CRM ──
+    // -- Action: Import Contact to CRM --
     if (action === "import") {
       if (!contact_id) {
         return new Response(

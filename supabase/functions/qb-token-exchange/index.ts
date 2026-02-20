@@ -2,7 +2,7 @@
  * Supabase Edge Function: qb-token-exchange
  *
  * Securely exchanges a QuickBooks OAuth authorization code for access/refresh tokens.
- * The client secret NEVER leaves the server — required by Intuit for production approval.
+ * The client secret NEVER leaves the server -- required by Intuit for production approval.
  *
  * POST /functions/v1/qb-token-exchange
  * Body: { code: string, realmId: string }
@@ -109,7 +109,7 @@ serve(async (req) => {
       throw new Error('Intuit returned incomplete token response');
     }
 
-    // Store tokens in DB using service role (bypasses RLS) — tokens never returned to client
+    // Store tokens in DB using service role (bypasses RLS) -- tokens never returned to client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { error: upsertError } = await supabase
@@ -136,7 +136,7 @@ serve(async (req) => {
       throw new Error(`Failed to store tokens: ${upsertError.message}`);
     }
 
-    // Return success — tokens are NEVER sent back to the frontend
+    // Return success -- tokens are NEVER sent back to the frontend
     return new Response(
       JSON.stringify({ success: true, realmId }),
       { status: 200, headers }

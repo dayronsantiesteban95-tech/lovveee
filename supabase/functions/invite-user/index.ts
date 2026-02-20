@@ -24,7 +24,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // 2. Check caller is an owner — check both profiles and user_roles tables
+    // 2. Check caller is an owner -- check both profiles and user_roles tables
     // Use admin client to verify JWT via getUser (getClaims does not exist in supabase-js v2)
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
@@ -63,7 +63,7 @@ serve(async (req) => {
       });
     }
 
-    // 3. Parse request body — parse once, destructure all fields
+    // 3. Parse request body -- parse once, destructure all fields
     const body = await req.json();
     const { email, full_name, role, action, password: providedPassword } = body;
 
@@ -110,7 +110,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Dispatchers cannot promote anyone to "owner" — only owners can grant owner role
+      // Dispatchers cannot promote anyone to "owner" -- only owners can grant owner role
       if (!isOwner && new_role === "owner") {
         return new Response(JSON.stringify({ error: "Forbidden: Only owners can promote users to owner" }), {
           status: 403,
@@ -219,7 +219,7 @@ serve(async (req) => {
       });
     }
 
-    // 4. Create user via Admin API — use provided password or default
+    // 4. Create user via Admin API -- use provided password or default
     const userPassword = providedPassword || "Anika2026!";
     
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({

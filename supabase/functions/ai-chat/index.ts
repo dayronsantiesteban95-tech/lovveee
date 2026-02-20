@@ -61,7 +61,7 @@ serve(async (req) => {
     const tasksDueToday = tasks.filter((t: any) => t.due_date === today && t.status !== "done").length;
     const openTasks = tasks.filter((t: any) => t.status !== "done").length;
 
-    const systemPrompt = `You are Anika AI, the intelligent assistant for Anika Logistics CRM — a last-mile delivery operations platform.
+    const systemPrompt = `You are Anika AI, the intelligent assistant for Anika Logistics CRM -- a last-mile delivery operations platform.
 
 You have access to the following live CRM data:
 

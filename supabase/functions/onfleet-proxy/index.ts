@@ -5,15 +5,15 @@
  * Deploy with: supabase functions deploy onfleet-proxy
  *
  * Supported actions:
- *   listWorkers       — GET /workers (with GPS filter)
- *   getTask           — GET /tasks/:id
- *   listTasks         — GET /tasks/all?from=&to=
- *   createTask        — POST /tasks
- *   updateTask        — PUT /tasks/:id
- *   completeTask      — POST /tasks/:id/complete
- *   getWorkerLocation — GET /workers/:id
- *   deleteTask        — DELETE /tasks/:id
- *   autoAssign        — POST /containers/teams/:id/tasks (Onfleet auto-assign)
+ *   listWorkers       -- GET /workers (with GPS filter)
+ *   getTask           -- GET /tasks/:id
+ *   listTasks         -- GET /tasks/all?from=&to=
+ *   createTask        -- POST /tasks
+ *   updateTask        -- PUT /tasks/:id
+ *   completeTask      -- POST /tasks/:id/complete
+ *   getWorkerLocation -- GET /workers/:id
+ *   deleteTask        -- DELETE /tasks/:id
+ *   autoAssign        -- POST /containers/teams/:id/tasks (Onfleet auto-assign)
  *
  * Required secrets:
  *   supabase secrets set ONFLEET_API_KEY=<your-key>
@@ -65,7 +65,7 @@ serve(async (req) => {
         let body: string | undefined;
 
         switch (action) {
-            // ── Read operations ─────────────────────
+            // -- Read operations ---------------------
             case "listWorkers":
                 // Optional: ?filter=all | ?states=0,1
                 url = `${ONFLEET_BASE}/workers`;
@@ -88,7 +88,7 @@ serve(async (req) => {
                 url = `${ONFLEET_BASE}/workers/${params.workerId}`;
                 break;
 
-            // ── Write operations ────────────────────
+            // -- Write operations --------------------
             case "createTask": {
                 url = `${ONFLEET_BASE}/tasks`;
                 method = "POST";

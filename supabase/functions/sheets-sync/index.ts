@@ -10,14 +10,14 @@ const corsHeaders = {
  * Google Sheets Two-Way Sync Edge Function
  *
  * Environment variables required:
- *   GOOGLE_SERVICE_ACCOUNT_JSON — Full JSON string of Google Cloud service account key
- *   GOOGLE_SHEET_ID — The ID from the Google Sheet URL
- *   GOOGLE_SHEET_NAME — The tab/sheet name (default: "Daily Dispatch")
+ *   GOOGLE_SERVICE_ACCOUNT_JSON -- Full JSON string of Google Cloud service account key
+ *   GOOGLE_SHEET_ID -- The ID from the Google Sheet URL
+ *   GOOGLE_SHEET_NAME -- The tab/sheet name (default: "Daily Dispatch")
  *
  * Actions:
- *   "pull" — Read rows from Google Sheets → upsert into daily_dispatches table
- *   "push" — Read from daily_dispatches table → write back to Google Sheets
- *   "sync" — Pull then push (full bidirectional sync)
+ *   "pull" -- Read rows from Google Sheets ? upsert into daily_dispatches table
+ *   "push" -- Read from daily_dispatches table ? write back to Google Sheets
+ *   "sync" -- Pull then push (full bidirectional sync)
  */
 
 interface GoogleTokenResponse {
@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
         const { action } = await req.json();
 
-        // ── PULL: Sheet → Supabase ──
+        // -- PULL: Sheet ? Supabase --
         if (action === "pull" || action === "sync") {
             const rows = await readSheet(accessToken, sheetId, sheetName);
 
@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        // ── PUSH: Supabase → Sheet ──
+        // -- PUSH: Supabase ? Sheet --
         if (action === "push" || action === "sync") {
             // Get dispatches that haven't been synced yet or were updated after last sync
             const { data: dispatches, error: fetchErr } = await supabase

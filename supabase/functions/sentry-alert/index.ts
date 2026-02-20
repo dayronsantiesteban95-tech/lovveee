@@ -73,7 +73,7 @@ function buildTelegramMessage(event: SentryEvent): string {
   const culprit = issue?.culprit ? `\n📍 Location: ${issue.culprit}` : ''
 
   return [
-    `${emoji} *ANIKA ALERT — ${actionLabel}*${level}`,
+    `${emoji} *ANIKA ALERT -- ${actionLabel}*${level}`,
     ``,
     `*Error:* ${escapeMarkdown(title)}`,
     `*Project:* ${escapeMarkdown(project)}${culprit}`,
@@ -86,7 +86,7 @@ function buildTelegramMessage(event: SentryEvent): string {
 }
 
 function escapeMarkdown(text: string): string {
-  // Escape special characters for Telegram MarkdownV2 — use basic Markdown (V1) here
+  // Escape special characters for Telegram MarkdownV2 -- use basic Markdown (V1) here
   return text.replace(/[`*_[\]]/g, '\\$&')
 }
 

@@ -88,7 +88,7 @@ serve(async (req) => {
       throw new Error('QuickBooks refresh token has expired. Please reconnect QuickBooks.');
     }
 
-    // Refresh using Basic auth — secret stays server-side
+    // Refresh using Basic auth -- secret stays server-side
     const credentials = btoa(`${QB_CLIENT_ID}:${QB_CLIENT_SECRET}`);
     const refreshResponse = await fetch(
       'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
@@ -123,7 +123,7 @@ serve(async (req) => {
       throw new Error('Intuit returned no access token on refresh');
     }
 
-    // Update tokens in DB — never return to frontend
+    // Update tokens in DB -- never return to frontend
     const { error: updateError } = await supabase
       .from('quickbooks_tokens')
       .update({
@@ -147,7 +147,7 @@ serve(async (req) => {
       throw new Error(`Failed to update tokens: ${updateError.message}`);
     }
 
-    // Return success only — tokens never leave the server
+    // Return success only -- tokens never leave the server
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers }

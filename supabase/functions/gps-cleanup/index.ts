@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Use service role to bypass RLS — this is an admin cleanup task
+    // Use service role to bypass RLS -- this is an admin cleanup task
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 

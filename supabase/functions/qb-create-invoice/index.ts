@@ -6,7 +6,7 @@
  * The client secret NEVER leaves the server.
  *
  * POST /functions/v1/qb-create-invoice
- * Body: { invoiceId: string }  — our internal Supabase invoice UUID
+ * Body: { invoiceId: string }  -- our internal Supabase invoice UUID
  * Returns: { success: true, qbInvoiceId: string, qbInvoiceNumber: string } | { error: string }
  *
  * Deploy: supabase functions deploy qb-create-invoice
@@ -42,7 +42,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-// ── Internal: refresh access token if expired ────────────────────────────────
+// -- Internal: refresh access token if expired --------------------------------
 
 async function ensureFreshToken(
   supabase: ReturnType<typeof createClient>,
@@ -64,7 +64,7 @@ async function ensureFreshToken(
     throw new Error('QuickBooks refresh token has expired. Please reconnect QuickBooks.');
   }
 
-  // Refresh via Intuit — secret stays server-side
+  // Refresh via Intuit -- secret stays server-side
   const credentials = btoa(`${QB_CLIENT_ID}:${QB_CLIENT_SECRET}`);
   const refreshResponse = await fetch(
     'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer',
@@ -122,7 +122,7 @@ async function ensureFreshToken(
   return refreshed.access_token;
 }
 
-// ── Internal: find or create QB customer ─────────────────────────────────────
+// -- Internal: find or create QB customer -------------------------------------
 
 async function findOrCreateCustomer(
   accessToken: string,
@@ -169,7 +169,7 @@ async function findOrCreateCustomer(
   return { value: created.Customer.Id, name: created.Customer.DisplayName };
 }
 
-// ── Main handler ─────────────────────────────────────────────────────────────
+// -- Main handler -------------------------------------------------------------
 
 serve(async (req) => {
   const origin = req.headers.get('origin');
@@ -203,7 +203,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // ── 1. Load tokens ────────────────────────────────────────────────────────
+    // -- 1. Load tokens --------------------------------------------------------
     const { data: tokenData, error: tokenError } = await supabase
       .from('quickbooks_tokens')
       .select('*')
@@ -223,10 +223,10 @@ serve(async (req) => {
       environment: string;
     };
 
-    // ── 2. Ensure fresh access token (refresh if needed) ─────────────────────
+    // -- 2. Ensure fresh access token (refresh if needed) ---------------------
     const accessToken = await ensureFreshToken(supabase, tokenRow);
 
-    // ── 3. Load invoice + line items from Supabase ────────────────────────────
+    // -- 3. Load invoice + line items from Supabase ----------------------------
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .select('*, invoice_line_items(*)')
@@ -252,14 +252,14 @@ serve(async (req) => {
       }>;
     };
 
-    // ── 4. Find or create QB customer ─────────────────────────────────────────
+    // -- 4. Find or create QB customer -----------------------------------------
     const customerRef = await findOrCreateCustomer(
       accessToken,
       tokenRow.realm_id,
       inv.client_name
     );
 
-    // ── 5. Build QB invoice payload ───────────────────────────────────────────
+    // -- 5. Build QB invoice payload -------------------------------------------
     const lineItems = (inv.invoice_line_items ?? []).map((li, i) => ({
       Id: String(i + 1),
       LineNum: i + 1,
@@ -284,7 +284,7 @@ serve(async (req) => {
       SalesTermRef: { value: '3' }, // Net 30
     };
 
-    // ── 6. Create invoice in QB ───────────────────────────────────────────────
+    // -- 6. Create invoice in QB -----------------------------------------------
     const qbResponse = await fetch(
       `${QB_BASE_URL}/v3/company/${tokenRow.realm_id}/invoice`,
       {
@@ -315,10 +315,10 @@ serve(async (req) => {
     const qbInvoiceNumber = qbResult.Invoice?.DocNumber;
 
     if (!qbInvoiceId) {
-      throw new Error('QB returned no invoice ID — sync may have failed.');
+      throw new Error('QB returned no invoice ID -- sync may have failed.');
     }
 
-    // ── 7. Update our DB with QB invoice info ─────────────────────────────────
+    // -- 7. Update our DB with QB invoice info ---------------------------------
     await supabase
       .from('invoices')
       .update({
@@ -327,7 +327,7 @@ serve(async (req) => {
       })
       .eq('id', invoiceId);
 
-    // ── 8. Log the sync event ─────────────────────────────────────────────────
+    // -- 8. Log the sync event -------------------------------------------------
     await supabase.from('quickbooks_sync_log').insert({
       invoice_id: invoiceId,
       qb_invoice_id: qbInvoiceId,

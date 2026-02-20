@@ -5,16 +5,16 @@
  * Deploy with: supabase functions deploy ontime360-proxy
  *
  * Supported actions:
- *   listOrders         — GET /orders?dateFrom=&dateTo=
- *   getOrder           — GET /orders?trackingNumber=
- *   createOrder        — POST /orders
- *   updateOrder        — PUT /orders/:id
- *   cancelOrder        — PUT /orders/:id (sets status to Cancelled)
- *   listDrivers        — GET /drivers
- *   getDriver          — GET /drivers/:id
- *   driverGpsHistory   — GET /drivers/:id/gps?date=
- *   listLocations      — GET /locations
- *   getLocation        — GET /locations/:id
+ *   listOrders         -- GET /orders?dateFrom=&dateTo=
+ *   getOrder           -- GET /orders?trackingNumber=
+ *   createOrder        -- POST /orders
+ *   updateOrder        -- PUT /orders/:id
+ *   cancelOrder        -- PUT /orders/:id (sets status to Cancelled)
+ *   listDrivers        -- GET /drivers
+ *   getDriver          -- GET /drivers/:id
+ *   driverGpsHistory   -- GET /drivers/:id/gps?date=
+ *   listLocations      -- GET /locations
+ *   getLocation        -- GET /locations/:id
  *
  * Required secrets:
  *   supabase secrets set ONTIME360_COMPANY_ID=<your-company>
@@ -64,7 +64,7 @@ serve(async (req) => {
         let body: string | undefined;
 
         switch (action) {
-            // ── Order operations ────────────────────
+            // -- Order operations --------------------
             case "listOrders":
                 if (!params.dateFrom || !params.dateTo) {
                     throw new Error("dateFrom and dateTo are required (YYYY-MM-DD)");
@@ -127,7 +127,7 @@ serve(async (req) => {
                 break;
             }
 
-            // ── Driver operations ───────────────────
+            // -- Driver operations -------------------
             case "listDrivers":
                 url = `${BASE}/drivers`;
                 if (params.status) url += `?status=${encodeURIComponent(params.status)}`;
@@ -145,7 +145,7 @@ serve(async (req) => {
                 url = `${BASE}/drivers/${params.driverId}/gps?date=${encodeURIComponent(params.date)}`;
                 break;
 
-            // ── Location operations ─────────────────
+            // -- Location operations -----------------
             case "listLocations":
                 url = `${BASE}/locations`;
                 if (params.search) url += `?search=${encodeURIComponent(params.search)}`;
