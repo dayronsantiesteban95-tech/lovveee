@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     sentryVitePlugin({
-      org: "anika-logistics",
-      project: "dispatch-app",
+      org: "anika-qi",
+      project: "javascript-react",
       authToken: process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: {
         filesToDeleteAfterUpload: ["./dist/**/*.map"],
