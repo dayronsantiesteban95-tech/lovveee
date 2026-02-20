@@ -30,7 +30,7 @@ import {
     X, MapPin, Clock, Package, DollarSign, Truck, FileText, Route,
     AlertTriangle, CheckCircle2, Timer, Copy, ExternalLink, Navigation,
     Building2, User, Hash, Ruler, Weight, Gauge, History, ReceiptText,
-    MessageSquare, Send, Link,
+    MessageSquare, Send, Link, Upload, Download, FolderOpen,
 } from "lucide-react";
 import { generateInvoice } from "@/lib/generateInvoice";
 import StatusTimeline from "@/components/StatusTimeline";
@@ -95,6 +95,7 @@ export interface LoadDetail {
     pickup_lat?: number | null;
     pickup_lng?: number | null;
     cutoff_time?: string | null;
+    bol_url?: string | null;
 }
 
 interface LoadDetailPanelProps {
@@ -350,6 +351,9 @@ export default function LoadDetailPanel({
     const { user } = useAuth();
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'messages'>('details');
+    const [bolUploading, setBolUploading] = useState(false);
+    const [bolUrl, setBolUrl] = useState<string | null>(load.bol_url ?? null);
+    const bolInputRef = useRef<HTMLInputElement>(null);
     const { messages: allMessages } = useMessages(load.id, user?.id ?? null);
     const unreadCount = user
         ? allMessages.filter(
@@ -408,6 +412,41 @@ export default function LoadDetailPanel({
             toast({ title: "Update failed", description: error.message, variant: "destructive" });
         } else {
             onRefresh();
+        }
+    }, [load.id, toast, onRefresh]);
+
+    // BOL Upload handler
+    const handleBolUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.includes('pdf') && !file.type.includes('image')) {
+            toast({ title: "Invalid file", description: "Please upload a PDF or image file", variant: "destructive" });
+            return;
+        }
+        setBolUploading(true);
+        try {
+            const ext = file.name.split('.').pop() ?? 'pdf';
+            const path = `bol/${load.id}/${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+                .from('pod-files')
+                .upload(path, file, { upsert: true, contentType: file.type });
+            if (uploadError) throw uploadError;
+            const { data: { publicUrl } } = supabase.storage
+                .from('pod-files')
+                .getPublicUrl(path);
+            const { error: dbError } = await supabase
+                .from('daily_loads')
+                .update({ bol_url: publicUrl, updated_at: new Date().toISOString() })
+                .eq('id', load.id);
+            if (dbError) throw dbError;
+            setBolUrl(publicUrl);
+            toast({ title: "✅ BOL uploaded", description: "Driver can now download it from their app" });
+            onRefresh();
+        } catch (err: any) {
+            toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+        } finally {
+            setBolUploading(false);
+            if (bolInputRef.current) bolInputRef.current.value = '';
         }
     }, [load.id, toast, onRefresh]);
 
@@ -638,6 +677,56 @@ export default function LoadDetailPanel({
                         <Field label="PO Number" value={load.po_number} mono />
                         <Field label="Inbound Tracking" value={load.inbound_tracking} mono />
                         <Field label="Outbound Tracking" value={load.outbound_tracking} mono />
+                    </Section>
+
+                    {/* Documents — BOL Upload */}
+                    <Section title="Documents" icon={FolderOpen} accentColor="bg-orange-500">
+                        <div className="space-y-2">
+                            {/* BOL */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[10px] font-semibold text-muted-foreground mb-0.5">Bill of Lading (BOL)</p>
+                                    {bolUrl ? (
+                                        <a
+                                            href={bolUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors truncate"
+                                        >
+                                            <Download className="h-3 w-3 shrink-0" />
+                                            <span className="truncate">View / Download BOL</span>
+                                        </a>
+                                    ) : (
+                                        <p className="text-[10px] text-muted-foreground/60 italic">No BOL uploaded yet</p>
+                                    )}
+                                </div>
+                                <div className="shrink-0">
+                                    <input
+                                        ref={bolInputRef}
+                                        type="file"
+                                        accept=".pdf,image/*"
+                                        className="hidden"
+                                        onChange={handleBolUpload}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-[10px] gap-1"
+                                        disabled={bolUploading}
+                                        onClick={() => bolInputRef.current?.click()}
+                                    >
+                                        {bolUploading ? (
+                                            <span className="animate-pulse">Uploading…</span>
+                                        ) : (
+                                            <>
+                                                <Upload className="h-3 w-3" />
+                                                {bolUrl ? "Replace" : "Upload"} BOL
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </Section>
 
                     {/* Auto-Dispatch Suggestion — only when no driver assigned and GPS coords available */}
