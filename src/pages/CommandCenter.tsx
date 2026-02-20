@@ -1,3 +1,4 @@
+// Deploy cache bust: 2026-02-19 17:24:07
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
