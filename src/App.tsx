@@ -13,23 +13,39 @@ import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
+// Chunk retry helper -- retries dynamic imports up to 3x with exponential back-off.
+// Prevents "This section failed to load" on transient network blips after a redeploy.
+function retryImport<T>(factory: () => Promise<T>, retries = 3, delay = 800): Promise<T> {
+  return factory().catch(async (err) => {
+    if (retries <= 0) throw err;
+    await new Promise((r) => setTimeout(r, delay));
+    return retryImport(factory, retries - 1, delay * 2);
+  });
+}
+
+function lazyWithRetry<T extends React.ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> {
+  return lazy(() => retryImport(factory));
+}
+
 // Lazy-loaded pages -- these are the largest chunks
 const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("@/pages/legal/TermsOfService"));
 const QuickBooksCallback = lazy(() => import("@/pages/QuickBooksCallback"));
-const RateCalculator = lazy(() => import("@/pages/RateCalculator"));
-const TaskBoard = lazy(() => import("@/pages/TaskBoard"));
-const CalendarView = lazy(() => import("@/pages/CalendarView"));
-const SopWiki = lazy(() => import("@/pages/SopWiki"));
-const TeamManagement = lazy(() => import("@/pages/TeamManagement"));
-const DispatchTracker = lazy(() => import("@/pages/DispatchTracker"));
-const FleetTracker = lazy(() => import("@/pages/FleetTracker"));
-const PodManager = lazy(() => import("@/pages/PodManager"));
-const CommandCenter = lazy(() => import("@/pages/CommandCenter"));
-const TrackDelivery = lazy(() => import("@/pages/TrackDelivery"));
-const TimeClock = lazy(() => import("@/pages/TimeClock"));
-const DriverPerformance = lazy(() => import("@/pages/DriverPerformance"));
-const Billing = lazy(() => import("@/pages/Billing"));
+const RateCalculator = lazyWithRetry(() => import("@/pages/RateCalculator"));
+const TaskBoard = lazyWithRetry(() => import("@/pages/TaskBoard"));
+const CalendarView = lazyWithRetry(() => import("@/pages/CalendarView"));
+const SopWiki = lazyWithRetry(() => import("@/pages/SopWiki"));
+const TeamManagement = lazyWithRetry(() => import("@/pages/TeamManagement"));
+const DispatchTracker = lazyWithRetry(() => import("@/pages/DispatchTracker"));
+const FleetTracker = lazyWithRetry(() => import("@/pages/FleetTracker"));
+const PodManager = lazyWithRetry(() => import("@/pages/PodManager"));
+const CommandCenter = lazyWithRetry(() => import("@/pages/CommandCenter"));
+const TrackDelivery = lazyWithRetry(() => import("@/pages/TrackDelivery"));
+const TimeClock = lazyWithRetry(() => import("@/pages/TimeClock"));
+const DriverPerformance = lazyWithRetry(() => import("@/pages/DriverPerformance"));
+const Billing = lazyWithRetry(() => import("@/pages/Billing"));
 import CommandBar from "@/components/CommandBar";
 
 const queryClient = new QueryClient({
