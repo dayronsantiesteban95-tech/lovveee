@@ -18,6 +18,15 @@
 
   <body>
     <div id="root"></div>
+    <!-- Google Maps JS API — loaded as static tag to avoid CSP dynamic script issues.
+         The `loading=async` + `callback=__gm_init` pattern prevents blocking render.
+         Key is safe to expose (restricted to anikalogistics.com + lovveee.vercel.app in GCP). -->
+    <script>window.__gm_init = function(){};</script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_RD-ZMJeOTV6WLND-XGdJCsCKefyGzEs&libraries=marker,places&loading=async&callback=__gm_init"
+      async
+      defer
+    ></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

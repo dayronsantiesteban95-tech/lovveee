@@ -27,28 +27,20 @@ function statusColor(status?: string | null) {
   return STATUS_COLORS[status ?? "idle"] ?? STATUS_COLORS.idle;
 }
 
-// ── Load Maps JS API once ─────────────────────────────────────────────────────
-let mapsLoaded = false;
-let mapsLoading = false;
-const mapsCallbacks: Array<() => void> = [];
-
-function loadMapsScript(key: string): Promise<void> {
+// ── Wait for Maps JS API (loaded statically in index.html) ───────────────────
+function waitForMaps(): Promise<void> {
   return new Promise((resolve) => {
-    if (mapsLoaded) { resolve(); return; }
-    mapsCallbacks.push(resolve);
-    if (mapsLoading) return;
-    mapsLoading = true;
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      mapsLoaded = true;
-      mapsCallbacks.forEach(cb => cb());
-      mapsCallbacks.length = 0;
-    };
-    document.head.appendChild(script);
+    // Already loaded
+    if (typeof google !== "undefined" && google.maps) { resolve(); return; }
+    // Poll until available (loaded async from index.html static tag)
+    const interval = setInterval(() => {
+      if (typeof google !== "undefined" && google.maps) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+    // Timeout after 10s
+    setTimeout(() => { clearInterval(interval); resolve(); }, 10000);
   });
 }
 
@@ -66,7 +58,7 @@ export default function LiveDriverMap() {
   // ── Init map ──
   useEffect(() => {
     if (!API_KEY) return;
-    loadMapsScript(API_KEY).then(() => {
+    waitForMaps().then(() => {
       if (!mapRef.current || mapInstanceRef.current) return;
       const map = new google.maps.Map(mapRef.current, {
         center: PHOENIX_CENTER,
