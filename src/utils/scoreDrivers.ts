@@ -1,7 +1,7 @@
 import type { Driver, Load } from "@/pages/dispatch/types";
 import type { DriverLocation } from "@/hooks/useRealtimeDriverLocations";
 
-// ─── Haversine distance in miles ─────────────────────────────────────────────
+// --- Haversine distance in miles ---------------------------------------------
 
 export function distanceMiles(
   lat1: number,
@@ -20,38 +20,38 @@ export function distanceMiles(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------------
 
 export interface DriverScore {
   driver: Driver;
-  score: number;        // 0–100
+  score: number;        // 0-100
   distanceMi: number | null;
   reasoning: string;
   isAvailable: boolean;
 }
 
-// ─── Scoring ─────────────────────────────────────────────────────────────────
+// --- Scoring -----------------------------------------------------------------
 
 export function scoreDrivers(
   drivers: Driver[],
   driverLocations: DriverLocation[],
   pickupLat: number | null,
   pickupLng: number | null,
-  _loadHub: string, // Hub is a hard filter applied by the caller — not scored here
+  _loadHub: string, // Hub is a hard filter applied by the caller -- not scored here
   todayLoads: Load[],
 ): DriverScore[] {
   const results: DriverScore[] = drivers.map((driver) => {
-    // ── GPS lookup ──────────────────────────────────────────────────────────
+    // -- GPS lookup ----------------------------------------------------------
     const loc = driverLocations.find((l) => l.driver_id === driver.id);
     let distanceMi: number | null = null;
     if (loc && pickupLat != null && pickupLng != null) {
       distanceMi = distanceMiles(pickupLat, pickupLng, loc.latitude, loc.longitude);
     }
 
-    // ── Load count today ────────────────────────────────────────────────────
+    // -- Load count today ----------------------------------------------------
     const loadsToday = todayLoads.filter((l) => l.driver_id === driver.id).length;
 
-    // ── Status (30 pts) ─────────────────────────────────────────────────────
+    // -- Status (30 pts) -----------------------------------------------------
     const statusLower = driver.status.toLowerCase();
     let statusPts = 0;
     if (statusLower === "idle" || statusLower === "active") statusPts = 30;
@@ -59,8 +59,8 @@ export function scoreDrivers(
     else if (statusLower === "on_load" || statusLower === "in_progress") statusPts = 5;
     // off / inactive = 0
 
-    // ── Distance (45 pts) ───────────────────────────────────────────────────
-    // Hub is a hard filter applied upstream — no hub pts here.
+    // -- Distance (45 pts) ---------------------------------------------------
+    // Hub is a hard filter applied upstream -- no hub pts here.
     let distancePts = 18; // default when no GPS (proportional middle)
     if (distanceMi != null) {
       if (distanceMi < 5) distancePts = 45;
@@ -70,7 +70,7 @@ export function scoreDrivers(
       else distancePts = 5;
     }
 
-    // ── Workload (25 pts) ───────────────────────────────────────────────────
+    // -- Workload (25 pts) ---------------------------------------------------
     let workloadPts = 25;
     if (loadsToday === 1) workloadPts = 18;
     else if (loadsToday === 2) workloadPts = 11;
@@ -78,10 +78,10 @@ export function scoreDrivers(
 
     const score = statusPts + distancePts + workloadPts;
 
-    // ── Availability flag ───────────────────────────────────────────────────
+    // -- Availability flag ---------------------------------------------------
     const isAvailable = statusLower === "idle" || statusLower === "active";
 
-    // ── Reasoning string ────────────────────────────────────────────────────
+    // -- Reasoning string ----------------------------------------------------
     const parts: string[] = [];
 
     if (distanceMi != null) {
@@ -110,7 +110,7 @@ export function scoreDrivers(
       driver,
       score,
       distanceMi,
-      reasoning: parts.join(" · "),
+      reasoning: parts.join(" ? "),
       isAvailable,
     };
   });

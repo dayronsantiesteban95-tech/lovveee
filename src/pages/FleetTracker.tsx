@@ -1,10 +1,10 @@
-// ═══════════════════════════════════════════════════════════
-// FLEET TRACKER — Vehicle & Equipment Management
-// Tab 1: Vehicles     — CRUD + status + mileage + inspections
-// Tab 2: Maintenance  — Service records & upcoming alerts
-// Tab 3: Drivers      — Driver roster management
+// -----------------------------------------------------------
+// FLEET TRACKER -- Vehicle & Equipment Management
+// Tab 1: Vehicles     -- CRUD + status + mileage + inspections
+// Tab 2: Maintenance  -- Service records & upcoming alerts
+// Tab 3: Drivers      -- Driver roster management
 // + Walk-Around Inspection System + Car Wash Tracking
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +40,7 @@ import {
 import { differenceInDays } from "date-fns";
 import InspectionForm from "@/components/InspectionForm";
 
-// ─── Types ──────────────────────────────────────────
+// --- Types ------------------------------------------
 type Vehicle = {
     id: string; vehicle_name: string; vehicle_type: string;
     make: string | null; model: string | null; year: number | null;
@@ -86,7 +86,7 @@ type InspectionRecord = {
     created_at: string;
 };
 
-// ─── Checklist Normalizer ────────────────────────────
+// --- Checklist Normalizer ----------------------------
 function normalizeChecklistItem(val: unknown): { result: 'pass' | 'issue' | null; note: string | null } {
   if (val === null || val === undefined) return { result: null, note: null };
   if (typeof val === 'boolean') return { result: val ? 'pass' : 'issue', note: null };
@@ -94,7 +94,7 @@ function normalizeChecklistItem(val: unknown): { result: 'pass' | 'issue' | null
   return { result: null, note: null };
 }
 
-// ─── Constants ──────────────────────────────────────
+// --- Constants --------------------------------------
 const VEHICLE_TYPES = [
     { value: "cargo_van", label: "Cargo Van" },
     { value: "box_truck", label: "Box Truck" },
@@ -122,7 +122,7 @@ const MAINT_TYPES = [
 ];
 const HUBS = CITY_HUBS;
 
-// ─── Helper Components ───────────────────────────────
+// --- Helper Components -------------------------------
 function InspectionBadge({ done, status }: { done: boolean; status: string }) {
     if (done) {
         if (status === "flagged") return (
@@ -171,7 +171,7 @@ function CarWashBadge({ daysSince, overdue }: { daysSince: number; overdue: bool
     );
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function FleetTracker() {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -262,7 +262,7 @@ export default function FleetTracker() {
 
     // fetchAll / fetchFleetStatus replaced by React Query above
 
-    // ── Open inspection history ──────────────
+    // -- Open inspection history --------------
     const openHistory = useCallback(async (vehicle: Vehicle) => {
         setHistoryVehicle(vehicle);
         setHistorySheet(true);
@@ -284,7 +284,7 @@ export default function FleetTracker() {
         setHistoryLoading(false);
     }, []);
 
-    // ── Log car wash ─────────────────────────
+    // -- Log car wash -------------------------
     const logCarWash = useCallback(async (vehicle: Vehicle) => {
         const today = new Date().toISOString().split("T")[0];
         const { error } = await db.from("vehicle_car_washes").insert({
@@ -296,12 +296,12 @@ export default function FleetTracker() {
         if (error) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } else {
-            toast({ title: `🚿 Car wash logged for ${vehicle.vehicle_name}` });
+            toast({ title: `?? Car wash logged for ${vehicle.vehicle_name}` });
             refetchFleetStatus();
         }
     }, [user, refetchFleetStatus, toast]);
 
-    // ── Flag / Approve inspection ────────────
+    // -- Flag / Approve inspection ------------
     const flagInspection = useCallback(async (inspectionId: string) => {
         const { error } = await db.from("vehicle_inspections")
             .update({ status: "flagged", reviewed_by: user?.id ?? null })
@@ -328,7 +328,7 @@ export default function FleetTracker() {
         }
     }, [user, historyVehicle, openHistory, refetchFleetStatus, toast]);
 
-    // ── Stats ────────────────────────────────
+    // -- Stats --------------------------------
     const stats = useMemo(() => {
         const active = vehicles.filter((v) => v.status === "active").length;
         const inMaint = vehicles.filter((v) => v.status === "maintenance").length;
@@ -356,7 +356,7 @@ export default function FleetTracker() {
     const getVehicleFleetStatus = (vehicleId: string) =>
         fleetStatus.find((f) => f.vehicle_id === vehicleId);
 
-    // ── Vehicle & Driver quick status toggles ────────
+    // -- Vehicle & Driver quick status toggles --------
     const toggleVehicleStatus = useCallback(async (v: Vehicle) => {
         const newStatus = v.status === "active" ? "inactive" : "active";
         const { error } = await db.from("vehicles").update({ status: newStatus }).eq("id", v.id);
@@ -380,7 +380,7 @@ export default function FleetTracker() {
         }
     }, [db, toast, queryClient]);
 
-    // ── Vehicle CRUD ─────────────────────────
+    // -- Vehicle CRUD -------------------------
     const handleVehSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -426,7 +426,7 @@ export default function FleetTracker() {
         }
     };
 
-    // ── Maintenance CRUD ─────────────────────
+    // -- Maintenance CRUD ---------------------
     const handleMaintSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -452,7 +452,7 @@ export default function FleetTracker() {
         else { toast({ title: editMaint ? "Record updated" : "Maintenance logged" }); setMaintDialog(false); setEditMaint(null); refetchAll(); }
     };
 
-    // ── Driver CRUD ──────────────────────────
+    // -- Driver CRUD --------------------------
     const handleDrvSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -477,7 +477,7 @@ export default function FleetTracker() {
         else { toast({ title: editDrv ? "Driver updated" : "Driver added" }); setDrvDialog(false); setEditDrv(null); refetchAll(); }
     };
 
-    // ── Delete ───────────────────────────────
+    // -- Delete -------------------------------
     const handleDelete = async () => {
         if (!deleteTarget) return;
         const table = deleteTarget.type === "vehicle" ? "vehicles" : deleteTarget.type === "maintenance" ? "vehicle_maintenance" : "drivers";
@@ -495,7 +495,7 @@ export default function FleetTracker() {
     const drvStatusBadge = (s: string) => DRIVER_STATUSES.find((d) => d.value === s) ?? DRIVER_STATUSES[0];
     const vehTypeLbl = (t: string) => VEHICLE_TYPES.find((v) => v.value === t)?.label ?? t;
     const maintTypeLbl = (t: string) => MAINT_TYPES.find((m) => m.value === t)?.label ?? t;
-    const vehName = (id: string) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "—";
+    const vehName = (id: string) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "--";
 
     if (loading) return (
         <div className="space-y-6 p-6 animate-in">
@@ -511,7 +511,7 @@ export default function FleetTracker() {
         </div>
     );
 
-    // ═══════════════════════════════════════════
+    // -------------------------------------------
     return (
         <div className="space-y-6 animate-in">
             <div>
@@ -542,7 +542,7 @@ export default function FleetTracker() {
                 ))}
             </div>
 
-            {/* ─── TODAY'S FLEET STATUS ─── */}
+            {/* --- TODAY'S FLEET STATUS --- */}
             {fleetStatus.length > 0 && (
                 <Card className="glass-card rounded-2xl">
                     <CardHeader className="pb-3">
@@ -598,7 +598,7 @@ export default function FleetTracker() {
                     <TabsTrigger value="drivers" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Drivers ({drivers.length})</TabsTrigger>
                 </TabsList>
 
-                {/* ──── VEHICLES TAB ──── */}
+                {/* ---- VEHICLES TAB ---- */}
                 <TabsContent value="vehicles" className="space-y-4">
                     <div className="flex gap-2 justify-end">
                         <Button
@@ -633,7 +633,7 @@ export default function FleetTracker() {
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                                             <div className="flex items-center gap-1.5 text-muted-foreground"><Gauge className="h-3 w-3" />{(v.current_mileage || 0).toLocaleString()} mi</div>
-                                            <div className="flex items-center gap-1.5 text-muted-foreground"><Fuel className="h-3 w-3" />{v.avg_mpg ? `${v.avg_mpg} mpg` : "—"}</div>
+                                            <div className="flex items-center gap-1.5 text-muted-foreground"><Fuel className="h-3 w-3" />{v.avg_mpg ? `${v.avg_mpg} mpg` : "--"}</div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground"><Truck className="h-3 w-3" />{vehTypeLbl(v.vehicle_type)}</div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground">{v.license_plate || "No plate"}</div>
                                         </div>
@@ -726,7 +726,7 @@ export default function FleetTracker() {
                     </div>
                 </TabsContent>
 
-                {/* ──── MAINTENANCE TAB ──── */}
+                {/* ---- MAINTENANCE TAB ---- */}
                 <TabsContent value="maintenance" className="space-y-4">
                     <div className="flex justify-end">
                         <Button className="btn-gradient gap-2" onClick={() => { setEditMaint(null); setMaintDialog(true); }}>
@@ -765,10 +765,10 @@ export default function FleetTracker() {
                                         <TableCell className="text-sm">{m.service_date}</TableCell>
                                         <TableCell className="font-medium text-sm">{vehName(m.vehicle_id)}</TableCell>
                                         <TableCell><Badge variant="secondary" className="text-[10px]">{maintTypeLbl(m.maintenance_type)}</Badge></TableCell>
-                                        <TableCell className="text-sm max-w-48 truncate">{m.description || "—"}</TableCell>
+                                        <TableCell className="text-sm max-w-48 truncate">{m.description || "--"}</TableCell>
                                         <TableCell className="text-right font-mono text-sm">{fmtMoney(Number(m.cost))}</TableCell>
-                                        <TableCell className="font-mono text-xs">{m.mileage_at_service?.toLocaleString() ?? "—"}</TableCell>
-                                        <TableCell className="text-sm">{m.vendor || "—"}</TableCell>
+                                        <TableCell className="font-mono text-xs">{m.mileage_at_service?.toLocaleString() ?? "--"}</TableCell>
+                                        <TableCell className="text-sm">{m.vendor || "--"}</TableCell>
                                         <TableCell>
                                             <div className="flex gap-1">
                                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditMaint(m); setMaintDialog(true); }}><Pencil className="h-3 w-3" /></Button>
@@ -783,7 +783,7 @@ export default function FleetTracker() {
                     </Card>
                 </TabsContent>
 
-                {/* ──── DRIVERS TAB ──── */}
+                {/* ---- DRIVERS TAB ---- */}
                 <TabsContent value="drivers" className="space-y-4">
                     <div className="flex justify-end">
                         <Button className="btn-gradient gap-2" onClick={() => { setEditDrv(null); setDrvDialog(true); }}>
@@ -824,15 +824,15 @@ export default function FleetTracker() {
                                         <TableRow key={d.id} className={licenseWarn ? "bg-orange-500/5" : ""}>
                                             <TableCell className="font-medium">{d.full_name}</TableCell>
                                             <TableCell className="text-sm">{HUBS.find((h) => h.value === d.hub)?.label ?? d.hub}</TableCell>
-                                            <TableCell className="text-sm">{d.phone || "—"}</TableCell>
+                                            <TableCell className="text-sm">{d.phone || "--"}</TableCell>
                                             <TableCell><Badge className={`${dBadge.badge} text-[10px]`}>{dBadge.label}</Badge></TableCell>
                                             <TableCell className="text-sm">
                                                 {d.license_expiry ? (
-                                                    <span className={licenseWarn ? "text-orange-500 font-medium" : ""}>{d.license_expiry}{licenseWarn && " ⚠️"}</span>
-                                                ) : "—"}
+                                                    <span className={licenseWarn ? "text-orange-500 font-medium" : ""}>{d.license_expiry}{licenseWarn && " ??"}</span>
+                                                ) : "--"}
                                             </TableCell>
                                             <TableCell className="text-right font-mono">${d.hourly_rate}</TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">{d.hired_date || "—"}</TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{d.hired_date || "--"}</TableCell>
                                             <TableCell>
                                                 <div className="flex gap-1 items-center">
                                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditDrv(d); setDrvDialog(true); }}><Pencil className="h-3 w-3" /></Button>
@@ -868,7 +868,7 @@ export default function FleetTracker() {
                 </TabsContent>
             </Tabs>
 
-            {/* ═══ VEHICLE DIALOG ═══ */}
+            {/* --- VEHICLE DIALOG --- */}
             <Dialog open={vehDialog} onOpenChange={(o) => { setVehDialog(o); if (!o) setEditVeh(null); }}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
@@ -904,7 +904,7 @@ export default function FleetTracker() {
                 </DialogContent>
             </Dialog>
 
-            {/* ═══ MAINTENANCE DIALOG ═══ */}
+            {/* --- MAINTENANCE DIALOG --- */}
             <Dialog open={maintDialog} onOpenChange={(o) => { setMaintDialog(o); if (!o) setEditMaint(null); }}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
@@ -932,7 +932,7 @@ export default function FleetTracker() {
                 </DialogContent>
             </Dialog>
 
-            {/* ═══ DRIVER DIALOG ═══ */}
+            {/* --- DRIVER DIALOG --- */}
             <Dialog open={drvDialog} onOpenChange={(o) => { setDrvDialog(o); if (!o) setEditDrv(null); }}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
@@ -960,7 +960,7 @@ export default function FleetTracker() {
                 </DialogContent>
             </Dialog>
 
-            {/* ═══ INSPECTION FORM DIALOG ═══ */}
+            {/* --- INSPECTION FORM DIALOG --- */}
             <Dialog open={inspectionDialog} onOpenChange={setInspectionDialog}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
@@ -985,13 +985,13 @@ export default function FleetTracker() {
                 </DialogContent>
             </Dialog>
 
-            {/* ═══ INSPECTION HISTORY SLIDE-OVER ═══ */}
+            {/* --- INSPECTION HISTORY SLIDE-OVER --- */}
             <Sheet open={historySheet} onOpenChange={setHistorySheet}>
                 <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
                     <SheetHeader className="mb-4">
                         <SheetTitle className="flex items-center gap-2">
                             <Eye className="h-5 w-5 text-blue-500" />
-                            {historyVehicle?.vehicle_name} — Inspection History
+                            {historyVehicle?.vehicle_name} -- Inspection History
                         </SheetTitle>
                         <SheetDescription>
                             Last 30 days of walk-around inspections and odometer readings
@@ -1018,7 +1018,7 @@ export default function FleetTracker() {
                                                 <div key={i} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
                                                     <div>
                                                         <span className="font-mono font-semibold">{o.odometer_reading.toLocaleString()} mi</span>
-                                                        {o.driver_name && <span className="text-muted-foreground text-xs ml-2">— {o.driver_name}</span>}
+                                                        {o.driver_name && <span className="text-muted-foreground text-xs ml-2">-- {o.driver_name}</span>}
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {diff !== null && (
@@ -1080,7 +1080,7 @@ export default function FleetTracker() {
                                                 </div>
                                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                     <span className="flex items-center gap-1"><Gauge className="h-3 w-3" /> {insp.odometer_reading.toLocaleString()} mi</span>
-                                                    {insp.checklist.fuel_level && <span>⛽ {insp.checklist.fuel_level}</span>}
+                                                    {insp.checklist.fuel_level && <span>? {insp.checklist.fuel_level}</span>}
                                                 </div>
                                                 <div className="flex flex-wrap gap-1">
                                                     {(() => {
@@ -1099,10 +1099,10 @@ export default function FleetTracker() {
                                                             const isGood = invertBad ? norm.result === 'issue' : norm.result === 'pass';
                                                             const isBad = invertBad ? norm.result === 'pass' : norm.result === 'issue';
                                                             if (isGood) return (
-                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-green-500/10 text-green-700 dark:text-green-400">{label} ✓{norm.note ? ` (${norm.note})` : ''}</Badge>
+                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-green-500/10 text-green-700 dark:text-green-400">{label} v{norm.note ? ` (${norm.note})` : ''}</Badge>
                                                             );
                                                             if (isBad) return (
-                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700 dark:text-orange-400">{label} ⚠️{norm.note ? ` (${norm.note})` : ''}</Badge>
+                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700 dark:text-orange-400">{label} ??{norm.note ? ` (${norm.note})` : ''}</Badge>
                                                             );
                                                             return null;
                                                         });
@@ -1155,7 +1155,7 @@ export default function FleetTracker() {
                 </SheetContent>
             </Sheet>
 
-            {/* ═══ PHOTO LIGHTBOX ═══ */}
+            {/* --- PHOTO LIGHTBOX --- */}
             {lightboxPhoto && (
                 <div
                     className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"

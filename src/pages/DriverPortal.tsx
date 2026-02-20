@@ -1,19 +1,19 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * DRIVER PORTAL — Mobile-First PWA
+ * -----------------------------------------------------------
+ * DRIVER PORTAL -- Mobile-First PWA
  *
  * This replaces Onfleet / OnTime 360 driver apps entirely.
- * Drivers open this on their phone's browser — no app store needed.
+ * Drivers open this on their phone's browser -- no app store needed.
  *
  * Features:
  *   1. Go on-duty / off-duty (starts/stops GPS tracking)
  *   2. See assigned loads for today
- *   3. Update load status (tap → picked up → in transit → delivered)
+ *   3. Update load status (tap -> picked up -> in transit -> delivered)
  *   4. Capture POD (photo + signature)
  *   5. Live GPS tracked in background (30s intervals)
  *
- * Cost: $0 — browser Geolocation API + Supabase
- * ═══════════════════════════════════════════════════════════
+ * Cost: $0 -- browser Geolocation API + Supabase
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ import {
     Power, Pause, Play, Radio,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface DriverLoad {
     id: string;
@@ -81,7 +81,7 @@ function timeAgo(iso: string): string {
     return `${hrs}h ${mins % 60}m`;
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function DriverPortal() {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -95,7 +95,7 @@ export default function DriverPortal() {
     const [statusNote, setStatusNote] = useState("");
     const [updatingLoadId, setUpdatingLoadId] = useState<string | null>(null);
 
-    // ── GPS Hook ─────────────────────────────
+    // -- GPS Hook -----------------------------
     const gps = useDriverGPS({
         driverId: driver?.id ?? "",
         activeLoadId,
@@ -103,7 +103,7 @@ export default function DriverPortal() {
         enabled: onDuty && !!driver,
     });
 
-    // ── Fetch driver profile ─────────────────
+    // -- Fetch driver profile -----------------
     useEffect(() => {
         if (!user) return;
         (async () => {
@@ -130,7 +130,7 @@ export default function DriverPortal() {
         })();
     }, [user]);
 
-    // ── Fetch today's loads ──────────────────
+    // -- Fetch today's loads ------------------
     const fetchLoads = useCallback(async () => {
         if (!driver) return;
         const today = new Date().toISOString().split("T")[0];
@@ -151,7 +151,7 @@ export default function DriverPortal() {
         setActiveLoadId(active?.id ?? null);
     }, [loads]);
 
-    // ── Toggle duty ──────────────────────────
+    // -- Toggle duty --------------------------
     const toggleDuty = async () => {
         if (!driver) return;
 
@@ -179,7 +179,7 @@ export default function DriverPortal() {
             setShiftId(data.id);
             setOnDuty(true);
             gps.startTracking();
-            toast({ title: "🟢 On Duty", description: "GPS tracking started. Drive safe!" });
+            toast({ title: "?? On Duty", description: "GPS tracking started. Drive safe!" });
         } else {
             // Go off duty
             if (shiftId) {
@@ -193,11 +193,11 @@ export default function DriverPortal() {
             gps.stopTracking();
             setOnDuty(false);
             setShiftId(null);
-            toast({ title: "🔴 Off Duty", description: "GPS tracking stopped. Good job today!" });
+            toast({ title: "?? Off Duty", description: "GPS tracking stopped. Good job today!" });
         }
     };
 
-    // ── Update load status ───────────────────
+    // -- Update load status -------------------
     const advanceStatus = async (load: DriverLoad) => {
         const nextStatus = getNextStatus(load.status);
         if (!nextStatus || !driver) return;
@@ -235,11 +235,11 @@ export default function DriverPortal() {
 
         setStatusNote("");
         setUpdatingLoadId(null);
-        toast({ title: `✅ ${getStatusInfo(nextStatus).label}`, description: load.client_name ?? "Load updated" });
+        toast({ title: `? ${getStatusInfo(nextStatus).label}`, description: load.client_name ?? "Load updated" });
         fetchLoads();
     };
 
-    // ── Render ───────────────────────────────
+    // -- Render -------------------------------
     if (loading) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
@@ -272,7 +272,7 @@ export default function DriverPortal() {
 
     return (
         <div className="min-h-screen bg-background pb-24">
-            {/* ── Header ── */}
+            {/* -- Header -- */}
             <div className={`px-4 py-4 ${onDuty ? "bg-green-600" : "bg-slate-800"} text-white transition-colors duration-500`}>
                 <div className="flex items-center justify-between">
                     <div>
@@ -283,18 +283,18 @@ export default function DriverPortal() {
                     </div>
                     <div className="text-right">
                         <Badge className={`${onDuty ? "bg-white/20 text-white" : "bg-white/10 text-white/60"} text-xs`}>
-                            {onDuty ? "🟢 On Duty" : "🔴 Off Duty"}
+                            {onDuty ? "?? On Duty" : "?? Off Duty"}
                         </Badge>
                         {gps.tracking && (
                             <p className="text-[10px] opacity-60 mt-1 flex items-center gap-1 justify-end">
-                                <Radio className="h-2.5 w-2.5 animate-pulse" /> GPS active · {gps.pingCount} pings
+                                <Radio className="h-2.5 w-2.5 animate-pulse" /> GPS active ? {gps.pingCount} pings
                             </p>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* ── GPS Status Bar ── */}
+            {/* -- GPS Status Bar -- */}
             {onDuty && (
                 <div className="px-4 py-2 bg-muted/50 border-b flex items-center gap-3 text-xs">
                     <span className="flex items-center gap-1">
@@ -305,7 +305,7 @@ export default function DriverPortal() {
                         )}
                     </span>
                     {gps.position?.accuracy && (
-                        <span className="text-muted-foreground">±{Math.round(gps.position.accuracy)}m</span>
+                        <span className="text-muted-foreground">?{Math.round(gps.position.accuracy)}m</span>
                     )}
                     {gps.position?.speed !== null && gps.position?.speed !== undefined && (
                         <span className="text-muted-foreground">{Math.round(gps.position.speed * 2.237)} mph</span>
@@ -317,7 +317,7 @@ export default function DriverPortal() {
             )}
 
             <div className="px-4 py-4 space-y-4">
-                {/* ── Duty Toggle ── */}
+                {/* -- Duty Toggle -- */}
                 <Button
                     onClick={toggleDuty}
                     className={`w-full h-14 text-base font-bold rounded-2xl transition-all shadow-lg ${onDuty
@@ -329,7 +329,7 @@ export default function DriverPortal() {
                     {onDuty ? "End Shift" : "Start Shift"}
                 </Button>
 
-                {/* ── GPS Permission Warning ── */}
+                {/* -- GPS Permission Warning -- */}
                 {gps.permissionStatus === "denied" && (
                     <Card className="border-red-500/30 bg-red-500/5">
                         <CardContent className="py-3 px-4 flex items-center gap-3">
@@ -342,7 +342,7 @@ export default function DriverPortal() {
                     </Card>
                 )}
 
-                {/* ── Active Loads ── */}
+                {/* -- Active Loads -- */}
                 <div>
                     <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
                         <Package className="h-4 w-4 text-primary" />
@@ -376,7 +376,7 @@ export default function DriverPortal() {
                                                 <div>
                                                     <p className="font-semibold text-sm">{load.client_name ?? "Unknown Client"}</p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {load.reference_number ? `#${load.reference_number}` : ""} · {load.packages} pkg · {load.service_type}
+                                                        {load.reference_number ? `#${load.reference_number}` : ""} ? {load.packages} pkg ? {load.service_type}
                                                     </p>
                                                 </div>
                                                 <Badge className={`${statusInfo.color} text-white text-[10px]`}>
@@ -423,7 +423,7 @@ export default function DriverPortal() {
                                                     variant="outline" size="sm"
                                                     className="h-9 w-9 p-0 rounded-lg shrink-0"
                                                     onClick={() => {
-                                                        toast({ title: "📞 Call client", description: "Client phone not yet configured for this load." });
+                                                        toast({ title: "?? Call client", description: "Client phone not yet configured for this load." });
                                                     }}
                                                 >
                                                     <Phone className="h-3.5 w-3.5 text-green-500" />
@@ -449,7 +449,7 @@ export default function DriverPortal() {
                                                                 toast({ title: "Upload failed", description: uploadErr.message, variant: "destructive" });
                                                             } else {
                                                                 await supabase.from("daily_loads").update({ pod_confirmed: true }).eq("id", load.id);
-                                                                toast({ title: "📸 POD captured!", description: "Photo uploaded successfully." });
+                                                                toast({ title: "?? POD captured!", description: "Photo uploaded successfully." });
                                                                 fetchLoads();
                                                             }
                                                         };
@@ -495,7 +495,7 @@ export default function DriverPortal() {
                     )}
                 </div>
 
-                {/* ── Completed Loads ── */}
+                {/* -- Completed Loads -- */}
                 {completedLoads.length > 0 && (
                     <div>
                         <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
@@ -511,7 +511,7 @@ export default function DriverPortal() {
                                             <p className="text-[10px] text-muted-foreground">{load.reference_number ?? ""}</p>
                                         </div>
                                         <Badge className="bg-green-500/15 text-green-600 border-0 text-[10px]">
-                                            ✅ Delivered
+                                            ? Delivered
                                         </Badge>
                                     </CardContent>
                                 </Card>
@@ -520,7 +520,7 @@ export default function DriverPortal() {
                     </div>
                 )}
 
-                {/* ── Stats Footer ── */}
+                {/* -- Stats Footer -- */}
                 {onDuty && gps.tracking && (
                     <Card className="border-0 bg-muted/30">
                         <CardContent className="py-3 px-4">

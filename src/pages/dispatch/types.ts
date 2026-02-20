@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // Shared types for DispatchTracker and its sub-components
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 export type Driver = { id: string; full_name: string; hub: string; status: string };
 export type Vehicle = { id: string; vehicle_name: string; vehicle_type: string; hub: string; status: string };

@@ -1,9 +1,9 @@
 /**
- * DriverSuggestionBadge v2 — Auto-Dispatch Suggestion UI
+ * DriverSuggestionBadge v2 -- Auto-Dispatch Suggestion UI
  *
  * Shows when a load has no driver assigned and has pickup GPS coordinates.
  * Displays top-scored driver from get_driver_suggestion RPC (ETA-aware).
- * Yellow/amber accent — suggestion, not mandate.
+ * Yellow/amber accent -- suggestion, not mandate.
  */
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { useDriverSuggestion } from "@/hooks/useDriverSuggestion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 interface LoadCoords {
   id: string;
@@ -29,17 +29,17 @@ interface DriverSuggestionBadgeProps {
   onAssigned: (driverId: string) => void;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 function fmtTime(ts: string | null | undefined): string {
-  if (!ts) return "—";
+  if (!ts) return "--";
   try {
     return new Date(ts).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
     });
   } catch {
-    return "—";
+    return "--";
   }
 }
 
@@ -61,7 +61,7 @@ function cutoffBgColor(marginMin: number): string {
   return "bg-red-500/10 border-red-500/20";
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// --- Component ----------------------------------------------------------------
 
 export default function DriverSuggestionBadge({
   load,
@@ -78,7 +78,7 @@ export default function DriverSuggestionBadge({
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground px-1 py-1">
         <RefreshCw className="h-3 w-3 animate-spin text-amber-500" />
-        <span>Finding best driver…</span>
+        <span>Finding best driver...</span>
       </div>
     );
   }
@@ -104,7 +104,7 @@ export default function DriverSuggestionBadge({
     }
 
     toast({
-      title: "🚛 Driver assigned!",
+      title: "?? Driver assigned!",
       description: `${suggestion.driver_name} assigned to this load`,
     });
     onAssigned(suggestion.driver_id);
@@ -194,7 +194,7 @@ export default function DriverSuggestionBadge({
                       <AlertTriangle className="h-3 w-3 shrink-0" />
                     )}
                     <span className={cutoffColor(suggestion.cutoff_margin_min)}>
-                      Cutoff: {fmtTime(load.cutoff_time)} · {Math.round(suggestion.cutoff_margin_min)} min margin
+                      Cutoff: {fmtTime(load.cutoff_time)} ? {Math.round(suggestion.cutoff_margin_min)} min margin
                     </span>
                   </div>
                 )}

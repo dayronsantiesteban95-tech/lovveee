@@ -98,7 +98,7 @@ export function AppSidebar() {
         </div>
         <Separator className="bg-sidebar-border/50 mb-1 flex-shrink-0" />
 
-        {/* Nav — fills remaining space, no scroll */}
+        {/* Nav -- fills remaining space, no scroll */}
         <div className="flex flex-col flex-1 justify-between min-h-0 py-1">
           <div className="space-y-0">
             {/* Operations */}

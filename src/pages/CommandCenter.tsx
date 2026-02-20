@@ -1,4 +1,4 @@
-// Deploy cache bust: 2026-02-20 rebuild — ErrorBoundary + bulletproof map init
+// Deploy cache bust: 2026-02-20 rebuild -- ErrorBoundary + bulletproof map init
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,9 +23,9 @@ import type { LoadDetail } from "@/components/LoadDetailPanel";
 import LiveDriverMap from "@/components/LiveDriverMap";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Types
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 interface Load {
     id: string;
@@ -58,9 +58,9 @@ interface Driver {
 
 
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Metric Card Component
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function MetricCard({
     label,
@@ -128,9 +128,9 @@ function MetricCard({
     );
 }
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Live Status Dot
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function LiveDot({ status, size = "sm" }: { status: string; size?: "xs" | "sm" | "md" }) {
     const sizeClass = { xs: "h-1.5 w-1.5", sm: "h-2 w-2", md: "h-2.5 w-2.5" }[size];
@@ -158,9 +158,9 @@ function LiveDot({ status, size = "sm" }: { status: string; size?: "xs" | "sm" |
     );
 }
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Status Badge
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function StatusBadge({ status }: { status: string }) {
     const configs: Record<string, { label: string; className: string }> = {
@@ -186,9 +186,9 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Alert Item
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function AlertItem({
     alert,
@@ -247,9 +247,9 @@ function AlertItem({
     );
 }
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Driver Row (sidebar)
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function DriverRow({ driver, assignedLoad }: { driver: Driver; assignedLoad?: Load }) {
     const statusColor = driver.status === "active"
@@ -278,9 +278,9 @@ function DriverRow({ driver, assignedLoad }: { driver: Driver; assignedLoad?: Lo
     );
 }
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Load Row (compact, for sidebar)
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function LoadRow({
     load,
@@ -300,7 +300,7 @@ function LoadRow({
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="text-data text-[11px] text-muted-foreground">
-                        {load.reference_number || "—"}
+                        {load.reference_number || "--"}
                     </span>
                     <StatusBadge status={load.status} />
                 </div>
@@ -308,7 +308,7 @@ function LoadRow({
                     {load.client_name || "Unassigned"}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate">
-                    {driverName} • {Number(load.miles).toFixed(0)} mi • ${Number(load.revenue).toFixed(0)}
+                    {driverName} * {Number(load.miles).toFixed(0)} mi * ${Number(load.revenue).toFixed(0)}
                 </p>
             </div>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -316,9 +316,9 @@ function LoadRow({
     );
 }
 
-// ═══════════════════════════════════════════
+// -------------------------------------------
 // Map Placeholder (Google Maps will go here)
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 function MapPlaceholder({ driverCount, loadCount }: { driverCount: number; loadCount: number }) {
     return (
@@ -384,15 +384,15 @@ function MapPlaceholder({ driverCount, loadCount }: { driverCount: number; loadC
                 <span>LIVE FEED READY</span>
             </div>
             <div className="absolute bottom-8 right-8 text-[10px] text-muted-foreground font-mono">
-                33.4484° N, 112.0740° W — PHX
+                33.4484? N, 112.0740? W -- PHX
             </div>
         </div>
     );
 }
 
-// ═══════════════════════════════════════════
-// ═══ MAIN: COMMAND CENTER ═══════════════
-// ═══════════════════════════════════════════
+// -------------------------------------------
+// --- MAIN: COMMAND CENTER ---------------
+// -------------------------------------------
 
 function CommandCenter() {
     const { user } = useAuth();
@@ -408,7 +408,7 @@ function CommandCenter() {
     const [clock, setClock] = useState(() => new Date());
     const today = new Date().toISOString().slice(0, 10);
 
-    // ── Alerts (real-time from route_alerts table) ──
+    // -- Alerts (real-time from route_alerts table) --
     const {
         alerts: routeAlerts,
         stats: alertStats,
@@ -416,10 +416,10 @@ function CommandCenter() {
         loading: alertsLoading,
     } = useAlerts({ realtime: true });
 
-    // ── Singleton realtime driver locations (shared with LiveDriverMap — one subscription) ──
+    // -- Singleton realtime driver locations (shared with LiveDriverMap -- one subscription) --
     const { realtimeStatus } = useRealtimeDriverLocations();
 
-    // ── Fetch ──
+    // -- Fetch --
     const fetchData = useCallback(async () => {
         setLoading(true);
         const [loadsRes, driversRes] = await Promise.all([
@@ -433,13 +433,13 @@ function CommandCenter() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    // ── Real-time clock ──
+    // -- Real-time clock --
     useEffect(() => {
         const timer = setInterval(() => setClock(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    // ── Realtime subscriptions ──
+    // -- Realtime subscriptions --
     useEffect(() => {
         const channel = supabase
             .channel("cc-realtime")
@@ -450,7 +450,7 @@ function CommandCenter() {
         return () => { supabase.removeChannel(channel); };
     }, [fetchData]);
 
-    // ── Computed ──
+    // -- Computed --
     const driverMap = useMemo(() => {
         const m = new Map<string, Driver>();
         drivers.forEach(d => m.set(d.id, d));
@@ -491,7 +491,7 @@ function CommandCenter() {
         return { total, delivered, inProgress, unassigned, activeDrivers, idleDrivers, totalRevenue, onTimeRate, atRisk };
     }, [loads, drivers]);
 
-    // ── Client-generated supplemental alerts (unassigned loads for blast integration) ──
+    // -- Client-generated supplemental alerts (unassigned loads for blast integration) --
     const combinedAlerts = useMemo(() => {
         // Start with real DB alerts
         const dbAlerts = [...routeAlerts];
@@ -508,7 +508,7 @@ function CommandCenter() {
                 alert_type: "unassigned",
                 severity: "info",
                 title: "Unassigned load",
-                message: `${l.client_name ?? "Unknown"} — ${l.reference_number ?? "No ref"}`,
+                message: `${l.client_name ?? "Unknown"} -- ${l.reference_number ?? "No ref"}`,
                 status: "active",
                 created_at: l.created_at,
                 acknowledged_at: null,
@@ -523,7 +523,7 @@ function CommandCenter() {
 
 
 
-    // ── Format helpers ──
+    // -- Format helpers --
     const fmtMoney = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 
     // Format helpers for header
@@ -534,12 +534,12 @@ function CommandCenter() {
 
     return (
         <div className="cc-layout">
-            {/* ────── MAP ────── */}
+            {/* ------ MAP ------ */}
             <div className="cc-map-container">
                 <LiveDriverMap />
             </div>
 
-            {/* ────── METRICS BAR (top) ────── */}
+            {/* ------ METRICS BAR (top) ------ */}
             <div className="cc-metrics-bar">
                 <div className="flex-1 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
                     {/* Header / title card */}
@@ -632,7 +632,7 @@ function CommandCenter() {
                 </div>
             </div>
 
-            {/* ────── SIDEBAR PANEL (right) ────── */}
+            {/* ------ SIDEBAR PANEL (right) ------ */}
             {showSidebar && (
                 <div className="cc-sidebar-panel cc-overlay-panel animate-in-right">
                     {/* Tab switcher */}
@@ -758,7 +758,7 @@ function CommandCenter() {
                                 {combinedAlerts.length === 0 && (
                                     <div className="text-center py-8 text-muted-foreground">
                                         <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-30 text-emerald-400" />
-                                        <p className="text-xs">All clear — no alerts</p>
+                                        <p className="text-xs">All clear -- no alerts</p>
                                     </div>
                                 )}
                                 {combinedAlerts.map((alert, i) => (
@@ -808,7 +808,7 @@ function CommandCenter() {
                 </div>
             )}
 
-            {/* ────── ALERT PANEL (bottom-left) ────── */}
+            {/* ------ ALERT PANEL (bottom-left) ------ */}
             {combinedAlerts.length > 0 && !showSidebar && (
                 <div className="cc-alert-panel cc-overlay-panel animate-panel-up p-3 space-y-2 sleek-scroll">
                     <div className="flex items-center justify-between mb-1">
@@ -843,7 +843,7 @@ function CommandCenter() {
                 </div>
             )}
 
-            {/* ────── LIVE INDICATOR (bottom-right when sidebar hidden) ────── */}
+            {/* ------ LIVE INDICATOR (bottom-right when sidebar hidden) ------ */}
             {!showSidebar && (
                 <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 glass-card rounded-full px-3 py-1.5 animate-panel-up">
                     <span className="relative flex h-2 w-2">
@@ -851,18 +851,18 @@ function CommandCenter() {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
                     </span>
                     <span className="text-[10px] font-medium text-muted-foreground">
-                        {metrics.inProgress} in transit • {metrics.activeDrivers} drivers
+                        {metrics.inProgress} in transit * {metrics.activeDrivers} drivers
                     </span>
                 </div>
             )}
 
-            {/* ────── LOAD DETAIL PANEL (from alert click) ────── */}
+            {/* ------ LOAD DETAIL PANEL (from alert click) ------ */}
             {selectedLoad && (
                 <LoadDetailPanel
                     load={selectedLoad as unknown as LoadDetail}
                     driverName={driverName(selectedLoad.driver_id)}
-                    vehicleName="—"
-                    dispatcherName="—"
+                    vehicleName="--"
+                    dispatcherName="--"
                     onClose={() => setSelectedLoad(null)}
                     onStatusChange={() => { fetchData(); setSelectedLoad(null); }}
                     onEdit={() => { window.location.href = "/dispatch"; }}
@@ -873,10 +873,10 @@ function CommandCenter() {
     );
 }
 
-// ═══════════════════════════════════════════
-// Page export — wrapped in ErrorBoundary so a
+// -------------------------------------------
+// Page export -- wrapped in ErrorBoundary so a
 // single component crash can't kill the whole page
-// ═══════════════════════════════════════════
+// -------------------------------------------
 
 export default function CommandCenterPage() {
     return (

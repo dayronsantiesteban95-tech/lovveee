@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════════
-// COMPANIES — Client CRM with load history & contact detail
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
+// COMPANIES -- Client CRM with load history & contact detail
+// -----------------------------------------------------------
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-// ─── Types ───────────────────────────────────────────────
+// --- Types -----------------------------------------------
 type Company = {
   id: string;
   name: string;
@@ -67,7 +67,7 @@ type Contact = {
 
 type LoadSummary = { count: number; revenue: number };
 
-// ─── Helpers ────────────────────────────────────────────
+// --- Helpers --------------------------------------------
 const fmtRevenue = (v: number) =>
   v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -78,7 +78,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-500/15 text-red-400",
 };
 
-// ─── Company Form ────────────────────────────────────────
+// --- Company Form ----------------------------------------
 function CompanyForm({
   initial,
   onSubmit,
@@ -145,14 +145,14 @@ function CompanyForm({
       </div>
       <DialogFooter>
         <Button type="submit" disabled={loading} className="btn-gradient">
-          {loading ? "Saving…" : initial ? "Save Changes" : "Add Company"}
+          {loading ? "Saving..." : initial ? "Save Changes" : "Add Company"}
         </Button>
       </DialogFooter>
     </form>
   );
 }
 
-// ─── Company Detail Slide-Over ────────────────────────────
+// --- Company Detail Slide-Over ----------------------------
 function CompanyDetail({
   company,
   open,
@@ -356,7 +356,7 @@ function CompanyDetail({
                           {new Date(l.load_date).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="py-2 font-mono text-xs">
-                          {l.reference_number ?? "—"}
+                          {l.reference_number ?? "--"}
                         </TableCell>
                         <TableCell className="py-2">
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[l.status] ?? "bg-muted text-muted-foreground"}`}>
@@ -379,7 +379,7 @@ function CompanyDetail({
   );
 }
 
-// ─── Main Component ──────────────────────────────────────
+// --- Main Component --------------------------------------
 export default function Companies() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loadStats, setLoadStats] = useState<Record<string, LoadSummary>>({});
@@ -482,7 +482,7 @@ export default function Companies() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight gradient-text">Companies</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {companies.length} client{companies.length !== 1 ? "s" : ""} · Manage your client database
+            {companies.length} client{companies.length !== 1 ? "s" : ""} ? Manage your client database
           </p>
         </div>
         <Button
@@ -497,7 +497,7 @@ export default function Companies() {
       <div className="relative w-72">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name, city, state…"
+          placeholder="Search by name, city, state..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -556,9 +556,9 @@ export default function Companies() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {[c.city, c.state].filter(Boolean).join(", ") || "—"}
+                        {[c.city, c.state].filter(Boolean).join(", ") || "--"}
                       </TableCell>
-                      <TableCell>{c.phone ?? "—"}</TableCell>
+                      <TableCell>{c.phone ?? "--"}</TableCell>
                       <TableCell className="text-right">
                         {stats ? (
                           <Badge variant="secondary" className="font-mono">
@@ -569,7 +569,7 @@ export default function Companies() {
                         )}
                       </TableCell>
                       <TableCell className="text-right font-medium text-emerald-400">
-                        {stats ? fmtRevenue(stats.revenue) : "—"}
+                        {stats ? fmtRevenue(stats.revenue) : "--"}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

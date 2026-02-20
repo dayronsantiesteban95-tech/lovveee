@@ -1,10 +1,10 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * TERMS OF SERVICE / EULA — Public Legal Page
+ * -----------------------------------------------------------
+ * TERMS OF SERVICE / EULA -- Public Legal Page
  *
  * Route: /legal/terms
  * No auth required. Fully public.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Truck, FileText } from "lucide-react";
@@ -20,7 +20,7 @@ export default function TermsOfService() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
           <Button
@@ -42,7 +42,7 @@ export default function TermsOfService() {
         </div>
       </header>
 
-      {/* ── Body ── */}
+      {/* -- Body -- */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         {/* Title block */}
         <div className="mb-10">
@@ -81,7 +81,7 @@ export default function TermsOfService() {
             <p className="mb-3">
               This Agreement is entered into between <strong>{COMPANY}</strong> ("Company,"
               "we," "us," or "our"), a limited liability company, and you ("User," "you," or
-              "your") — whether an individual accessing the Service on your own behalf or an
+              "your") -- whether an individual accessing the Service on your own behalf or an
               authorized representative accessing on behalf of an organization.
             </p>
             <p>
@@ -190,9 +190,9 @@ export default function TermsOfService() {
               5. Intellectual Property
             </h2>
             <p className="mb-3">
-              All rights, title, and interest in and to the Service — including but not limited to
+              All rights, title, and interest in and to the Service -- including but not limited to
               software code, algorithms, user interface design, branding, logos, documentation,
-              and all related intellectual property — are and will remain the exclusive property
+              and all related intellectual property -- are and will remain the exclusive property
               of <strong>{COMPANY}</strong> and its licensors.
             </p>
             <p className="mb-3">
@@ -249,7 +249,7 @@ export default function TermsOfService() {
               8. Disclaimers &amp; Warranties
             </h2>
             <p className="mb-3 uppercase text-sm font-semibold tracking-wide text-gray-500">
-              Important — Please Read Carefully
+              Important -- Please Read Carefully
             </p>
             <p className="mb-3">
               THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES
@@ -276,7 +276,7 @@ export default function TermsOfService() {
               9. Limitation of Liability
             </h2>
             <p className="mb-3 uppercase text-sm font-semibold tracking-wide text-gray-500">
-              Important — Please Read Carefully
+              Important -- Please Read Carefully
             </p>
             <p className="mb-3">
               TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL {COMPANY.toUpperCase()},
@@ -474,8 +474,8 @@ export default function TermsOfService() {
             <a href="/legal/privacy" className="hover:text-blue-600 hover:underline">
               Privacy Policy
             </a>
-            <span>·</span>
-            <span>© {new Date().getFullYear()} {COMPANY}</span>
+            <span>?</span>
+            <span>? {new Date().getFullYear()} {COMPANY}</span>
           </div>
         </div>
       </main>

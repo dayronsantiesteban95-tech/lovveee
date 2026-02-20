@@ -1,17 +1,17 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * useDispatchBlast — Realtime hook for the Blast System
+ * -----------------------------------------------------------
+ * useDispatchBlast -- Realtime hook for the Blast System
  *
  * Key rule: Dispatcher assigns all loads. Blast is an
- * availability check — drivers express interest, dispatcher
+ * availability check -- drivers express interest, dispatcher
  * confirms the assignment.
  *
  * Provides:
- *   • CRUD for dispatch blasts
- *   • Realtime subscription for responses
- *   • expressInterest (driver) / confirmAssignment (dispatcher)
- *   • Analytics (response rates, avg time)
- * ═══════════════════════════════════════════════════════════
+ *   * CRUD for dispatch blasts
+ *   * Realtime subscription for responses
+ *   * expressInterest (driver) / confirmAssignment (dispatcher)
+ *   * Analytics (response rates, avg time)
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 export type BlastPriority = "low" | "normal" | "high" | "urgent";
 export type BlastStatus = "active" | "accepted" | "expired" | "cancelled";
@@ -74,7 +74,7 @@ interface CreateBlastParams {
     expiresInMinutes?: number;
 }
 
-// ─── Hook ──────────────────────────────────────────────
+// --- Hook ----------------------------------------------
 
 export function useDispatchBlast() {
     const { user } = useAuth();
@@ -82,7 +82,7 @@ export function useDispatchBlast() {
     const [blasts, setBlasts] = useState<BlastWithResponses[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // ── Fetch all active + recent blasts ──────────
+    // -- Fetch all active + recent blasts ----------
     const fetchBlasts = useCallback(async () => {
         const { data: blastRows, error } = await supabase
             .from("dispatch_blasts")
@@ -120,7 +120,7 @@ export function useDispatchBlast() {
         setLoading(false);
     }, []);
 
-    // ── Realtime subscriptions ────────────────────
+    // -- Realtime subscriptions --------------------
     useEffect(() => {
         fetchBlasts();
 
@@ -144,7 +144,7 @@ export function useDispatchBlast() {
         };
     }, [fetchBlasts]);
 
-    // ── Create a new blast ────────────────────────
+    // -- Create a new blast ------------------------
     const createBlast = useCallback(
         async (params: CreateBlastParams): Promise<DispatchBlast | null> => {
             if (!user) return null;
@@ -190,7 +190,7 @@ export function useDispatchBlast() {
                 .insert(responseRows);
 
             if (respErr) {
-                // Non-fatal — blast was created; response tracking may be incomplete
+                // Non-fatal -- blast was created; response tracking may be incomplete
             }
 
             // 3. Update load status to show it's being blasted
@@ -212,22 +212,22 @@ export function useDispatchBlast() {
                     .single() as { data: { service_type: string; pickup_address: string; delivery_address: string; revenue: number } | null };
 
                 const loadBody = loadData
-                    ? `${loadData.service_type} — ${loadData.pickup_address} → ${loadData.delivery_address} | $${loadData.revenue}`
-                    : params.message ?? "New load available — open the app to view details.";
+                    ? `${loadData.service_type} -- ${loadData.pickup_address} -> ${loadData.delivery_address} | $${loadData.revenue}`
+                    : params.message ?? "New load available -- open the app to view details.";
 
                 await sendPushToDrivers(
                     params.driverIds,
-                    '🚨 New Load Available',
+                    '?? New Load Available',
                     loadBody,
                     { load_id: params.loadId, blast_id: blast.id, type: 'blast' }
                 );
             } catch (pushErr) {
-                // Non-fatal — blast was created; push may be unavailable
+                // Non-fatal -- blast was created; push may be unavailable
                 console.warn('[useDispatchBlast] Push notification failed:', pushErr);
             }
 
             toast({
-                title: "📡 Blast Sent!",
+                title: "?? Blast Sent!",
                 description: `Notified ${params.driverIds.length} driver${params.driverIds.length > 1 ? "s" : ""}. Waiting for responses...`,
             });
 
@@ -236,7 +236,7 @@ export function useDispatchBlast() {
         [user, toast],
     );
 
-    // ── Cancel a blast ────────────────────────────
+    // -- Cancel a blast ----------------------------
     const cancelBlast = useCallback(
         async (blastId: string) => {
             const { error } = await supabase
@@ -260,7 +260,7 @@ export function useDispatchBlast() {
         [toast],
     );
 
-    // ── Express interest (driver-side — marks as "interested") ──
+    // -- Express interest (driver-side -- marks as "interested") --
     const expressInterest = useCallback(
         async (blastId: string, driverId: string, lat?: number, lng?: number) => {
             const { error } = await supabase
@@ -284,7 +284,7 @@ export function useDispatchBlast() {
             }
 
             toast({
-                title: "🙋 Interest sent!",
+                title: "?? Interest sent!",
                 description: "Dispatcher will confirm your assignment.",
             });
             return true;
@@ -292,7 +292,7 @@ export function useDispatchBlast() {
         [toast],
     );
 
-    // ── Confirm assignment (dispatcher-side — calls PG function) ──
+    // -- Confirm assignment (dispatcher-side -- calls PG function) --
     const confirmAssignment = useCallback(
         async (blastId: string, driverId: string) => {
             const { data, error } = await supabase.rpc("confirm_blast_assignment", {
@@ -310,7 +310,7 @@ export function useDispatchBlast() {
             }
 
             toast({
-                title: "✅ Driver Assigned!",
+                title: "? Driver Assigned!",
                 description: "Load has been assigned to the selected driver.",
             });
             return true;
@@ -318,7 +318,7 @@ export function useDispatchBlast() {
         [toast],
     );
 
-    // ── Decline (for driver-side) ─────────────────
+    // -- Decline (for driver-side) -----------------
     const declineBlast = useCallback(
         async (blastId: string, driverId: string, reason?: string) => {
             const { error } = await supabase
@@ -349,7 +349,7 @@ export function useDispatchBlast() {
         [blasts],
     );
 
-    // ── Analytics ─────────────────────────────────
+    // -- Analytics ---------------------------------
     const analytics = useMemo(() => {
         const active = blasts.filter((b) => b.status === "active");
         const assigned = blasts.filter((b) => b.status === "accepted");

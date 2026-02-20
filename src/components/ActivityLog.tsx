@@ -1,16 +1,16 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * ACTIVITY LOG — Full Audit Trail
+ * -----------------------------------------------------------
+ * ACTIVITY LOG -- Full Audit Trail
  *
  * Tracks every action in the dispatch system:
- *   • Load created / updated / status changed
- *   • Driver assigned / unassigned
- *   • POD captured
- *   • Route optimized
- *   • Settings changed
+ *   * Load created / updated / status changed
+ *   * Driver assigned / unassigned
+ *   * POD captured
+ *   * Route optimized
+ *   * Settings changed
  *
  * Displays a searchable, filterable timeline.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import {
     CheckCircle2, MapPin, Zap, FileText,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface ActivityEntry {
     id: string;
@@ -43,7 +43,7 @@ interface ActivityLogProps {
     compact?: boolean;
 }
 
-// ─── Action → icon/color mapping ──────────────────────
+// --- Action -> icon/color mapping ----------------------
 
 function getActionMeta(action: string, entityType: string) {
     if (action.includes("created") || action.includes("new")) return { icon: Package, color: "text-green-500", bg: "bg-green-500/10" };
@@ -69,7 +69,7 @@ function timeAgo(iso: string): string {
     return `${days}d ago`;
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 export default function ActivityLog({
     loadId, driverId, limit = 30, compact = false,
@@ -105,8 +105,8 @@ export default function ActivityLog({
                         entity_type: "load",
                         entity_id: evt.load_id,
                         details: evt.note
-                            ? `${evt.old_status ?? "—"} → ${evt.new_status} · "${evt.note}"`
-                            : `${evt.old_status ?? "—"} → ${evt.new_status}`,
+                            ? `${evt.old_status ?? "--"} -> ${evt.new_status} ? "${evt.note}"`
+                            : `${evt.old_status ?? "--"} -> ${evt.new_status}`,
                         timestamp: evt.recorded_at,
                     });
                 }
@@ -132,7 +132,7 @@ export default function ActivityLog({
                         action: "Load created",
                         entity_type: "load",
                         entity_id: load.id,
-                        details: `${load.reference_number ?? "No ref"} · ${load.client_name ?? "Unknown client"} · ${load.status}`,
+                        details: `${load.reference_number ?? "No ref"} ? ${load.client_name ?? "Unknown client"} ? ${load.status}`,
                         timestamp: load.created_at,
                     });
 
@@ -142,7 +142,7 @@ export default function ActivityLog({
                             action: "Driver assigned",
                             entity_type: "load",
                             entity_id: load.id,
-                            details: `${load.reference_number ?? "No ref"} — driver assigned`,
+                            details: `${load.reference_number ?? "No ref"} -- driver assigned`,
                             timestamp: load.updated_at,
                         });
                     }

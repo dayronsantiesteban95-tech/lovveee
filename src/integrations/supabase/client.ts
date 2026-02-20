@@ -5,13 +5,13 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// ── Environment validation ──
+// -- Environment validation --
 // Fail fast with a clear message if Supabase env vars are missing
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error(
     `[Supabase] Missing environment variables.\n` +
-    `  VITE_SUPABASE_URL: ${SUPABASE_URL ? "✅" : "❌ MISSING"}\n` +
-    `  VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY ? "✅" : "❌ MISSING"}\n` +
+    `  VITE_SUPABASE_URL: ${SUPABASE_URL ? "?" : "? MISSING"}\n` +
+    `  VITE_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY ? "?" : "? MISSING"}\n` +
     `Check your .env file in the project root.`
   );
 }

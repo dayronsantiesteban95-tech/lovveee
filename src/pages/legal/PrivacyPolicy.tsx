@@ -1,10 +1,10 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * PRIVACY POLICY — Public Legal Page
+ * -----------------------------------------------------------
+ * PRIVACY POLICY -- Public Legal Page
  *
  * Route: /legal/privacy
  * No auth required. Fully public.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Truck, Shield } from "lucide-react";
@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <header className="border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
           <Button
@@ -41,7 +41,7 @@ export default function PrivacyPolicy() {
         </div>
       </header>
 
-      {/* ── Body ── */}
+      {/* -- Body -- */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         {/* Title block */}
         <div className="mb-10">
@@ -385,8 +385,8 @@ export default function PrivacyPolicy() {
             <a href="/legal/terms" className="hover:text-blue-600 hover:underline">
               Terms of Service
             </a>
-            <span>·</span>
-            <span>© {new Date().getFullYear()} {COMPANY}</span>
+            <span>?</span>
+            <span>? {new Date().getFullYear()} {COMPANY}</span>
           </div>
         </div>
       </main>

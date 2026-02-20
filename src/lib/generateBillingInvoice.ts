@@ -1,13 +1,13 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * generateBillingInvoice — Billing Module PDF Generator
+ * -----------------------------------------------------------
+ * generateBillingInvoice -- Billing Module PDF Generator
  * Anika Logistics Group
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// ─── Types ───────────────────────────────────────────────
+// --- Types -----------------------------------------------
 export interface BillingLineItem {
   description: string;
   reference_number?: string | null;
@@ -32,7 +32,7 @@ export interface BillingInvoiceData {
   line_items: BillingLineItem[];
 }
 
-// ─── Color Palette ────────────────────────────────────────
+// --- Color Palette ----------------------------------------
 const C = {
   primary:    [15, 23, 42] as [number, number, number],
   accent:     [37, 99, 235] as [number, number, number],
@@ -47,9 +47,9 @@ const C = {
   red:        [185, 28, 28] as [number, number, number],
 };
 
-// ─── Helpers ─────────────────────────────────────────────
+// --- Helpers ---------------------------------------------
 function fmtDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
+  if (!dateStr) return "--";
   try {
     return new Date(dateStr).toLocaleDateString("en-US", {
       month: "long", day: "numeric", year: "numeric",
@@ -63,18 +63,18 @@ function fmt$(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // MAIN EXPORT
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
   const W = doc.internal.pageSize.getWidth();
 
-  // ── Full-page white background ────────────────────────
+  // -- Full-page white background ------------------------
   doc.setFillColor(...C.white);
   doc.rect(0, 0, W, 279.4, "F");
 
-  // ── Header Banner ─────────────────────────────────────
+  // -- Header Banner -------------------------------------
   doc.setFillColor(...C.primary);
   doc.rect(0, 0, W, 48, "F");
 
@@ -106,7 +106,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   doc.setTextColor(180, 196, 220);
   doc.text(invoice.invoice_number, W - 16, 30, { align: "right" });
 
-  // ── Meta Block ────────────────────────────────────────
+  // -- Meta Block ----------------------------------------
   let y = 62;
   const leftX = 16;
   const rightX = W / 2 + 10;
@@ -156,13 +156,13 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   y = Math.max(y + 15, detailY) + 6;
 
-  // ── Divider ───────────────────────────────────────────
+  // -- Divider -------------------------------------------
   doc.setDrawColor(...C.gray200);
   doc.setLineWidth(0.4);
   doc.line(leftX, y, W - 16, y);
   y += 8;
 
-  // ── Line Items Table ──────────────────────────────────
+  // -- Line Items Table ----------------------------------
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...C.accent);
@@ -170,8 +170,8 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   y += 4;
 
   const tableRows = invoice.line_items.map((item) => [
-    item.service_date ? new Date(item.service_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—",
-    item.reference_number || "—",
+    item.service_date ? new Date(item.service_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "--",
+    item.reference_number || "--",
     item.description,
     item.quantity.toString(),
     fmt$(item.unit_price),
@@ -212,7 +212,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   y = (doc as any).lastAutoTable.finalY + 8;
 
-  // ── Totals ─────────────────────────────────────────────
+  // -- Totals ---------------------------------------------
   const totalsX = W - 16 - 65;
   const valX = W - 16;
 
@@ -246,7 +246,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   y += 6;
 
-  // ── Notes ─────────────────────────────────────────────
+  // -- Notes ---------------------------------------------
   if (invoice.notes) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
@@ -261,7 +261,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
     y += noteLines.length * 4.5 + 6;
   }
 
-  // ── Payment Footer ────────────────────────────────────
+  // -- Payment Footer ------------------------------------
   doc.setFillColor(...C.gray100);
   doc.roundedRect(leftX, y, W - 32, 22, 3, 3, "F");
 
@@ -284,7 +284,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   doc.setTextColor(...C.accent);
   doc.text("Thank you for your business!", W / 2, y, { align: "center" });
 
-  // ── PAID Watermark ────────────────────────────────────
+  // -- PAID Watermark ------------------------------------
   if (invoice.status === "paid") {
     const pageH = doc.internal.pageSize.getHeight();
     doc.saveGraphicsState();
@@ -296,7 +296,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
     doc.restoreGraphicsState();
   }
 
-  // ── Footer Strip ──────────────────────────────────────
+  // -- Footer Strip --------------------------------------
   const pageH = doc.internal.pageSize.getHeight();
   doc.setFillColor(...C.primary);
   doc.rect(0, pageH - 12, W, 12, "F");
@@ -311,7 +311,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
     { align: "center" },
   );
 
-  // ── Save ──────────────────────────────────────────────
+  // -- Save ----------------------------------------------
   const dateStr = new Date().toISOString().slice(0, 10);
   doc.save(`ANIKA-${invoice.invoice_number}-${dateStr}.pdf`);
 }

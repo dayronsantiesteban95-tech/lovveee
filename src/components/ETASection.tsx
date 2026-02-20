@@ -1,12 +1,12 @@
 /**
- * ETASection — Prominent ETA display for LoadDetailPanel.
+ * ETASection -- Prominent ETA display for LoadDetailPanel.
  *
  * Shows:
- *   • Estimated Arrival time
- *   • Drive time
- *   • Distance in miles
- *   • Last updated timestamp
- *   • Manual refresh button
+ *   * Estimated Arrival time
+ *   * Drive time
+ *   * Distance in miles
+ *   * Last updated timestamp
+ *   * Manual refresh button
  *
  * Only rendered when status = "in_progress".
  */
@@ -86,7 +86,7 @@ export default function ETASection({
       {/* Error state */}
       {!loading && (error || !hasAddresses) && (
         <p className="text-[11px] text-muted-foreground">
-          {!hasAddresses ? "Addresses not set — cannot calculate ETA." : "ETA unavailable"}
+          {!hasAddresses ? "Addresses not set -- cannot calculate ETA." : "ETA unavailable"}
         </p>
       )}
 

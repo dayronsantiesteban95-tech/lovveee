@@ -1,13 +1,13 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * TRACK DELIVERY — Public Customer Tracking Page
+ * -----------------------------------------------------------
+ * TRACK DELIVERY -- Public Customer Tracking Page
  *
  * Customers receive a link like: yoursite.com/track/ANK-A1B2C3
  * They can see delivery status, driver location, and ETA
  * WITHOUT logging in.
  *
- * This is your FedEx/UPS tracking page — but branded for Anika.
- * ═══════════════════════════════════════════════════════════
+ * This is your FedEx/UPS tracking page -- but branded for Anika.
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
@@ -21,7 +21,7 @@ import {
     ArrowRight, Search, ShieldCheck, RefreshCw, Phone,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface TrackingData {
     found: boolean;
@@ -61,7 +61,7 @@ function getStatusIdx(status: string): number {
 }
 
 function formatTime(t: string | null | undefined): string {
-    if (!t) return "—";
+    if (!t) return "--";
     if (t.length === 5) {
         const [h, m] = t.split(":").map(Number);
         const ampm = h >= 12 ? "PM" : "AM";
@@ -80,7 +80,7 @@ function timeAgo(iso: string): string {
     return `${hrs}h ${mins % 60}m ago`;
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function TrackDelivery() {
     const { token: urlToken } = useParams<{ token?: string }>();
     const [token, setToken] = useState(urlToken ?? "");
@@ -132,7 +132,7 @@ export default function TrackDelivery() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            {/* ── Header ── */}
+            {/* -- Header -- */}
             <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
                 <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export default function TrackDelivery() {
 
             <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
-                {/* ── Search Bar ── */}
+                {/* -- Search Bar -- */}
                 <div className="space-y-2">
                     <h2 className="text-2xl font-bold text-white text-center">
                         {tracking ? "Delivery Status" : "Track Your Delivery"}
@@ -189,7 +189,7 @@ export default function TrackDelivery() {
                     </div>
                 </div>
 
-                {/* ── Error ── */}
+                {/* -- Error -- */}
                 {error && (
                     <Card className="border-red-500/30 bg-red-500/10 border">
                         <CardContent className="py-4 text-center">
@@ -198,7 +198,7 @@ export default function TrackDelivery() {
                     </Card>
                 )}
 
-                {/* ── Tracking Result ── */}
+                {/* -- Tracking Result -- */}
                 {tracking && (
                     <>
                         {/* Status Header */}
@@ -209,7 +209,7 @@ export default function TrackDelivery() {
                                     <div>
                                         <p className="text-xs text-white/40 font-mono">{token}</p>
                                         <h3 className="text-lg font-bold text-white mt-1">
-                                            {isDelivered ? "✅ Delivered!" : STATUS_STEPS[currentStep].desc}
+                                            {isDelivered ? "? Delivered!" : STATUS_STEPS[currentStep].desc}
                                         </h3>
                                         {tracking.customer_name && (
                                             <p className="text-sm text-white/60 mt-0.5">For {tracking.customer_name}</p>
@@ -358,7 +358,7 @@ export default function TrackDelivery() {
                                         {tracking.driver_last_seen && (
                                             <div className="absolute bottom-2 left-2 text-[10px] text-white/40 bg-black/30 px-2 py-1 rounded-full flex items-center gap-1">
                                                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                                Live · {timeAgo(tracking.driver_last_seen)}
+                                                Live ? {timeAgo(tracking.driver_last_seen)}
                                             </div>
                                         )}
                                     </div>
@@ -434,7 +434,7 @@ export default function TrackDelivery() {
 
             {/* Footer */}
             <footer className="border-t border-white/5 mt-12 py-6 text-center text-xs text-white/20">
-                Powered by <span className="text-white/40 font-semibold">Anika Logistics</span> · Real-time tracking
+                Powered by <span className="text-white/40 font-semibold">Anika Logistics</span> ? Real-time tracking
             </footer>
         </div>
     );

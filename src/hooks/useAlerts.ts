@@ -1,23 +1,23 @@
 /**
- * â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
- * useAlerts â€” Real-time alert system for Command Center
+ * ???????????????????????????????????????????????????????????
+ * useAlerts -- Real-time alert system for Command Center
  *
  * Spec (from Phase 6 Blueprint):
- *   â€¢ Visible: Command Center sidebar only
- *   â€¢ Types: Wait time alerts (15min warning, 30min detention)
- *   â€¢ Delivery: Visual â€” badge count + toasts
- *   â€¢ Click action: Opens LoadDetailPanel
- *   â€¢ Escalation: info (5min) â†’ warning (15min) â†’ critical (30min) â†’ auto-ping
- *   â€¢ Scope: Today only (clear at midnight)
- *   â€¢ Blast integration: Auto-blast unassigned loads + "Blast" button on alerts
- *   â€¢ Transport: Supabase Realtime on CC, poll elsewhere
- * â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+ *   * Visible: Command Center sidebar only
+ *   * Types: Wait time alerts (15min warning, 30min detention)
+ *   * Delivery: Visual -- badge count + toasts
+ *   * Click action: Opens LoadDetailPanel
+ *   * Escalation: info (5min) -> warning (15min) -> critical (30min) -> auto-ping
+ *   * Scope: Today only (clear at midnight)
+ *   * Blast integration: Auto-blast unassigned loads + "Blast" button on alerts
+ *   * Transport: Supabase Realtime on CC, poll elsewhere
+ * ???????????????????????????????????????????????????????????
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Types ------------------------------------------
 
 export interface RouteAlert {
     id: string;
@@ -45,7 +45,7 @@ interface UseAlertsOptions {
     pollInterval?: number;
 }
 
-// â”€â”€â”€ Escalation Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Escalation Logic ---------------------------------
 
 function computeEscalation(alert: RouteAlert): RouteAlert["escalatedSeverity"] {
     if (alert.status !== "active") return alert.severity;
@@ -63,7 +63,7 @@ function computeAge(alert: RouteAlert): number {
     return Math.round((Date.now() - new Date(alert.created_at).getTime()) / 60_000);
 }
 
-// â”€â”€â”€ Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Hook ---------------------------------------------
 
 export function useAlerts(options: UseAlertsOptions = {}) {
     const { realtime = false, pollInterval = 30_000 } = options;
@@ -75,7 +75,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
     const prevAlertIdsRef = useRef<Set<string>>(new Set());
     const autoPingedRef = useRef<Set<string>>(new Set());
 
-    // â”€â”€ Fetch alerts from route_alerts table â”€â”€
+    // -- Fetch alerts from route_alerts table --
     const fetchAlerts = useCallback(async () => {
         // Computed fresh each call so it's always today's date even after midnight
         const today = new Date().toISOString().slice(0, 10);
@@ -88,7 +88,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
             .order("created_at", { ascending: false });
 
         if (error) {
-            // Table may not exist yet â€” continue with empty state
+            // Table may not exist yet -- continue with empty state
             setLoading(false);
             return;
         }
@@ -116,17 +116,17 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         setLastFetched(new Date());
         setLoading(false);
         } catch {
-            // Never crash â€” network or other unexpected error
+            // Never crash -- network or other unexpected error
             setLoading(false);
         }
     }, [toast]);
 
-    // â”€â”€ Initial fetch â”€â”€
+    // -- Initial fetch --
     useEffect(() => {
         fetchAlerts();
     }, [fetchAlerts]);
 
-    // â”€â”€ Supabase Realtime subscription (Command Center) â”€â”€
+    // -- Supabase Realtime subscription (Command Center) --
     useEffect(() => {
         if (!realtime) return;
 
@@ -144,21 +144,21 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         };
     }, [realtime, fetchAlerts]);
 
-    // â”€â”€ Polling fallback (non-Command Center pages) â”€â”€
+    // -- Polling fallback (non-Command Center pages) --
     useEffect(() => {
         if (realtime) return; // Don't poll if realtime is active
         const interval = setInterval(fetchAlerts, pollInterval);
         return () => clearInterval(interval);
     }, [realtime, pollInterval, fetchAlerts]);
 
-    // â”€â”€ Escalation tick (re-compute every 60s) â”€â”€
+    // -- Escalation tick (re-compute every 60s) --
     const [escalationTick, setEscalationTick] = useState(0);
     useEffect(() => {
         const interval = setInterval(() => setEscalationTick(t => t + 1), 60_000);
         return () => clearInterval(interval);
     }, []);
 
-    // â”€â”€ Enriched alerts with escalation + age â”€â”€
+    // -- Enriched alerts with escalation + age --
     const alerts = useMemo(() => {
         return rawAlerts.map(alert => {
             const escalatedSeverity = computeEscalation(alert);
@@ -171,7 +171,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         });
     }, [rawAlerts, escalationTick]);
 
-    // â”€â”€ Auto-ping side effect (moved out of useMemo to avoid side effects in render) â”€â”€
+    // -- Auto-ping side effect (moved out of useMemo to avoid side effects in render) --
     useEffect(() => {
         alerts.forEach(alert => {
             if (alert.escalatedSeverity === "auto_ping" && !autoPingedRef.current.has(alert.id)) {
@@ -185,7 +185,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         });
     }, [alerts, toast]);
 
-    // â”€â”€ Acknowledge alert â”€â”€
+    // -- Acknowledge alert --
     const acknowledgeAlert = useCallback(async (alertId: string) => {
         const { error } = await supabase
             .from("route_alerts")
@@ -202,7 +202,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         }
     }, [fetchAlerts, toast]);
 
-    // â”€â”€ Resolve alert â”€â”€
+    // -- Resolve alert --
     const resolveAlert = useCallback(async (alertId: string) => {
         const { error } = await supabase
             .from("route_alerts")
@@ -219,7 +219,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         }
     }, [fetchAlerts, toast]);
 
-    // â”€â”€ Dismiss all â”€â”€
+    // -- Dismiss all --
     const dismissAll = useCallback(async () => {
         const ids = rawAlerts.map(a => a.id);
         if (ids.length === 0) return;
@@ -240,7 +240,7 @@ export function useAlerts(options: UseAlertsOptions = {}) {
         }
     }, [rawAlerts, toast]);
 
-    // â”€â”€ Stats â”€â”€
+    // -- Stats --
     const stats = useMemo(() => ({
         total: alerts.length,
         critical: alerts.filter(a => a.escalatedSeverity === "critical" || a.escalatedSeverity === "auto_ping").length,

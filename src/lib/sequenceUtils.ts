@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays } from "date-fns";
 
-// ── Hub Assignment ──
+// -- Hub Assignment --
 // Maps US states to the nearest Anika hub
 const STATE_TO_HUB: Record<string, string> = {
     // Atlanta hub covers Southeast
@@ -52,7 +52,7 @@ export function assignHub(state?: string | null, city?: string | null): string {
     return "phoenix";
 }
 
-// ── Default cadence settings ──
+// -- Default cadence settings --
 const DEFAULT_CADENCE = {
     email1_to_email2_days: 3,
     email2_to_call_days: 4,

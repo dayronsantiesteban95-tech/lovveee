@@ -1,10 +1,10 @@
-// ═══════════════════════════════════════════════════════════
-// BILLING MODULE — Phase 2
+// -----------------------------------------------------------
+// BILLING MODULE -- Phase 2
 // Tab 1: Uninvoiced Queue
 // Tab 2: Invoices List
 // Tab 3: Client Billing Profiles
 // QB: QuickBooks Online sync integration
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ import { fmtMoney } from "@/lib/formatters";
 import { generateBillingInvoice } from "@/lib/generateBillingInvoice";
 import { useQuickBooks } from "@/hooks/useQuickBooks";
 
-// ── UI Components ──────────────────────────────────────────
+// -- UI Components ------------------------------------------
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// ── Icons ──────────────────────────────────────────────────
+// -- Icons --------------------------------------------------
 import {
   ReceiptText, Plus, CheckCircle, Clock, AlertTriangle, Ban,
   DollarSign, Send, Download, Eye, RefreshCw, FileText,
@@ -47,7 +47,7 @@ import {
   Link2, Loader2,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────
+// --- Types ------------------------------------------------
 interface UninvoicedLoad {
   id: string;
   reference_number: string | null;
@@ -111,7 +111,7 @@ interface ClientBillingProfile {
   updated_at: string;
 }
 
-// ─── Status Badge ─────────────────────────────────────────
+// --- Status Badge -----------------------------------------
 function StatusBadge({ status }: { status: string }) {
   const cfg: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
     draft:   { label: "Draft",   className: "bg-gray-100 text-gray-700 border-gray-300", icon: <FileText className="h-3 w-3" /> },
@@ -128,11 +128,11 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Format date helper ───────────────────────────────────
+// --- Format date helper -----------------------------------
 function fmtDate(d: string | null | undefined): string {
-  if (!d) return "—";
+  if (!d) return "--";
   try { return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
-  catch { return "—"; }
+  catch { return "--"; }
 }
 
 function todayISO(): string {
@@ -145,22 +145,22 @@ function addDaysISO(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function Billing() {
   const { user } = useAuth();
   const { isOwner } = useUserRole();
   const { toast } = useToast();
 
-  // ── QuickBooks integration ─────────────────────────────
+  // -- QuickBooks integration -----------------------------
   const { connected: qbConnected, loading: qbLoading, connect: connectQB, syncInvoice: syncQBInvoice } = useQuickBooks();
   const [syncingInvoiceId, setSyncingInvoiceId] = useState<string | null>(null);
 
-  // ── Tab state ──────────────────────────────────────────
+  // -- Tab state ------------------------------------------
   const [activeTab, setActiveTab] = useState("uninvoiced");
 
-  // ── React Query ────────────────────────────────────────
+  // -- React Query ----------------------------------------
   const queryClient = useQueryClient();
 
   const { data: uninvoicedLoads = [], isLoading: loadingUninvoiced } = useQuery({
@@ -205,10 +205,10 @@ export default function Billing() {
     enabled: !!user,
   });
 
-  // ── Selections ────────────────────────────────────────
+  // -- Selections ----------------------------------------
   const [selectedLoadIds, setSelectedLoadIds] = useState<Set<string>>(new Set());
 
-  // ── Create Invoice Modal ──────────────────────────────
+  // -- Create Invoice Modal ------------------------------
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [issueDate, setIssueDate] = useState(todayISO());
@@ -216,14 +216,14 @@ export default function Billing() {
   const [invoiceNotes, setInvoiceNotes] = useState("");
   const [savingInvoice, setSavingInvoice] = useState(false);
 
-  // ── Invoice Detail Sheet ──────────────────────────────
+  // -- Invoice Detail Sheet ------------------------------
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceLineItems, setInvoiceLineItems] = useState<InvoiceLineItem[]>([]);
   const [invoicePayments, setInvoicePayments] = useState<InvoicePayment[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  // ── Record Payment Modal ──────────────────────────────
+  // -- Record Payment Modal ------------------------------
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(todayISO());
@@ -232,10 +232,10 @@ export default function Billing() {
   const [paymentNotes, setPaymentNotes] = useState("");
   const [savingPayment, setSavingPayment] = useState(false);
 
-  // ── Invoice filter ────────────────────────────────────
+  // -- Invoice filter ------------------------------------
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // ── Profile Modal ─────────────────────────────────────
+  // -- Profile Modal -------------------------------------
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ClientBillingProfile | null>(null);
   const [profileForm, setProfileForm] = useState({
@@ -248,12 +248,12 @@ export default function Billing() {
   });
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // ─── Helpers to refetch after mutations ───────────────
+  // --- Helpers to refetch after mutations ---------------
   const fetchUninvoiced = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-uninvoiced"] }), [queryClient]);
   const fetchInvoices = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-invoices"] }), [queryClient]);
   const fetchProfiles = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-profiles"] }), [queryClient]);
 
-  // ─── Load detail on invoice open ─────────────────────
+  // --- Load detail on invoice open ---------------------
   const openInvoiceDetail = useCallback(async (inv: Invoice) => {
     setSelectedInvoice(inv);
     setDetailOpen(true);
@@ -273,7 +273,7 @@ export default function Billing() {
     }
   }, []);
 
-  // ─── Create Invoice Modal open ────────────────────────
+  // --- Create Invoice Modal open ------------------------
   const openCreateModal = useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc("generate_invoice_number");
@@ -288,7 +288,7 @@ export default function Billing() {
     setCreateModalOpen(true);
   }, []);
 
-  // ─── Selected loads data ──────────────────────────────
+  // --- Selected loads data ------------------------------
   const selectedLoads = uninvoicedLoads.filter(l => selectedLoadIds.has(l.id));
   const selectedTotal = selectedLoads.reduce((s, l) => s + (l.revenue ?? 0), 0);
 
@@ -300,7 +300,7 @@ export default function Billing() {
     return acc;
   }, {});
 
-  // ─── Toggle load selection ────────────────────────────
+  // --- Toggle load selection ----------------------------
   const toggleLoad = (id: string) => {
     setSelectedLoadIds(prev => {
       const next = new Set(prev);
@@ -323,7 +323,7 @@ export default function Billing() {
     });
   };
 
-  // ─── Save Invoice ────────────────────────────────────
+  // --- Save Invoice ------------------------------------
   const saveInvoice = async () => {
     if (selectedLoads.length === 0) {
       toast({ title: "No loads selected", description: "Select at least one load to invoice.", variant: "destructive" });
@@ -366,7 +366,7 @@ export default function Billing() {
       const lineItems = selectedLoads.map(load => ({
         invoice_id: inv.id,
         load_id: load.id,
-        description: `${load.service_type ?? "Service"} — Ref: ${load.reference_number ?? load.id.slice(0, 8)}`,
+        description: `${load.service_type ?? "Service"} -- Ref: ${load.reference_number ?? load.id.slice(0, 8)}`,
         reference_number: load.reference_number,
         service_date: load.load_date,
         quantity: 1,
@@ -389,7 +389,7 @@ export default function Billing() {
     }
   };
 
-  // ─── Mark invoice sent ────────────────────────────────
+  // --- Mark invoice sent --------------------------------
   const markSent = async (inv: Invoice) => {
     const { error } = await supabase.from("invoices").update({ status: "sent" }).eq("id", inv.id);
     if (error) {
@@ -401,7 +401,7 @@ export default function Billing() {
     if (selectedInvoice?.id === inv.id) setSelectedInvoice({ ...selectedInvoice, status: "sent" });
   };
 
-  // ─── Void invoice ─────────────────────────────────────
+  // --- Void invoice -------------------------------------
   const voidInvoice = async (inv: Invoice) => {
     if (!confirm(`Void invoice ${inv.invoice_number}? This cannot be undone.`)) return;
     const { error } = await supabase.from("invoices").update({ status: "void" }).eq("id", inv.id);
@@ -414,7 +414,7 @@ export default function Billing() {
     if (detailOpen && selectedInvoice?.id === inv.id) setDetailOpen(false);
   };
 
-  // ─── Record Payment ───────────────────────────────────
+  // --- Record Payment -----------------------------------
   const openPaymentModal = (inv: Invoice) => {
     setSelectedInvoice(inv);
     setPaymentAmount(String(inv.total_amount - inv.amount_paid));
@@ -465,7 +465,7 @@ export default function Billing() {
     }
   };
 
-  // ─── Download PDF ─────────────────────────────────────
+  // --- Download PDF -------------------------------------
   const downloadPDF = (inv: Invoice, lineItems: InvoiceLineItem[]) => {
     generateBillingInvoice({
       invoice_number: inv.invoice_number,
@@ -489,7 +489,7 @@ export default function Billing() {
     });
   };
 
-  // ─── Sync invoice to QuickBooks ───────────────────────
+  // --- Sync invoice to QuickBooks -----------------------
   const syncToQB = async (inv: Invoice) => {
     if (!qbConnected) {
       toast({ title: "QuickBooks not connected", description: "Connect QuickBooks first.", variant: "destructive" });
@@ -499,7 +499,7 @@ export default function Billing() {
     try {
       const { qbInvoiceId, qbInvoiceNumber } = await syncQBInvoice(inv.id);
       toast({
-        title: "✅ Synced to QuickBooks",
+        title: "? Synced to QuickBooks",
         description: `QB Invoice #${qbInvoiceNumber} (ID: ${qbInvoiceId})`,
       });
       fetchInvoices();
@@ -511,7 +511,7 @@ export default function Billing() {
     }
   };
 
-  // ─── Profile save ─────────────────────────────────────
+  // --- Profile save -------------------------------------
   const openProfileModal = (profile?: ClientBillingProfile) => {
     if (profile) {
       setEditingProfile(profile);
@@ -565,14 +565,14 @@ export default function Billing() {
     }
   };
 
-  // ─── Filtered invoices ────────────────────────────────
+  // --- Filtered invoices --------------------------------
   const filteredInvoices = statusFilter === "all"
     ? invoices
     : invoices.filter(i => i.status === statusFilter);
 
-  // ═══════════════════════════════════════════════════════
+  // -------------------------------------------------------
   // RENDER
-  // ═══════════════════════════════════════════════════════
+  // -------------------------------------------------------
   return (
     <div className="space-y-4">
       {/* Page header */}
@@ -597,20 +597,20 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* ── QuickBooks Connection Banner ──────────────────── */}
+      {/* -- QuickBooks Connection Banner -------------------- */}
       {/* Only owners can manage QuickBooks OAuth. Dispatchers see a read-only status. */}
       {!qbLoading && (
         qbConnected ? (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
             <CheckCircle className="h-4 w-4 flex-shrink-0" />
-            <span>✅ QuickBooks Connected (Sandbox)</span>
+            <span>? QuickBooks Connected (Sandbox)</span>
           </div>
         ) : isOwner ? (
           <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800">
             <div className="flex items-center gap-2 text-sm">
               <AlertTriangle className="h-4 w-4 flex-shrink-0 text-yellow-600" />
               <span className="font-medium">QuickBooks not connected</span>
-              <span className="text-yellow-700 hidden sm:inline">— Connect to sync invoices automatically.</span>
+              <span className="text-yellow-700 hidden sm:inline">-- Connect to sync invoices automatically.</span>
             </div>
             <Button
               size="sm"
@@ -625,7 +625,7 @@ export default function Billing() {
         ) : (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-600 text-sm">
             <AlertTriangle className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            <span>QuickBooks not connected — Contact your owner to manage QuickBooks settings.</span>
+            <span>QuickBooks not connected -- Contact your owner to manage QuickBooks settings.</span>
           </div>
         )
       )}
@@ -651,9 +651,9 @@ export default function Billing() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ══════════════════════════════════════════════════ */}
+        {/* -------------------------------------------------- */}
         {/* TAB 1: UNINVOICED QUEUE                           */}
-        {/* ══════════════════════════════════════════════════ */}
+        {/* -------------------------------------------------- */}
         <TabsContent value="uninvoiced" className="mt-4">
           {loadingUninvoiced ? (
             <Card>
@@ -665,7 +665,7 @@ export default function Billing() {
             <Card>
               <CardContent className="pt-12 pb-12 text-center">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold">All loads invoiced ✅</h3>
+                <h3 className="text-lg font-semibold">All loads invoiced ?</h3>
                 <p className="text-muted-foreground text-sm mt-1">No completed loads are waiting to be invoiced.</p>
               </CardContent>
             </Card>
@@ -676,7 +676,7 @@ export default function Billing() {
                   <CardContent className="pt-4 pb-4 flex items-center justify-between">
                     <div>
                       <span className="font-semibold text-blue-700">{selectedLoadIds.size} load{selectedLoadIds.size > 1 ? "s" : ""} selected</span>
-                      <span className="text-blue-600 ml-2">— Total: {fmtMoney(selectedTotal)}</span>
+                      <span className="text-blue-600 ml-2">-- Total: {fmtMoney(selectedTotal)}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setSelectedLoadIds(new Set())}>
@@ -754,8 +754,8 @@ export default function Billing() {
                                 />
                               </TableCell>
                               <TableCell className="text-sm">{fmtDate(load.load_date)}</TableCell>
-                              <TableCell className="font-mono text-sm">{load.reference_number ?? "—"}</TableCell>
-                              <TableCell className="text-sm">{load.service_type ?? "—"}</TableCell>
+                              <TableCell className="font-mono text-sm">{load.reference_number ?? "--"}</TableCell>
+                              <TableCell className="text-sm">{load.service_type ?? "--"}</TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="text-xs capitalize">{load.status}</Badge>
                               </TableCell>
@@ -774,9 +774,9 @@ export default function Billing() {
           )}
         </TabsContent>
 
-        {/* ══════════════════════════════════════════════════ */}
+        {/* -------------------------------------------------- */}
         {/* TAB 2: INVOICES LIST                              */}
-        {/* ══════════════════════════════════════════════════ */}
+        {/* -------------------------------------------------- */}
         <TabsContent value="invoices" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
@@ -843,7 +843,7 @@ export default function Billing() {
                                 <CheckCircle className="h-3 w-3" /> Synced
                               </span>
                             ) : inv.status === "void" ? (
-                              <span className="text-xs text-muted-foreground">—</span>
+                              <span className="text-xs text-muted-foreground">--</span>
                             ) : (
                               <Button
                                 size="sm"
@@ -854,7 +854,7 @@ export default function Billing() {
                                 title={qbConnected ? "Sync to QuickBooks" : "Connect QuickBooks first"}
                               >
                                 {isSyncing ? (
-                                  <><Loader2 className="h-3 w-3 animate-spin" /> Syncing…</>
+                                  <><Loader2 className="h-3 w-3 animate-spin" /> Syncing...</>
                                 ) : (
                                   <><Link2 className="h-3 w-3" /> Sync to QB</>
                                 )}
@@ -888,9 +888,9 @@ export default function Billing() {
           </Card>
         </TabsContent>
 
-        {/* ══════════════════════════════════════════════════ */}
+        {/* -------------------------------------------------- */}
         {/* TAB 3: CLIENT PROFILES                            */}
-        {/* ══════════════════════════════════════════════════ */}
+        {/* -------------------------------------------------- */}
         <TabsContent value="clients" className="mt-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">Client Billing Profiles</h2>
@@ -952,9 +952,9 @@ export default function Billing() {
         </TabsContent>
       </Tabs>
 
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       {/* CREATE INVOICE MODAL                                  */}
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -976,7 +976,7 @@ export default function Billing() {
               </div>
               <div className="space-y-1">
                 <Label>Client</Label>
-                <Input value={selectedLoads[0]?.client_name ?? "—"} readOnly className="bg-muted" />
+                <Input value={selectedLoads[0]?.client_name ?? "--"} readOnly className="bg-muted" />
               </div>
               <div className="space-y-1">
                 <Label>Issue Date</Label>
@@ -1009,7 +1009,7 @@ export default function Billing() {
                     {selectedLoads.map(load => (
                       <TableRow key={load.id}>
                         <TableCell className="text-xs">{fmtDate(load.load_date)}</TableCell>
-                        <TableCell className="font-mono text-xs">{load.reference_number ?? "—"}</TableCell>
+                        <TableCell className="font-mono text-xs">{load.reference_number ?? "--"}</TableCell>
                         <TableCell className="text-xs">{load.service_type ?? "Service"}</TableCell>
                         <TableCell className="text-xs text-right font-semibold">{fmtMoney(load.revenue ?? 0)}</TableCell>
                       </TableRow>
@@ -1059,9 +1059,9 @@ export default function Billing() {
         </DialogContent>
       </Dialog>
 
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       {/* INVOICE DETAIL SLIDE-OVER                            */}
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader className="pb-4">
@@ -1117,7 +1117,7 @@ export default function Billing() {
                         {invoiceLineItems.map(li => (
                           <TableRow key={li.id}>
                             <TableCell className="text-xs">{li.description}</TableCell>
-                            <TableCell className="text-xs font-mono">{li.reference_number ?? "—"}</TableCell>
+                            <TableCell className="text-xs font-mono">{li.reference_number ?? "--"}</TableCell>
                             <TableCell className="text-xs text-right font-semibold">{fmtMoney(li.subtotal)}</TableCell>
                           </TableRow>
                         ))}
@@ -1223,9 +1223,9 @@ export default function Billing() {
         </SheetContent>
       </Sheet>
 
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       {/* RECORD PAYMENT MODAL                                  */}
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1234,7 +1234,7 @@ export default function Billing() {
               Record Payment
             </DialogTitle>
             <DialogDescription>
-              {selectedInvoice?.invoice_number} — {selectedInvoice?.client_name}
+              {selectedInvoice?.invoice_number} -- {selectedInvoice?.client_name}
             </DialogDescription>
           </DialogHeader>
 
@@ -1287,9 +1287,9 @@ export default function Billing() {
         </DialogContent>
       </Dialog>
 
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       {/* CLIENT PROFILE MODAL                                  */}
-      {/* ═════════════════════════════════════════════════════ */}
+      {/* ----------------------------------------------------- */}
       <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

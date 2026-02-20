@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════
-// LoadSearchFilters — Search bar + filter bar + sort for Load Board
+// -----------------------------------------------------------
+// LoadSearchFilters -- Search bar + filter bar + sort for Load Board
 // Used in DispatchTracker Tab 1: Load Board
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
     X, Search, ChevronDown, ChevronUp, SlidersHorizontal,
 } from "lucide-react";
 
-// ─── Types ──────────────────────────────────────────────────
+// --- Types --------------------------------------------------
 export type LoadSortKey = "newest" | "oldest" | "revenue_desc" | "status";
 
 export type LoadFilters = {
@@ -47,7 +47,7 @@ type Props = {
     drivers: Driver[];
 };
 
-// ─── Status options (matching the main STATUSES array) ──────
+// --- Status options (matching the main STATUSES array) ------
 const STATUS_OPTIONS = [
     { value: "", label: "All Statuses" },
     { value: "pending", label: "Pending" },
@@ -65,9 +65,9 @@ const STATUS_OPTIONS = [
 
 const SERVICE_TYPES = [
     { value: "", label: "All Services" },
-    { value: "AOG", label: "✈️ AOG" },
-    { value: "Courier", label: "⚡ Courier" },
-    { value: "Standard", label: "📦 Standard" },
+    { value: "AOG", label: "?? AOG" },
+    { value: "Courier", label: "? Courier" },
+    { value: "Standard", label: "?? Standard" },
 ];
 
 const DATE_RANGES = [
@@ -79,11 +79,11 @@ const DATE_RANGES = [
 const SORT_OPTIONS = [
     { value: "newest", label: "Newest First" },
     { value: "oldest", label: "Oldest First" },
-    { value: "revenue_desc", label: "Revenue (High→Low)" },
+    { value: "revenue_desc", label: "Revenue (High->Low)" },
     { value: "status", label: "By Status" },
 ];
 
-// ─── Component ───────────────────────────────────────────────
+// --- Component -----------------------------------------------
 export default function LoadSearchFilters({
     filters,
     onFiltersChange,
@@ -128,7 +128,7 @@ export default function LoadSearchFilters({
         onFiltersChange(EMPTY_LOAD_FILTERS);
     };
 
-    // ── Compute active filter count (excluding sort + search) ──
+    // -- Compute active filter count (excluding sort + search) --
     const activeFilterCount = [
         filters.status,
         filters.driverId,
@@ -144,7 +144,7 @@ export default function LoadSearchFilters({
         filters.dateRange
     );
 
-    // ── Active filter badges ─────────────────────────────────
+    // -- Active filter badges ---------------------------------
     const activeBadges: { label: string; clear: () => void }[] = [];
     if (filters.status) {
         const s = STATUS_OPTIONS.find((o) => o.value === filters.status);
@@ -165,14 +165,14 @@ export default function LoadSearchFilters({
 
     return (
         <div className="space-y-2 mb-3">
-            {/* ── Search Row ── */}
+            {/* -- Search Row -- */}
             <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
                         value={localSearch}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        placeholder="Search by reference, client, pickup, delivery…"
+                        placeholder="Search by reference, client, pickup, delivery..."
                         className="pl-8 pr-8 h-9"
                     />
                     {localSearch && (
@@ -225,7 +225,7 @@ export default function LoadSearchFilters({
                 </Button>
             </div>
 
-            {/* ── Result Count ── */}
+            {/* -- Result Count -- */}
             <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                     {hasAnyFilter ? (
@@ -265,7 +265,7 @@ export default function LoadSearchFilters({
                 )}
             </div>
 
-            {/* ── Filter Bar (collapsible) ── */}
+            {/* -- Filter Bar (collapsible) -- */}
             {filtersOpen && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-muted/30 rounded-xl border border-border/50 animate-in fade-in-0 slide-in-from-top-1 duration-150">
                     {/* Status */}

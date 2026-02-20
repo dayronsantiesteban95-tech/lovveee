@@ -1,6 +1,6 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * CSV IMPORT / EXPORT — Bulk Load Operations
+ * -----------------------------------------------------------
+ * CSV IMPORT / EXPORT -- Bulk Load Operations
  *
  * Import:  Drag & drop or file picker for CSV/Excel files.
  *          Auto-maps columns, shows preview, bulk inserts.
@@ -8,7 +8,7 @@
  * Export:  One-click export any filtered load list to CSV.
  *
  * Replaces the manual "paste from Google Sheet" workflow.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useCallback, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import {
     X, ArrowRight, RefreshCw, FileText, Table2,
 } from "lucide-react";
 
-// ─── Column mapping ─────────────────────────────────
+// --- Column mapping ---------------------------------
 
 const DB_COLUMNS = [
     { key: "reference_number", label: "Reference #", example: "REF-001" },
@@ -42,7 +42,7 @@ const DB_COLUMNS = [
     { key: "miles", label: "Miles", example: "12.5" },
 ];
 
-// ─── CSV Parser ─────────────────────────────────────
+// --- CSV Parser -------------------------------------
 
 function parseCSV(text: string): { headers: string[]; rows: string[][] } {
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
@@ -77,7 +77,7 @@ function parseCSV(text: string): { headers: string[]; rows: string[][] } {
     return { headers, rows };
 }
 
-// ─── Auto-map columns ──────────────────────────────
+// --- Auto-map columns ------------------------------
 
 function autoMapColumns(csvHeaders: string[]): Record<number, string> {
     const mapping: Record<number, string> = {};
@@ -114,7 +114,7 @@ function autoMapColumns(csvHeaders: string[]): Record<number, string> {
     return mapping;
 }
 
-// ─── Export to CSV ──────────────────────────────────
+// --- Export to CSV ----------------------------------
 
 export function exportToCSV(rows: Record<string, any>[], filename: string) {
     if (rows.length === 0) return;
@@ -141,7 +141,7 @@ export function exportToCSV(rows: Record<string, any>[], filename: string) {
     URL.revokeObjectURL(url);
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 interface CSVImportPanelProps {
     onImportComplete?: (count: number) => void;
@@ -240,7 +240,7 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
         setImporting(false);
         setStep("done");
         toast({
-            title: `📊 Import complete`,
+            title: `?? Import complete`,
             description: `${success} loads imported${errors > 0 ? `, ${errors} errors` : ""}`,
         });
         onImportComplete?.(success);
@@ -318,7 +318,7 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Table2 className="h-3.5 w-3.5" />
-                            {csvRows.length} rows · {csvHeaders.length} columns · {Object.keys(columnMap).length} mapped
+                            {csvRows.length} rows ? {csvHeaders.length} columns ? {Object.keys(columnMap).length} mapped
                         </div>
 
                         {/* Column mapping */}
@@ -334,7 +334,7 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
                                         onChange={(e) => updateMapping(idx, e.target.value)}
                                         className="flex-1 h-7 rounded border bg-background px-2 text-xs"
                                     >
-                                        <option value="">— Skip —</option>
+                                        <option value="">-- Skip --</option>
                                         {DB_COLUMNS.map((col) => (
                                             <option key={col.key} value={col.key}>
                                                 {col.label}
@@ -365,7 +365,7 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
                                             <tr key={i}>
                                                 {Object.keys(columnMap).map((csvIdx) => (
                                                     <td key={csvIdx} className="p-1 border-b truncate max-w-[120px]">
-                                                        {row[Number(csvIdx)] ?? "—"}
+                                                        {row[Number(csvIdx)] ?? "--"}
                                                     </td>
                                                 ))}
                                             </tr>
@@ -403,7 +403,7 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
                             <p className="text-xs text-muted-foreground mt-1">
                                 {importResult.success} loads imported successfully
                                 {importResult.errors > 0 && (
-                                    <span className="text-red-500"> · {importResult.errors} errors</span>
+                                    <span className="text-red-500"> ? {importResult.errors} errors</span>
                                 )}
                             </p>
                         </div>

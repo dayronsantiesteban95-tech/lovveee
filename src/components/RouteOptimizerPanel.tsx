@@ -1,13 +1,13 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * ROUTE OPTIMIZER PANEL — Smart Load Ordering
+ * -----------------------------------------------------------
+ * ROUTE OPTIMIZER PANEL -- Smart Load Ordering
  *
  * Dispatchers use this to optimize the delivery order for a driver.
  * Calculates optimal route using TSP nearest-neighbor + 2-opt,
  * shows savings vs current order and estimated arrival times.
  *
- * Zero cost — all calculations run client-side using Haversine.
- * ═══════════════════════════════════════════════════════════
+ * Zero cost -- all calculations run client-side using Haversine.
+ * -----------------------------------------------------------
  */
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { optimizeRoute, geocodeAddress, type RoutePoint, type OptimizedRoute } from "@/hooks/useRouteOptimizer";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface LoadForRoute {
     id: string;
@@ -103,7 +103,7 @@ export default function RouteOptimizerPanel({
         setLoading(false);
 
         toast({
-            title: `🗺️ Route optimized!`,
+            title: `??? Route optimized!`,
             description: `${result.savingsVsOriginalMiles > 0
                 ? `Saves ${result.savingsVsOriginalMiles} miles vs current order`
                 : "Route is already near-optimal"
@@ -123,7 +123,7 @@ export default function RouteOptimizerPanel({
             }).eq("id", stop.id);
         }
 
-        toast({ title: "✅ Route applied", description: "Load order and ETAs updated in the load board." });
+        toast({ title: "? Route applied", description: "Load order and ETAs updated in the load board." });
         setApplying(false);
         onRouteApplied?.(optimized.stops.map((s) => s.id));
     };
@@ -132,7 +132,7 @@ export default function RouteOptimizerPanel({
         if (!token) return;
         const url = `${window.location.origin}/track/${token}`;
         navigator.clipboard.writeText(url);
-        toast({ title: "📋 Copied", description: `Tracking link copied: ${url}` });
+        toast({ title: "?? Copied", description: `Tracking link copied: ${url}` });
     };
 
     return (
@@ -150,7 +150,7 @@ export default function RouteOptimizerPanel({
 
                 {driverName && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Truck className="h-3 w-3" /> {driverName} · Shift starts {shiftStart}
+                        <Truck className="h-3 w-3" /> {driverName} ? Shift starts {shiftStart}
                     </p>
                 )}
 
@@ -198,7 +198,7 @@ export default function RouteOptimizerPanel({
                                         <span className="flex items-center justify-center gap-0.5">
                                             <TrendingDown className="h-3 w-3" /> {optimized.savingsVsOriginalMiles} mi
                                         </span>
-                                    ) : "—"}
+                                    ) : "--"}
                                 </p>
                             </div>
                         </div>
@@ -216,7 +216,7 @@ export default function RouteOptimizerPanel({
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium truncate">{stop.label}</p>
                                                 <p className="text-muted-foreground">
-                                                    {stop.distanceFromPrev > 0 && `${stop.distanceFromPrev} mi · `}
+                                                    {stop.distanceFromPrev > 0 && `${stop.distanceFromPrev} mi ? `}
                                                     ETA {stop.estimatedArrival}
                                                 </p>
                                             </div>

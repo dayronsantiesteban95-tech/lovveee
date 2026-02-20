@@ -56,7 +56,7 @@ import {
 } from "lucide-react";
 // react-router-dom not needed here (guard removed)
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// --- Types ------------------------------------------------------------------
 
 type AppRole = "owner" | "dispatcher" | "driver";
 type DisplayRole = "admin" | "dispatcher" | "driver";
@@ -87,16 +87,16 @@ interface InviteForm {
   phone: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
-/** Map UI display role → DB app_role (drivers stored as dispatchers until we add enum value) */
+/** Map UI display role -> DB app_role (drivers stored as dispatchers until we add enum value) */
 function toDbRole(displayRole: DisplayRole): AppRole {
   if (displayRole === "admin") return "owner";
   if (displayRole === "driver") return "driver";
   return "dispatcher";
 }
 
-/** Map DB app_role → display label */
+/** Map DB app_role -> display label */
 function toDisplayRole(dbRole: AppRole | null, fullName?: string): DisplayRole {
   if (dbRole === "owner") return "admin";
   if (dbRole === "driver") return "driver";
@@ -175,7 +175,7 @@ function getAvatarColor(name: string): string {
   return colors[hash % colors.length];
 }
 
-// ─── Permissions Matrix Data ──────────────────────────────────────────────────
+// --- Permissions Matrix Data --------------------------------------------------
 
 const PERMISSIONS = [
   { feature: "User Management", admin: true, dispatcher: false, driver: false },
@@ -189,7 +189,7 @@ const PERMISSIONS = [
   { feature: "Rate Calculator", admin: true, dispatcher: true, driver: false },
 ];
 
-// ─── Default Form State ───────────────────────────────────────────────────────
+// --- Default Form State -------------------------------------------------------
 
 const DEFAULT_FORM: InviteForm = {
   full_name: "",
@@ -202,7 +202,7 @@ const DEFAULT_FORM: InviteForm = {
   phone: "",
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// --- Main Component -----------------------------------------------------------
 
 export default function TeamManagement() {
   const { user } = useAuth();
@@ -252,7 +252,7 @@ export default function TeamManagement() {
 
     return (profiles ?? []).map((p: { id: string; user_id: string; full_name: string; created_at: string }) => ({
       id: p.user_id,
-      email: "—",
+      email: "--",
       full_name: p.full_name || "Unknown",
       role: roleMap.get(p.user_id) ?? null,
       status: "active" as UserStatus,
@@ -329,7 +329,7 @@ export default function TeamManagement() {
     if (user) fetchTeam();
   }, [user, fetchTeam]);
 
-  // ── Invite ────────────────────────────────────────────────────────────────
+  // -- Invite ----------------------------------------------------------------
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -383,7 +383,7 @@ export default function TeamManagement() {
               status: "active",
               license_number: form.license_plate || null,
               notes: form.vehicle_make_model
-                ? `Vehicle: ${form.vehicle_type} – ${form.vehicle_make_model}. Plate: ${form.license_plate}`
+                ? `Vehicle: ${form.vehicle_type} - ${form.vehicle_make_model}. Plate: ${form.license_plate}`
                 : null,
               created_by: user?.id,
             });
@@ -409,7 +409,7 @@ export default function TeamManagement() {
     setInviteLoading(false);
   };
 
-  // ── Edit Role ─────────────────────────────────────────────────────────────
+  // -- Edit Role -------------------------------------------------------------
 
   const openEditRole = (member: TeamMember) => {
     setEditTarget(member);
@@ -444,7 +444,7 @@ export default function TeamManagement() {
           updated = true;
         }
       } catch {
-        // Edge Function unavailable — role changes require owner auth via server, cannot fall back to client
+        // Edge Function unavailable -- role changes require owner auth via server, cannot fall back to client
         toast({
           title: "Role update unavailable",
           description: "The user management service is offline. Please try again later.",
@@ -463,7 +463,7 @@ export default function TeamManagement() {
     setEditLoading(false);
   };
 
-  // ── Disable / Enable ──────────────────────────────────────────────────────
+  // -- Disable / Enable ------------------------------------------------------
 
   const handleToggleDisable = async (member: TeamMember) => {
     // For now, show a toast since disable requires service-role backend call
@@ -481,7 +481,7 @@ export default function TeamManagement() {
     );
   };
 
-  // ── Resend Invite ─────────────────────────────────────────────────────────
+  // -- Resend Invite ---------------------------------------------------------
 
   const handleResendInvite = async (member: TeamMember) => {
     try {
@@ -506,13 +506,13 @@ export default function TeamManagement() {
     } catch (err) {
       toast({
         title: "Invite service offline",
-        description: "Could not resend invite — the email service is currently unavailable.",
+        description: "Could not resend invite -- the email service is currently unavailable.",
         variant: "destructive",
       });
     }
   };
 
-  // ─── Guards ───────────────────────────────────────────────────────────────
+  // --- Guards ---------------------------------------------------------------
 
   if (roleLoading) {
     return (
@@ -522,7 +522,7 @@ export default function TeamManagement() {
     );
   }
 
-  // 🔒 Security guard: only owners can access Team Management
+  // ?? Security guard: only owners can access Team Management
   if (!isOwner) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 text-muted-foreground">
@@ -535,7 +535,7 @@ export default function TeamManagement() {
     );
   }
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // --- Render ---------------------------------------------------------------
 
   return (
     <div className="space-y-6 animate-in">
@@ -584,7 +584,7 @@ export default function TeamManagement() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Tab: Users ── */}
+        {/* -- Tab: Users -- */}
         <TabsContent value="users" className="mt-4">
           <Card className="glass-card border-0">
             <CardContent className="p-0">
@@ -675,7 +675,7 @@ export default function TeamManagement() {
                           {/* Hub */}
                           <TableCell>
                             <span className="text-sm text-muted-foreground">
-                              {member.hub ?? "—"}
+                              {member.hub ?? "--"}
                             </span>
                           </TableCell>
 
@@ -741,7 +741,7 @@ export default function TeamManagement() {
           </Card>
         </TabsContent>
 
-        {/* ── Tab: Permissions ── */}
+        {/* -- Tab: Permissions -- */}
         <TabsContent value="permissions" className="mt-4">
           <Card className="glass-card border-0">
             <CardHeader className="pb-3">
@@ -825,7 +825,7 @@ export default function TeamManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* ── Invite Modal ─────────────────────────────────────────────────────── */}
+      {/* -- Invite Modal ------------------------------------------------------- */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -923,9 +923,9 @@ export default function TeamManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PHX">PHX – Phoenix</SelectItem>
-                    <SelectItem value="ATL">ATL – Atlanta</SelectItem>
-                    <SelectItem value="LAX">LAX – Los Angeles</SelectItem>
+                    <SelectItem value="PHX">PHX - Phoenix</SelectItem>
+                    <SelectItem value="ATL">ATL - Atlanta</SelectItem>
+                    <SelectItem value="LAX">LAX - Los Angeles</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -980,7 +980,7 @@ export default function TeamManagement() {
                       onChange={(e) =>
                         setForm((f) => ({ ...f, license_plate: e.target.value }))
                       }
-                      placeholder="AZ · ABC123"
+                      placeholder="AZ ? ABC123"
                     />
                   </div>
                 </div>
@@ -1015,7 +1015,7 @@ export default function TeamManagement() {
                 {inviteLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending…
+                    Sending...
                   </>
                 ) : (
                   <>
@@ -1029,7 +1029,7 @@ export default function TeamManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Edit Role Modal ────────────────────────────────────────────────── */}
+      {/* -- Edit Role Modal -------------------------------------------------- */}
       <Dialog
         open={!!editTarget}
         onOpenChange={(open) => !open && setEditTarget(null)}
@@ -1095,7 +1095,7 @@ export default function TeamManagement() {
               {editLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving…
+                  Saving...
                 </>
               ) : (
                 "Save Changes"

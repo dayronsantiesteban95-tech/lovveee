@@ -1,13 +1,13 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * generateInvoice — Professional PDF Invoice Generator
+ * -----------------------------------------------------------
+ * generateInvoice -- Professional PDF Invoice Generator
  * Anika Logistics Group
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// ─── Types ───────────────────────────────────────────────
+// --- Types -----------------------------------------------
 export interface InvoiceLoad {
   id: string;
   reference_number: string | null;
@@ -29,10 +29,10 @@ export interface InvoiceLoad {
   hub: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────
+// --- Helpers ---------------------------------------------
 
 function fmtDate(ts: string | null | undefined): string {
-  if (!ts) return "—";
+  if (!ts) return "--";
   try {
     return new Date(ts).toLocaleString("en-US", {
       month: "short",
@@ -42,12 +42,12 @@ function fmtDate(ts: string | null | undefined): string {
       minute: "2-digit",
     });
   } catch {
-    return "—";
+    return "--";
   }
 }
 
 function fmtDateOnly(ts: string | null | undefined): string {
-  if (!ts) return "—";
+  if (!ts) return "--";
   try {
     return new Date(ts).toLocaleDateString("en-US", {
       month: "long",
@@ -55,7 +55,7 @@ function fmtDateOnly(ts: string | null | undefined): string {
       year: "numeric",
     });
   } catch {
-    return "—";
+    return "--";
   }
 }
 
@@ -85,7 +85,7 @@ function breakdownRevenue(revenue: number, miles: number): {
     return { base: BASE, additionalMiles, fuel, total: computed };
   }
 
-  // Revenue was manually entered — distribute proportionally
+  // Revenue was manually entered -- distribute proportionally
   const ratio = revenue / (computed || 1);
   const base = Math.round(BASE * ratio * 100) / 100;
   const addMi = Math.round(additionalMiles * ratio * 100) / 100;
@@ -96,7 +96,7 @@ function breakdownRevenue(revenue: number, miles: number): {
   return { base, additionalMiles: addMi, fuel: fuelAmt + diff, total: revenue };
 }
 
-// ─── Color palette ────────────────────────────────────────
+// --- Color palette ----------------------------------------
 const COLORS = {
   primary: [15, 23, 42] as [number, number, number],       // slate-900
   accent: [37, 99, 235] as [number, number, number],        // blue-600
@@ -110,9 +110,9 @@ const COLORS = {
   greenLight: [220, 252, 231] as [number, number, number],
 };
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // MAIN EXPORT
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
@@ -129,17 +129,17 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
       ? "4722 E Mcdowell Rd, Phoenix, AZ 85008"
       : "11431 NW 107th St, Ste 24, Medley, FL 33178";
 
-  // ── Breakdown ──────────────────────────────────────────
+  // -- Breakdown ------------------------------------------
   const breakdown = breakdownRevenue(
     load.revenue != null && Number(load.revenue) > 0 ? Number(load.revenue) : 131.25,
     Number(load.miles) || 0,
   );
 
-  // ── Background: full-page white ───────────────────────
+  // -- Background: full-page white -----------------------
   doc.setFillColor(...COLORS.white);
   doc.rect(0, 0, W, 279.4, "F");
 
-  // ── Header Banner ─────────────────────────────────────
+  // -- Header Banner -------------------------------------
   doc.setFillColor(...COLORS.primary);
   doc.rect(0, 0, W, 48, "F");
 
@@ -171,7 +171,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   doc.setTextColor(180, 196, 220);
   doc.text(invoiceNum, W - 16, 30, { align: "right" });
 
-  // ── Invoice Meta Block ────────────────────────────────
+  // -- Invoice Meta Block --------------------------------
   let y = 60;
 
   // Two-column: Bill To (left) | Invoice Details (right)
@@ -239,13 +239,13 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
 
   y = Math.max(y, detailY) + 8;
 
-  // ── Divider ───────────────────────────────────────────
+  // -- Divider -------------------------------------------
   doc.setDrawColor(...COLORS.gray200);
   doc.setLineWidth(0.4);
   doc.line(leftX, y, W - 16, y);
   y += 8;
 
-  // ── SERVICE DETAILS Table ─────────────────────────────
+  // -- SERVICE DETAILS Table -----------------------------
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.accent);
@@ -256,21 +256,21 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     ? `${load.weight_kg} KG`
     : load.weight_lbs
     ? `${(load.weight_lbs / 2.205).toFixed(1)} KG`
-    : "—";
+    : "--";
 
   const pkgDisplay = `${load.packages || 1} ${load.package_type || "PKG"}`;
-  const svcDisplay = `${load.service_type || "AOG"} — AOG Cartage`;
+  const svcDisplay = `${load.service_type || "AOG"} -- AOG Cartage`;
 
   const serviceRows = [
     ["Reference #", refNum],
     ["Service Type", svcDisplay],
-    ["Pickup Location", load.pickup_address || "—"],
-    ["Pickup Company", load.pickup_company || "—"],
-    ["Delivery Location", load.delivery_address || "—"],
-    ["Delivery Company", load.delivery_company || "—"],
-    ["Driver", driverName || "—"],
+    ["Pickup Location", load.pickup_address || "--"],
+    ["Pickup Company", load.pickup_company || "--"],
+    ["Delivery Location", load.delivery_address || "--"],
+    ["Delivery Company", load.delivery_company || "--"],
+    ["Driver", driverName || "--"],
     ["Pickup Date/Time", load.actual_pickup ? fmtDate(load.actual_pickup) : fmtDateOnly(load.load_date)],
-    ["Delivery Date/Time", load.actual_delivery ? fmtDate(load.actual_delivery) : "—"],
+    ["Delivery Date/Time", load.actual_delivery ? fmtDate(load.actual_delivery) : "--"],
     ["Weight", weightDisplay],
     ["Packages", pkgDisplay],
   ];
@@ -305,7 +305,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
 
   y = (doc as any).lastAutoTable.finalY + 10;
 
-  // ── CHARGES Table ─────────────────────────────────────
+  // -- CHARGES Table -------------------------------------
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.accent);
@@ -355,7 +355,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
 
   y = (doc as any).lastAutoTable.finalY + 10;
 
-  // ── Payment Terms & Thank You ─────────────────────────
+  // -- Payment Terms & Thank You -------------------------
   doc.setFillColor(...COLORS.gray100);
   doc.roundedRect(leftX, y, W - 32, 22, 3, 3, "F");
 
@@ -397,7 +397,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     { align: "center" },
   );
 
-  // ── Footer strip ──────────────────────────────────────
+  // -- Footer strip --------------------------------------
   const pageH = doc.internal.pageSize.getHeight();
   doc.setFillColor(...COLORS.primary);
   doc.rect(0, pageH - 12, W, 12, "F");
@@ -412,7 +412,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     { align: "center" },
   );
 
-  // ── Save / Download ────────────────────────────────────
+  // -- Save / Download ------------------------------------
   const dateStr = today.toISOString().slice(0, 10);
   const filename = `ANIKA-INV-${refNum}-${dateStr}.pdf`;
   doc.save(filename);

@@ -33,7 +33,7 @@ interface DailyReportProps {
 export default function DailyReport({ loads, drivers, selectedDate, onSelectedDateChange }: DailyReportProps) {
     const { toast } = useToast();
 
-    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "—";
+    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "--";
 
     const dailyReport = useMemo(() => {
         const dayLoads = loads.filter((l) => l.load_date === selectedDate);
@@ -74,7 +74,7 @@ export default function DailyReport({ loads, drivers, selectedDate, onSelectedDa
 
     const copyReport = () => {
         const r = dailyReport;
-        const text = `📋 DAILY OPS REPORT — ${selectedDate}\n${"═".repeat(40)}\n` +
+        const text = `?? DAILY OPS REPORT -- ${selectedDate}\n${"-".repeat(40)}\n` +
             `Loads: ${r.total} (${r.delivered} delivered)\nMiles: ${r.totalMiles}\n` +
             `Revenue: ${fmtMoney(r.totalRevenue)}\nCosts: ${fmtMoney(r.totalCosts)}\n` +
             `Profit: ${fmtMoney(r.profit)} (${r.margin.toFixed(1)}%)\n\n` +
@@ -101,7 +101,7 @@ export default function DailyReport({ loads, drivers, selectedDate, onSelectedDa
                     { label: "Total Miles", value: dailyReport.totalMiles.toFixed(0), sub: "load miles" },
                     { label: "Revenue", value: fmtMoney(dailyReport.totalRevenue), sub: "gross" },
                     { label: "Costs", value: fmtMoney(dailyReport.totalCosts), sub: "driver + fuel" },
-                    { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "▲" : "▼" },
+                    { label: "Profit", value: fmtMoney(dailyReport.profit), sub: dailyReport.profit >= 0 ? "?" : "?" },
                     { label: "Margin", value: `${dailyReport.margin.toFixed(1)}%`, sub: dailyReport.margin >= 30 ? "Healthy" : dailyReport.margin >= 15 ? "OK" : "Low" },
                 ].map((s) => (
                     <Card key={s.label} className="glass-card rounded-2xl">
@@ -139,7 +139,7 @@ export default function DailyReport({ loads, drivers, selectedDate, onSelectedDa
                                         <TableCell className="text-center">{d.loads}</TableCell>
                                         <TableCell className="text-right font-mono">{d.miles.toFixed(0)}</TableCell>
                                         <TableCell className="text-right font-mono">{fmtMoney(d.revenue)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs">{d.miles > 0 ? fmtMoney(d.revenue / d.miles) : "—"}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs">{d.miles > 0 ? fmtMoney(d.revenue / d.miles) : "--"}</TableCell>
                                         <TableCell><Badge className={`${waitBadgeClass(d.avgWait)} text-xs`}>{fmtWait(d.avgWait)}</Badge></TableCell>
                                     </TableRow>
                                 ))}
@@ -155,7 +155,7 @@ export default function DailyReport({ loads, drivers, selectedDate, onSelectedDa
                     <Card key={s.label} className="glass-card rounded-2xl">
                         <CardContent className="pt-5 pb-4 px-5">
                             <div className="flex items-center gap-2 mb-3">
-                                <span className="text-lg">{s.label === "Day" ? "☀️" : "🌙"}</span>
+                                <span className="text-lg">{s.label === "Day" ? "??" : "??"}</span>
                                 <p className="font-semibold">{s.label} Shift</p>
                             </div>
                             <div className="grid grid-cols-3 gap-4 text-center">

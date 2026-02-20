@@ -9,16 +9,16 @@ type TemplateData = {
 };
 
 const UNIQUE_TEMPLATES: TemplateData[] = [
-  // ── STEP 1: Day 1 — Introduction (email_1) ──
+  // -- STEP 1: Day 1 -- Introduction (email_1) --
   {
     name: "The Straight Shooter",
     step_type: "email_1",
     subject: "Quick question about [Company]'s deliveries",
     body: `Hi [Name],
 
-I'll keep this short — I run business development at Anika Logistics Group, and we specialize in time-critical deliveries for [Industry] companies in the [City Hub] area.
+I'll keep this short -- I run business development at Anika Logistics Group, and we specialize in time-critical deliveries for [Industry] companies in the [City Hub] area.
 
-We're not a marketplace or a broker. We operate our own fleet (cargo vans, sprinters, box trucks) with TSA-trained, uniformed personnel who treat every package like it matters — because it does.
+We're not a marketplace or a broker. We operate our own fleet (cargo vans, sprinters, box trucks) with TSA-trained, uniformed personnel who treat every package like it matters -- because it does.
 
 If [Company] ever deals with missed ETAs, damaged goods, or zero visibility on deliveries, I'd love a quick conversation about how we handle things differently.
 
@@ -38,14 +38,14 @@ Most [Industry] companies I talk to in [City Hub] share the same frustrations: l
 
 At Anika Logistics Group, we built our entire operation around eliminating those problems:
 
-• Real-time GPS tracking on every route
-• Photo proof of delivery on every stop
-• Dedicated dispatch — you always know who to call
-• Same-day and 6-hour hotshot options when it's urgent
+* Real-time GPS tracking on every route
+* Photo proof of delivery on every stop
+* Dedicated dispatch -- you always know who to call
+* Same-day and 6-hour hotshot options when it's urgent
 
 If any of that sounds relevant to [Company], I'd love to set up a quick intro call.
 
-No pitch — just a conversation to see if we're a fit.
+No pitch -- just a conversation to see if we're a fit.
 
 Best,
 Anika Logistics Group`,
@@ -58,7 +58,7 @@ Anika Logistics Group`,
 
 I came across [Company] while researching [Industry] businesses in [City Hub], and I think there might be a natural fit with what we do at Anika Logistics Group.
 
-We handle last-mile, white-glove, and time-critical deliveries for companies that can't afford missed windows or damaged freight. Our team operates 24/7 with our own fleet — no subcontractors, no surprises.
+We handle last-mile, white-glove, and time-critical deliveries for companies that can't afford missed windows or damaged freight. Our team operates 24/7 with our own fleet -- no subcontractors, no surprises.
 
 I work with several [Industry] companies in the area and understand the delivery challenges unique to your space.
 
@@ -77,7 +77,7 @@ Anika Logistics Group`,
 
 The difference? Accountability.
 
-At Anika Logistics Group, every delivery is tracked in real time, every driver is uniformed and TSA-trained, and every route has a dedicated dispatcher behind it. We offer last-mile, white-glove, AOG, and same-day services — all from our own fleet.
+At Anika Logistics Group, every delivery is tracked in real time, every driver is uniformed and TSA-trained, and every route has a dedicated dispatcher behind it. We offer last-mile, white-glove, AOG, and same-day services -- all from our own fleet.
 
 If [Company] is looking for more reliability in [City Hub], I'd love to show you how we operate.
 
@@ -89,27 +89,27 @@ Anika Logistics Group`,
   {
     name: "The Local Partner",
     step_type: "email_1",
-    subject: "Your [City Hub] logistics partner — quick intro",
+    subject: "Your [City Hub] logistics partner -- quick intro",
     body: `Hi [Name],
 
 My name's Dayron, and I lead Anika Logistics Group out of [City Hub].
 
-We're a local logistics company with a simple promise: we move what matters — on time, every time. Our team is available 24/7, operates our own fleet of cargo vans, sprinters, and box trucks, and every team member is uniformed, background-checked, and TSA-trained.
+We're a local logistics company with a simple promise: we move what matters -- on time, every time. Our team is available 24/7, operates our own fleet of cargo vans, sprinters, and box trucks, and every team member is uniformed, background-checked, and TSA-trained.
 
 We serve [Industry] companies across [City Hub] with:
-→ Last-mile & same-day delivery
-→ White-glove & hand-carry service
-→ 6-hour hotshot for emergencies
-→ Airport transfers & AOG support
+-> Last-mile & same-day delivery
+-> White-glove & hand-carry service
+-> 6-hour hotshot for emergencies
+-> Airport transfers & AOG support
 
-I'd love to introduce Anika to [Company] — even just a quick call to see if we can help.
+I'd love to introduce Anika to [Company] -- even just a quick call to see if we can help.
 
 Looking forward to it,
 Dayron Santiesteban
 Anika Logistics Group`,
   },
 
-  // ── STEP 2: Day 4 — Social Proof (email_2) ──
+  // -- STEP 2: Day 4 -- Social Proof (email_2) --
   {
     name: "The Case Study",
     step_type: "email_2",
@@ -118,15 +118,15 @@ Anika Logistics Group`,
 
 I wanted to follow up with a real example of what we do at Anika.
 
-One of our [Industry] clients in [City Hub] needed 47 time-sensitive packages delivered across 12 locations — all before noon. Their previous courier missed 6 stops. We haven't missed one since taking over.
+One of our [Industry] clients in [City Hub] needed 47 time-sensitive packages delivered across 12 locations -- all before noon. Their previous courier missed 6 stops. We haven't missed one since taking over.
 
 Here's how we did it:
-• Pre-routed every stop the night before
-• Assigned two dedicated drivers with real-time tracking
-• Dispatched a backup vehicle on standby
-• Delivered photo proof of every single drop-off
+* Pre-routed every stop the night before
+* Assigned two dedicated drivers with real-time tracking
+* Dispatched a backup vehicle on standby
+* Delivered photo proof of every single drop-off
 
-That's not a special occasion for us — that's Tuesday.
+That's not a special occasion for us -- that's Tuesday.
 
 If [Company] needs that kind of reliability, let's talk.
 
@@ -141,7 +141,7 @@ Anika Logistics Group`,
 
 Just circling back on my earlier note. I wanted to share a few things about our operation that might be relevant to [Company]:
 
-Fleet: Cargo vans, sprinters, box trucks — all company-owned
+Fleet: Cargo vans, sprinters, box trucks -- all company-owned
 Coverage: Full [City Hub] metro + surrounding 300-mile radius
 Response time: Same-day dispatch, 6-hour hotshot available
 Personnel: Uniformed, TSA-trained, background-checked
@@ -162,7 +162,7 @@ Anika Logistics Group`,
 
 I know your inbox is busy, so I'll be quick.
 
-I reached out a few days ago about Anika Logistics Group and how we support [Industry] companies in [City Hub]. Our philosophy is simple: trust is earned through consistency — and we prove it on every delivery.
+I reached out a few days ago about Anika Logistics Group and how we support [Industry] companies in [City Hub]. Our philosophy is simple: trust is earned through consistency -- and we prove it on every delivery.
 
 No long-term contracts required. No hidden fees. Just reliable, professional delivery service backed by our own fleet and a team that takes ownership.
 
@@ -179,14 +179,14 @@ Anika Logistics Group`,
 
 I wanted to make sure you knew the full scope of what Anika Logistics Group offers in [City Hub]. Here's a quick snapshot:
 
-1. Last-Mile Delivery — reliable, tracked, on-time
-2. White-Glove Service — for fragile, high-value, or sensitive cargo
-3. AOG (Aircraft on Ground) — urgent aerospace parts delivery
-4. Same-Day Rush — when it absolutely can't wait
-5. 6-Hour Hotshot — emergency door-to-door
-6. Airport Transfers — TSA-trained personnel, secure chain of custody
-7. Legal Courier — court filings, sensitive documents, certified delivery
-8. Hand Carry — dedicated person, dedicated route, no stops
+1. Last-Mile Delivery -- reliable, tracked, on-time
+2. White-Glove Service -- for fragile, high-value, or sensitive cargo
+3. AOG (Aircraft on Ground) -- urgent aerospace parts delivery
+4. Same-Day Rush -- when it absolutely can't wait
+5. 6-Hour Hotshot -- emergency door-to-door
+6. Airport Transfers -- TSA-trained personnel, secure chain of custody
+7. Legal Courier -- court filings, sensitive documents, certified delivery
+8. Hand Carry -- dedicated person, dedicated route, no stops
 
 Every service runs on our own fleet with real-time tracking and photo proof of delivery.
 
@@ -205,15 +205,15 @@ If [Company] already has a delivery partner, you might be wondering why I'm reac
 
 Here's what I hear from companies that switch to Anika:
 
-"Our old provider missed ETAs constantly." → We track every route in real time and proactively communicate delays before they happen.
+"Our old provider missed ETAs constantly." -> We track every route in real time and proactively communicate delays before they happen.
 
-"We never knew if the package actually arrived." → Every delivery gets photo proof, a timestamp, and a recipient signature.
+"We never knew if the package actually arrived." -> Every delivery gets photo proof, a timestamp, and a recipient signature.
 
-"We couldn't get anyone on the phone." → You get a dedicated dispatcher. One number. Always answered.
+"We couldn't get anyone on the phone." -> You get a dedicated dispatcher. One number. Always answered.
 
-"Drivers showed up in personal vehicles looking unprofessional." → Our team is uniformed, background-checked, and TSA-trained. Every time.
+"Drivers showed up in personal vehicles looking unprofessional." -> Our team is uniformed, background-checked, and TSA-trained. Every time.
 
-We're not the cheapest option — but we are the most reliable. And for [Industry] companies, that matters.
+We're not the cheapest option -- but we are the most reliable. And for [Industry] companies, that matters.
 
 Worth a conversation?
 
@@ -221,16 +221,16 @@ Best,
 Anika Logistics Group`,
   },
 
-  // ── STEP 3: Day 8 — Low Friction Offer (call) ──
+  // -- STEP 3: Day 8 -- Low Friction Offer (call) --
   {
     name: "The Pilot Offer",
     step_type: "call",
-    subject: "Let's do a trial run, [Name] — zero commitment",
+    subject: "Let's do a trial run, [Name] -- zero commitment",
     body: `Hi [Name],
 
 I've reached out a couple of times, and I know timing is everything. So here's a simple offer:
 
-Let us do one delivery for [Company] — on us. A trial run so you can see exactly how Anika operates: the tracking, the communication, the professionalism, the proof of delivery.
+Let us do one delivery for [Company] -- on us. A trial run so you can see exactly how Anika operates: the tracking, the communication, the professionalism, the proof of delivery.
 
 No contract. No obligation. Just a chance to show you why [Industry] companies in [City Hub] trust us with their most important deliveries.
 
@@ -247,7 +247,7 @@ www.anikalogisticsgroup.com`,
     subject: "15 minutes to see if we're a fit?",
     body: `Hi [Name],
 
-I know I've been in your inbox a few times now — I appreciate your patience.
+I know I've been in your inbox a few times now -- I appreciate your patience.
 
 I'm not looking for a hard sell. Just 15 minutes to understand [Company]'s delivery needs and share how Anika handles [Industry] logistics in [City Hub].
 
@@ -264,9 +264,9 @@ Anika Logistics Group`,
     subject: "[Name], one last thing before I go quiet",
     body: `Hi [Name],
 
-I'll respect your time — this is my last note for now.
+I'll respect your time -- this is my last note for now.
 
-If [Company] ever needs a reliable delivery partner in [City Hub] — whether it's a same-day emergency, a recurring last-mile route, or a white-glove job — Anika Logistics Group is here.
+If [Company] ever needs a reliable delivery partner in [City Hub] -- whether it's a same-day emergency, a recurring last-mile route, or a white-glove job -- Anika Logistics Group is here.
 
 We operate 24/7. Our own fleet. Uniformed, TSA-trained team. Real-time tracking on every delivery.
 
@@ -283,7 +283,7 @@ dayron@anikalogisticsgroup.com`,
     subject: "Custom logistics quote for [Company]",
     body: `Hi [Name],
 
-Before I go quiet, I wanted to offer one more thing — a custom logistics quote for [Company].
+Before I go quiet, I wanted to offer one more thing -- a custom logistics quote for [Company].
 
 If you can share a few details (typical delivery volume, routes, and any special requirements), I'll put together a no-obligation proposal tailored to [Company]'s needs.
 
@@ -302,11 +302,11 @@ Anika Logistics Group`,
 
 I'll keep this one short.
 
-If [Company] ever needs same-day delivery, hotshot service, or a reliable logistics partner in [City Hub] — here's my direct line:
+If [Company] ever needs same-day delivery, hotshot service, or a reliable logistics partner in [City Hub] -- here's my direct line:
 
-📱 (305) 555-0100
-📧 dayron@anikalogisticsgroup.com
-🕐 Available Mon-Sun, 6 AM - 10 PM
+?? (305) 555-0100
+?? dayron@anikalogisticsgroup.com
+?? Available Mon-Sun, 6 AM - 10 PM
 
 No gatekeepers, no phone tree. Just me.
 

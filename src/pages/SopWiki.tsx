@@ -116,7 +116,7 @@ export default function SopWiki() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 gradient-text">
             <BookOpen className="h-6 w-6" /> SOP Wiki
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Standard Operating Procedures — The Anika Playbook</p>
+          <p className="text-muted-foreground text-sm mt-1">Standard Operating Procedures -- The Anika Playbook</p>
         </div>
         <Button onClick={() => { setEditArticle(null); setShowForm(true); }} className="gap-2 btn-gradient">
           <Plus className="h-4 w-4" /> New Article

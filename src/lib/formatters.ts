@@ -1,11 +1,11 @@
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // Shared Formatting Utilities
 // Centralized to avoid duplication across pages
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 /**
  * Format a number as USD currency (no cents).
- * e.g. 1234 → "$1,234"
+ * e.g. 1234 -> "$1,234"
  */
 export function fmtMoney(n: number): string {
     return n.toLocaleString("en-US", {
@@ -17,7 +17,7 @@ export function fmtMoney(n: number): string {
 
 /**
  * Format minutes into a human-readable wait time.
- * e.g. 0 → "—", 45 → "45m", 90 → "1h 30m"
+ * e.g. 0 -> "--", 45 -> "45m", 90 -> "1h 30m"
  */
 export function fmtWait(mins: number): string {
     if (!mins) return "\u2014";

@@ -1,11 +1,11 @@
 /**
- * ETABadge — Live traffic-aware ETA badge for in_progress load cards.
+ * ETABadge -- Live traffic-aware ETA badge for in_progress load cards.
  *
  * Shows "ETA 2:45 PM" or "~18 min" with color coding:
- *   • green  = on time (≥15 min buffer vs SLA)
- *   • yellow = at risk (<15 min buffer)
- *   • red    = late (past SLA deadline)
- *   • gray   = loading / unavailable
+ *   * green  = on time (?15 min buffer vs SLA)
+ *   * yellow = at risk (<15 min buffer)
+ *   * red    = late (past SLA deadline)
+ *   * gray   = loading / unavailable
  *
  * Only fetches when status = in_progress and addresses are present.
  */
@@ -51,7 +51,7 @@ export default function ETABadge({
     return (
       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted/50 text-muted-foreground animate-pulse">
         <RefreshCw className="h-2.5 w-2.5 animate-spin" />
-        ETA…
+        ETA...
       </span>
     );
   }

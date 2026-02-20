@@ -6,20 +6,20 @@
  *   POST { action, ...params }
  *
  * Read operations:
- *   getTodayOrders()    — orders for today
- *   getOrder()          — single order by tracking #
- *   getDrivers()        — all active drivers
- *   getDriverGpsHistory()— GPS trail for a driver
- *   getLocations()      — location directory
+ *   getTodayOrders()    -- orders for today
+ *   getOrder()          -- single order by tracking #
+ *   getDrivers()        -- all active drivers
+ *   getDriverGpsHistory()-- GPS trail for a driver
+ *   getLocations()      -- location directory
  *
  * Write operations:
- *   pushLoadToOnTime360() — create an order from our load data
- *   updateOT360Order()    — update order fields
- *   cancelOT360Order()    — cancel an order
+ *   pushLoadToOnTime360() -- create an order from our load data
+ *   updateOT360Order()    -- update order fields
+ *   cancelOT360Order()    -- cancel an order
  *
  * Sync:
- *   syncOrderToLoad()  — pull an OT360 order → our daily_loads row
- *   syncAllOrders()    — bulk sync all today's orders
+ *   syncOrderToLoad()  -- pull an OT360 order -> our daily_loads row
+ *   syncAllOrders()    -- bulk sync all today's orders
  */
 import { supabase } from "@/integrations/supabase/client";
 import type {
@@ -30,7 +30,7 @@ import type {
 } from "./types";
 import { mapOT360Status } from "./types";
 
-// ─── Edge Function Caller ──────────────────────────────
+// --- Edge Function Caller ------------------------------
 
 async function callEdge<T>(action: string, params: Record<string, unknown> = {}): Promise<T> {
     const { data, error } = await supabase.functions.invoke("ontime360-proxy", {
@@ -40,7 +40,7 @@ async function callEdge<T>(action: string, params: Record<string, unknown> = {})
     return data as T;
 }
 
-// ─── Read Operations ───────────────────────────────────
+// --- Read Operations -----------------------------------
 
 /** List today's orders from OnTime 360 */
 export async function getTodayOrders(): Promise<OT360Order[]> {
@@ -90,7 +90,7 @@ export async function getLocation(locationId: string): Promise<OT360Location> {
     return callEdge<OT360Location>("getLocation", { locationId });
 }
 
-// ─── Write Operations (Push → OnTime 360) ──────────────
+// --- Write Operations (Push -> OnTime 360) --------------
 
 interface PushOrderPayload {
     customerName: string;
@@ -140,12 +140,12 @@ export async function cancelOT360Order(orderId: string, reason?: string): Promis
     await callEdge("cancelOrder", { orderId, reason });
 }
 
-// ─── Sync (Pull → daily_loads) ────────────────────────
+// --- Sync (Pull -> daily_loads) ------------------------
 
-/** Sync a single OT360 order → daily_loads row */
+/** Sync a single OT360 order -> daily_loads row */
 export async function syncOrderToLoad(
     order: OT360Order,
-    driverMapping: Record<string, string>, // ot360DriverId → our driverId
+    driverMapping: Record<string, string>, // ot360DriverId -> our driverId
 ) {
     const ourDriverId = order.driverCurrentlyAssigned
         ? driverMapping[order.driverCurrentlyAssigned] ?? null
@@ -201,7 +201,7 @@ export async function syncAllOrders(
     return { synced, errors };
 }
 
-// ─── GPS Polling ───────────────────────────────────────
+// --- GPS Polling ---------------------------------------
 
 export interface DriverGPS {
     driverId: string;

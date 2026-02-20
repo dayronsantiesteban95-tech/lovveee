@@ -47,7 +47,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                         border: "1px solid #334155",
                     }}>
                         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem", color: "#f87171" }}>
-                            ⚠️ Something went wrong
+                            ?? Something went wrong
                         </h1>
                         <p style={{ color: "#94a3b8", marginBottom: "1rem", fontSize: "0.875rem" }}>
                             The app encountered an error. Check the browser console (F12) for details.

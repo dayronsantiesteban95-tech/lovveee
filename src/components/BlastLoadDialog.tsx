@@ -1,10 +1,10 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * BlastLoadDialog — Dispatcher UI to blast a load to drivers
+ * -----------------------------------------------------------
+ * BlastLoadDialog -- Dispatcher UI to blast a load to drivers
  *
  * Opens as a dialog/modal. Shows load details pre-filled,
  * lets dispatcher select drivers and send blast.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -35,7 +35,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 export interface BlastLoad {
     id: string;
@@ -66,7 +66,7 @@ interface BlastLoadDialogProps {
     onBlastSent?: (blastId: string, driverCount: number) => void;
 }
 
-// ─── Component ─────────────────────────────────────────
+// --- Component -----------------------------------------
 
 export default function BlastLoadDialog({
     open,
@@ -194,12 +194,12 @@ export default function BlastLoadDialog({
             const notifRows = driverIdsArray.map((driverId) => ({
                 driver_id: driverId,
                 type: "blast",
-                title: "🚚 New Load Available!",
+                title: "?? New Load Available!",
                 body: [
                     load.reference_number ? `Ref: ${load.reference_number}` : null,
                     load.pickup_address ? `From: ${load.pickup_address}` : null,
                     load.delivery_address ? `To: ${load.delivery_address}` : null,
-                    `${load.miles} mi · $${load.revenue}`,
+                    `${load.miles} mi ? $${load.revenue}`,
                     message.trim() || null,
                 ]
                     .filter(Boolean)
@@ -226,7 +226,7 @@ export default function BlastLoadDialog({
                 .eq("id", load.id);
 
             toast({
-                title: "📡 Blast Sent!",
+                title: "?? Blast Sent!",
                 description: `Blast sent to ${driverIdsArray.length} driver${driverIdsArray.length !== 1 ? "s" : ""}`,
             });
 
@@ -278,9 +278,9 @@ export default function BlastLoadDialog({
 
                     <div className="flex items-center gap-1 text-muted-foreground text-xs">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span>{load.pickup_address ?? "—"}</span>
-                        <span className="mx-1">→</span>
-                        <span>{load.delivery_address ?? "—"}</span>
+                        <span>{load.pickup_address ?? "--"}</span>
+                        <span className="mx-1">-></span>
+                        <span>{load.delivery_address ?? "--"}</span>
                     </div>
 
                     <div className="flex items-center gap-4 text-xs">
@@ -433,7 +433,7 @@ export default function BlastLoadDialog({
     );
 }
 
-// ─── Driver Row Sub-component ──────────────────────────
+// --- Driver Row Sub-component --------------------------
 
 function DriverRow({
     driver,

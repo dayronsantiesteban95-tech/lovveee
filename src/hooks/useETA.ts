@@ -1,5 +1,5 @@
 /**
- * useETA — Live traffic-aware ETA using Google Maps Routes API v2
+ * useETA -- Live traffic-aware ETA using Google Maps Routes API v2
  *
  * Uses REST (fetch), not the SDK. Works in browser.
  * POST https://routes.googleapis.com/directions/v2:computeRoutes
@@ -15,7 +15,7 @@ const ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoute
 const FIELD_MASK = "routes.duration,routes.distanceMeters";
 const REFRESH_INTERVAL_MS = 60 * 1000; // 60 seconds
 
-// ── In-memory cache ──────────────────────────────────────────────────────────
+// -- In-memory cache ----------------------------------------------------------
 
 interface CacheEntry {
   durationSeconds: number;
@@ -33,7 +33,7 @@ function isCacheFresh(entry: CacheEntry): boolean {
   return Date.now() - entry.fetchedAt < REFRESH_INTERVAL_MS;
 }
 
-// ── API call ─────────────────────────────────────────────────────────────────
+// -- API call -----------------------------------------------------------------
 
 async function fetchRouteData(
   origin: string,
@@ -78,7 +78,7 @@ async function fetchRouteData(
   return { durationSeconds, distanceMeters };
 }
 
-// ── Hook ─────────────────────────────────────────────────────────────────────
+// -- Hook ---------------------------------------------------------------------
 
 export interface ETAResult {
   eta: Date | null;
@@ -170,7 +170,7 @@ export function useETA(
   return { eta, durationMinutes, distanceMiles, loading, error, lastUpdated, refresh: doFetch };
 }
 
-// ── Utility: ETA status color ────────────────────────────────────────────────
+// -- Utility: ETA status color ------------------------------------------------
 
 /**
  * Returns "green" | "yellow" | "red" | "gray" based on how close ETA is

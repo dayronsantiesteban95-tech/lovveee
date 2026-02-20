@@ -1,13 +1,13 @@
 /**
- * useRouteOptimizer — Optimizes load delivery order to minimize total distance
+ * useRouteOptimizer -- Optimizes load delivery order to minimize total distance
  *
  * Uses nearest-neighbor TSP approximation with the Haversine formula.
- * Runs entirely client-side — no API keys, no third-party services.
+ * Runs entirely client-side -- no API keys, no third-party services.
  *
  * BONUS: Also calculates estimated arrival times based on average speeds.
  */
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 export interface RoutePoint {
     id: string;
@@ -36,7 +36,7 @@ export interface RouteStop {
     estimatedDepartMinutes: number;    // minutes at stop
 }
 
-// ─── Haversine distance (miles) ────────────────────────
+// --- Haversine distance (miles) ------------------------
 
 function haversineDistance(
     lat1: number, lng1: number,
@@ -56,7 +56,7 @@ function toRad(deg: number): number {
     return deg * Math.PI / 180;
 }
 
-// ─── Distance matrix ──────────────────────────────────
+// --- Distance matrix ----------------------------------
 
 function buildDistanceMatrix(points: RoutePoint[]): number[][] {
     const n = points.length;
@@ -71,7 +71,7 @@ function buildDistanceMatrix(points: RoutePoint[]): number[][] {
     return matrix;
 }
 
-// ─── Nearest-Neighbor TSP ─────────────────────────────
+// --- Nearest-Neighbor TSP -----------------------------
 
 function nearestNeighborTSP(distMatrix: number[][], startIdx: number): number[] {
     const n = distMatrix.length;
@@ -96,7 +96,7 @@ function nearestNeighborTSP(distMatrix: number[][], startIdx: number): number[] 
     return route;
 }
 
-// ─── 2-opt improvement ────────────────────────────────
+// --- 2-opt improvement --------------------------------
 
 function twoOptImprove(route: number[], distMatrix: number[][]): number[] {
     const improved = [...route];
@@ -123,7 +123,7 @@ function twoOptImprove(route: number[], distMatrix: number[][]): number[] {
     return improved;
 }
 
-// ─── Total route distance ─────────────────────────────
+// --- Total route distance -----------------------------
 
 function routeDistance(route: number[], distMatrix: number[][]): number {
     let total = 0;
@@ -133,13 +133,13 @@ function routeDistance(route: number[], distMatrix: number[][]): number {
     return total;
 }
 
-// ─── Main optimizer function ──────────────────────────
+// --- Main optimizer function --------------------------
 
 export function optimizeRoute(
     points: RoutePoint[],
     options?: {
         startIndex?: number;
-        startTime?: string;          // HH:MM — shift start
+        startTime?: string;          // HH:MM -- shift start
         avgSpeedMph?: number;        // default: 30 (urban)
         minutesPerStop?: number;     // default: 10
     },
@@ -223,9 +223,9 @@ export function optimizeRoute(
     };
 }
 
-// ─── Geocoding helper (free, approximate) ─────────────
-// Uses Nominatim (OpenStreetMap) — free, no API key needed
-// Rate limited to 1 req/sec — use sparingly
+// --- Geocoding helper (free, approximate) -------------
+// Uses Nominatim (OpenStreetMap) -- free, no API key needed
+// Rate limited to 1 req/sec -- use sparingly
 
 export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
     try {

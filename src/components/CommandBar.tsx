@@ -1,16 +1,16 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * COMMAND BAR — ⌘K / Ctrl+K Spotlight Search
+ * -----------------------------------------------------------
+ * COMMAND BAR -- ?K / Ctrl+K Spotlight Search
  *
- * Press Ctrl+K (or ⌘K on Mac) from ANYWHERE in the app to:
- *   • Search loads by reference #, client, address, status
- *   • Search drivers by name, hub, status
- *   • Search customers / companies
- *   • Quick-navigate to any page
- *   • Run quick actions (create load, assign driver, etc.)
+ * Press Ctrl+K (or ?K on Mac) from ANYWHERE in the app to:
+ *   * Search loads by reference #, client, address, status
+ *   * Search drivers by name, hub, status
+ *   * Search customers / companies
+ *   * Quick-navigate to any page
+ *   * Run quick actions (create load, assign driver, etc.)
  *
- * Designed to feel like Raycast / Linear — instant, keyboard-driven.
- * ═══════════════════════════════════════════════════════════
+ * Designed to feel like Raycast / Linear -- instant, keyboard-driven.
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ import {
     Hash, Clock, CheckCircle2, AlertCircle, Star, Route,
 } from "lucide-react";
 
-// ─── Result Types ──────────────────────────────────────
+// --- Result Types --------------------------------------
 
 type ResultCategory = "loads" | "drivers" | "customers" | "pages" | "actions";
 
@@ -38,7 +38,7 @@ interface SearchResult {
     badgeColor?: string;
 }
 
-// ─── Quick-nav pages ──────────────────────────────────
+// --- Quick-nav pages ----------------------------------
 
 const PAGES: SearchResult[] = [
     { id: "nav-dashboard", category: "pages", title: "Dashboard", subtitle: "Overview & analytics", icon: BarChart3, iconColor: "text-blue-500", action: () => { }, badge: "Page" },
@@ -62,21 +62,21 @@ const PAGE_ROUTES: Record<string, string> = {
     "nav-driver": "/driver",
 };
 
-// ─── Status helpers ───────────────────────────────────
+// --- Status helpers -----------------------------------
 
 function statusBadge(status: string): { badge: string; badgeColor: string } {
     switch (status) {
-        case "delivered": return { badge: "✅ Delivered", badgeColor: "bg-green-500/15 text-green-600" };
-        case "in_progress": return { badge: "🚛 In Transit", badgeColor: "bg-yellow-500/15 text-yellow-600" };
-        case "picked_up": return { badge: "📦 Picked Up", badgeColor: "bg-blue-500/15 text-blue-600" };
-        case "assigned": return { badge: "📋 Assigned", badgeColor: "bg-indigo-500/15 text-indigo-600" };
-        case "pending": return { badge: "⏳ Pending", badgeColor: "bg-slate-500/15 text-slate-600" };
-        case "cancelled": return { badge: "❌ Cancelled", badgeColor: "bg-red-500/15 text-red-600" };
+        case "delivered": return { badge: "? Delivered", badgeColor: "bg-green-500/15 text-green-600" };
+        case "in_progress": return { badge: "?? In Transit", badgeColor: "bg-yellow-500/15 text-yellow-600" };
+        case "picked_up": return { badge: "?? Picked Up", badgeColor: "bg-blue-500/15 text-blue-600" };
+        case "assigned": return { badge: "?? Assigned", badgeColor: "bg-indigo-500/15 text-indigo-600" };
+        case "pending": return { badge: "? Pending", badgeColor: "bg-slate-500/15 text-slate-600" };
+        case "cancelled": return { badge: "? Cancelled", badgeColor: "bg-red-500/15 text-red-600" };
         default: return { badge: status, badgeColor: "bg-slate-500/15 text-slate-600" };
     }
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function CommandBar() {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -88,7 +88,7 @@ export default function CommandBar() {
     const [selectedIdx, setSelectedIdx] = useState(0);
     const [searching, setSearching] = useState(false);
 
-    // ── Keyboard shortcut ─────────────────────
+    // -- Keyboard shortcut ---------------------
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -101,7 +101,7 @@ export default function CommandBar() {
         return () => window.removeEventListener("keydown", handler);
     }, []);
 
-    // ── Focus input when opened ───────────────
+    // -- Focus input when opened ---------------
     useEffect(() => {
         if (open) {
             setTimeout(() => inputRef.current?.focus(), 50);
@@ -111,7 +111,7 @@ export default function CommandBar() {
         }
     }, [open]);
 
-    // ── Search logic ──────────────────────────
+    // -- Search logic --------------------------
     const doSearch = useCallback(async (q: string) => {
         if (!q.trim()) {
             setResults([]);
@@ -121,7 +121,7 @@ export default function CommandBar() {
         const term = q.trim().toLowerCase();
         const allResults: SearchResult[] = [];
 
-        // ── Quick actions ──
+        // -- Quick actions --
         if (term.includes("new") || term.includes("create") || term.includes("add")) {
             allResults.push({
                 id: "action-new-load", category: "actions",
@@ -150,7 +150,7 @@ export default function CommandBar() {
             });
         }
 
-        // ── Pages (filter by query) ──
+        // -- Pages (filter by query) --
         const matchedPages = PAGES.filter(
             (p) => p.title.toLowerCase().includes(term) || p.subtitle.toLowerCase().includes(term),
         ).map((p) => ({
@@ -159,7 +159,7 @@ export default function CommandBar() {
         }));
         allResults.push(...matchedPages);
 
-        // ── Search loads ──
+        // -- Search loads --
         try {
             const { data: loads } = await supabase
                 .from("daily_loads")
@@ -174,7 +174,7 @@ export default function CommandBar() {
                     allResults.push({
                         id: `load-${load.id}`,
                         category: "loads",
-                        title: `${load.client_name ?? "Unknown"} — ${load.reference_number ?? "No Ref"}`,
+                        title: `${load.client_name ?? "Unknown"} -- ${load.reference_number ?? "No Ref"}`,
                         subtitle: load.delivery_address ?? load.load_date ?? "",
                         icon: Package,
                         iconColor: "text-violet-500",
@@ -186,7 +186,7 @@ export default function CommandBar() {
             }
         } catch { /* ignore */ }
 
-        // ── Search drivers ──
+        // -- Search drivers --
         try {
             const { data: drivers } = await supabase
                 .from("drivers")
@@ -200,18 +200,18 @@ export default function CommandBar() {
                         id: `driver-${d.id}`,
                         category: "drivers",
                         title: d.full_name,
-                        subtitle: `${d.hub?.charAt(0).toUpperCase()}${d.hub?.slice(1)} Hub · ${d.status}`,
+                        subtitle: `${d.hub?.charAt(0).toUpperCase()}${d.hub?.slice(1)} Hub ? ${d.status}`,
                         icon: Truck,
                         iconColor: "text-emerald-500",
                         action: () => { navigate("/dispatch"); setOpen(false); },
-                        badge: d.status === "active" ? "🟢 Active" : "⚪ Inactive",
+                        badge: d.status === "active" ? "?? Active" : "? Inactive",
                         badgeColor: d.status === "active" ? "bg-green-500/15 text-green-600" : "bg-slate-500/15 text-slate-500",
                     });
                 }
             }
         } catch { /* ignore */ }
 
-        // ── Search contacts/companies ──
+        // -- Search contacts/companies --
         try {
             const { data: contacts } = await supabase
                 .from("contacts")
@@ -225,7 +225,7 @@ export default function CommandBar() {
                         id: `contact-${c.id}`,
                         category: "customers",
                         title: c.name,
-                        subtitle: `${c.company ?? ""} · ${c.email ?? ""}`.trim().replace(/^·\s*/, ""),
+                        subtitle: `${c.company ?? ""} ? ${c.email ?? ""}`.trim().replace(/^?\s*/, ""),
                         icon: Users,
                         iconColor: "text-pink-500",
                         action: () => { navigate("/contacts"); setOpen(false); },
@@ -239,14 +239,14 @@ export default function CommandBar() {
         setSearching(false);
     }, [navigate]);
 
-    // ── Debounced search ──────────────────────
+    // -- Debounced search ----------------------
     useEffect(() => {
         if (!open) return;
         const timeout = setTimeout(() => doSearch(query), 200);
         return () => clearTimeout(timeout);
     }, [query, open, doSearch]);
 
-    // ── Keyboard navigation ───────────────────
+    // -- Keyboard navigation -------------------
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -260,7 +260,7 @@ export default function CommandBar() {
         }
     };
 
-    // ── Category labels ───────────────────────
+    // -- Category labels -----------------------
     const grouped = useMemo(() => {
         const groups: { category: ResultCategory; label: string; items: SearchResult[] }[] = [];
         const catOrder: { key: ResultCategory; label: string }[] = [
@@ -277,7 +277,7 @@ export default function CommandBar() {
         return groups;
     }, [results]);
 
-    // ── Flatten for index tracking ────────────
+    // -- Flatten for index tracking ------------
     const flatResults = useMemo(() => results, [results]);
 
     if (!open) return null;
@@ -394,8 +394,8 @@ export default function CommandBar() {
 
                     {/* Footer */}
                     <div className="px-4 py-2 border-t bg-muted/20 flex items-center gap-4 text-[10px] text-muted-foreground/50">
-                        <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">↑↓</kbd> Navigate</span>
-                        <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">↵</kbd> Select</span>
+                        <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">??</kbd> Navigate</span>
+                        <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">?</kbd> Select</span>
                         <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">ESC</kbd> Close</span>
                         <span className="ml-auto">Ctrl+K to toggle</span>
                     </div>

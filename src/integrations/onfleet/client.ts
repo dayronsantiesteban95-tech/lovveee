@@ -6,18 +6,18 @@
  *   POST { action, ...params }
  *
  * Read operations:
- *   getWorkerLocations() — live GPS positions
- *   getTask(id)          — single task details
- *   getTodayTasks()      — all tasks for today
+ *   getWorkerLocations() -- live GPS positions
+ *   getTask(id)          -- single task details
+ *   getTodayTasks()      -- all tasks for today
  *
  * Write operations:
- *   pushLoadToOnfleet()  — create a task from our load data
- *   updateOnfleetTask()  — update task fields
- *   completeOnfleetTask()— mark task completed with POD
+ *   pushLoadToOnfleet()  -- create a task from our load data
+ *   updateOnfleetTask()  -- update task fields
+ *   completeOnfleetTask()-- mark task completed with POD
  *
  * Sync:
- *   syncTaskToLoad()     — pull an Onfleet task → our daily_loads row
- *   syncAllTasks()       — bulk sync all today's tasks
+ *   syncTaskToLoad()     -- pull an Onfleet task -> our daily_loads row
+ *   syncAllTasks()       -- bulk sync all today's tasks
  */
 import { supabase } from "@/integrations/supabase/client";
 import type {
@@ -26,7 +26,7 @@ import type {
 } from "./types";
 import { mapOnfleetStatus, calcWaitMinutes } from "./types";
 
-// ─── Edge Function Caller ──────────────────────────────
+// --- Edge Function Caller ------------------------------
 
 async function callEdge<T>(action: string, params: Record<string, unknown> = {}): Promise<T> {
     const { data, error } = await supabase.functions.invoke("onfleet-proxy", {
@@ -36,7 +36,7 @@ async function callEdge<T>(action: string, params: Record<string, unknown> = {})
     return data as T;
 }
 
-// ─── Read Operations ───────────────────────────────────
+// --- Read Operations -----------------------------------
 
 /** Get all active workers with their GPS locations */
 export async function getWorkerLocations(): Promise<OnfleetWorker[]> {
@@ -61,7 +61,7 @@ export async function getTodayTasks(): Promise<OnfleetTask[]> {
     });
 }
 
-// ─── Write Operations (Push → Onfleet) ─────────────────
+// --- Write Operations (Push -> Onfleet) -----------------
 
 interface PushLoadPayload {
     pickupAddress: string;
@@ -149,12 +149,12 @@ export async function deleteOnfleetTask(taskId: string): Promise<void> {
     await callEdge("deleteTask", { taskId });
 }
 
-// ─── Sync (Pull → daily_loads) ────────────────────────
+// --- Sync (Pull -> daily_loads) ------------------------
 
-/** Sync a single Onfleet task → daily_loads row */
+/** Sync a single Onfleet task -> daily_loads row */
 export async function syncTaskToLoad(
     task: OnfleetTask,
-    driverMapping: Record<string, string>, // onfleetWorkerId → our driverId
+    driverMapping: Record<string, string>, // onfleetWorkerId -> our driverId
     userId: string,
 ) {
     const ourDriverId = task.worker ? driverMapping[task.worker] ?? null : null;
@@ -163,7 +163,7 @@ export async function syncTaskToLoad(
         ? calcWaitMinutes(task.completionDetails.events)
         : 0;
 
-    // Build upsert payload — keyed by reference_number (the Onfleet shortId)
+    // Build upsert payload -- keyed by reference_number (the Onfleet shortId)
     const payload: Record<string, unknown> = {
         reference_number: task.shortId,
         status,
@@ -180,7 +180,7 @@ export async function syncTaskToLoad(
         const cd = task.completionDetails;
         payload.pod_confirmed = cd.success;
 
-        // meters → miles (1 meter = 0.000621371 miles)
+        // meters -> miles (1 meter = 0.000621371 miles)
         if (cd.distance) {
             payload.miles = Math.round(cd.distance * 0.000621371 * 10) / 10;
         }
@@ -225,7 +225,7 @@ export async function syncAllTasks(
     return { synced, errors };
 }
 
-// ─── GPS Polling ───────────────────────────────────────
+// --- GPS Polling ---------------------------------------
 
 export interface DriverGPS {
     driverId: string;      // our internal driver ID
@@ -240,7 +240,7 @@ export interface DriverGPS {
 
 /** Fetch live GPS for all on-duty workers, mapped to our driver IDs */
 export async function getLiveGPS(
-    driverMapping: Record<string, string>, // onfleetWorkerId → our driverId
+    driverMapping: Record<string, string>, // onfleetWorkerId -> our driverId
 ): Promise<DriverGPS[]> {
     const workers = await getWorkerLocations();
 

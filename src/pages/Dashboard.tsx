@@ -11,7 +11,7 @@ import {
   Radio, Activity,
 } from "lucide-react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------------
 
 interface DailyLoad {
   id: string;
@@ -60,7 +60,7 @@ interface WeekStats {
   topDriver: string | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; badge: string }> = {
   pending:     { label: "Pending",     color: "bg-muted text-muted-foreground",    badge: "secondary" },
@@ -92,10 +92,10 @@ function fmtStatus(s: string): string {
 }
 
 function Pulse() {
-  return <span className="opacity-50 animate-pulse">—</span>;
+  return <span className="opacity-50 animate-pulse">--</span>;
 }
 
-// ─── Skeleton Card ────────────────────────────────────────────────────────────
+// --- Skeleton Card ------------------------------------------------------------
 
 function SkeletonKPI() {
   return (
@@ -108,7 +108,7 @@ function SkeletonKPI() {
   );
 }
 
-// ─── Query functions ──────────────────────────────────────────────────────────
+// --- Query functions ----------------------------------------------------------
 
 async function fetchLoadsData(today: string): Promise<DailyLoad[]> {
   const { data, error } = await supabase
@@ -179,7 +179,7 @@ async function fetchActivityData(): Promise<ActivityEvent[]> {
     created_at: e.created_at,
     new_status: e.new_status,
     driverName: (e.changed_by ? driverNameMap[e.changed_by] : null) ?? "System",
-    loadRef: e.daily_loads?.reference_number ?? e.load_id ?? "—",
+    loadRef: e.daily_loads?.reference_number ?? e.load_id ?? "--",
   }));
 }
 
@@ -231,14 +231,14 @@ function computeKPIs(loads: DailyLoad[]): KPIs {
   return { totalLoads: total, inTransit, delivered, unassigned, onTimePct, revenue };
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+// --- Dashboard ----------------------------------------------------------------
 
 export default function Dashboard() {
   const today = todayISO();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // ── React Query fetches ───────────────────────────────────────────────────
+  // -- React Query fetches ---------------------------------------------------
   const { data: loads = [], isLoading: loadsLoading, error: loadsError } = useQuery({
     queryKey: ["dashboard-loads", today],
     queryFn: () => fetchLoadsData(today),
@@ -281,14 +281,14 @@ export default function Dashboard() {
     }
   }, [loadsError, toast]);
 
-  // ── Computed KPIs from loads ──────────────────────────────────────────────
+  // -- Computed KPIs from loads ----------------------------------------------
   const kpis = computeKPIs(loads);
 
   // Build a driverNames lookup from the drivers query result
   const driverNames: Record<string, string> = {};
   for (const d of drivers) driverNames[d.id] = d.full_name;
 
-  // ── Realtime subscriptions — keep as-is, invalidate React Query cache ─────
+  // -- Realtime subscriptions -- keep as-is, invalidate React Query cache -----
   useEffect(() => {
     // Auto-refresh loads every 60s
     const loadRefreshTimer = setInterval(() => {
@@ -321,7 +321,7 @@ export default function Dashboard() {
     };
   }, [today, queryClient]);
 
-  // ─── KPI card data ────────────────────────────────────────────────────────
+  // --- KPI card data --------------------------------------------------------
   const kpiCards = [
     {
       title: "Today's Loads",
@@ -353,7 +353,7 @@ export default function Dashboard() {
     },
     {
       title: "On-Time %",
-      value: loading ? null : (kpis.onTimePct !== null ? `${kpis.onTimePct}%` : "—"),
+      value: loading ? null : (kpis.onTimePct !== null ? `${kpis.onTimePct}%` : "--"),
       icon: <Percent className="h-4 w-4 text-blue-400" />,
       color: kpis.onTimePct !== null ? (kpis.onTimePct >= 80 ? "text-green-400" : kpis.onTimePct >= 60 ? "text-yellow-400" : "text-red-400") : "text-muted-foreground",
       accent: "border-border/50",
@@ -367,7 +367,7 @@ export default function Dashboard() {
     },
   ];
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // --- Render ---------------------------------------------------------------
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -384,7 +384,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ROW 1 — KPI Cards */}
+      {/* ROW 1 -- KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <SkeletonKPI key={i} />)
@@ -405,7 +405,7 @@ export default function Dashboard() {
             ))}
       </div>
 
-      {/* ROW 2 — Active Loads Table */}
+      {/* ROW 2 -- Active Loads Table */}
       <Card className="border border-border/50">
         <CardHeader className="pb-2 px-5 pt-4">
           <CardTitle className="text-sm font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
@@ -447,18 +447,18 @@ export default function Dashboard() {
                       className={`border-b border-border/20 hover:bg-muted/30 transition-colors ${idx % 2 === 0 ? "" : "bg-muted/[0.03]"}`}
                     >
                       <td className="px-5 py-3 font-mono text-xs text-blue-400">
-                        {load.reference_number ?? "—"}
+                        {load.reference_number ?? "--"}
                       </td>
-                      <td className="px-3 py-3 text-xs max-w-[120px] truncate">{load.client_name ?? "—"}</td>
+                      <td className="px-3 py-3 text-xs max-w-[120px] truncate">{load.client_name ?? "--"}</td>
                       <td className="px-3 py-3 text-xs text-muted-foreground hidden md:table-cell max-w-[200px]">
                         <span className="truncate block">
-                          {load.pickup_address ? load.pickup_address.split(",")[0] : "—"}
-                          <span className="text-muted-foreground/50 mx-1">→</span>
-                          {load.delivery_address ? load.delivery_address.split(",")[0] : "—"}
+                          {load.pickup_address ? load.pickup_address.split(",")[0] : "--"}
+                          <span className="text-muted-foreground/50 mx-1">-></span>
+                          {load.delivery_address ? load.delivery_address.split(",")[0] : "--"}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-xs">
-                        {load.driver_id ? (driverNames[load.driver_id] ?? <span className="text-muted-foreground">Loading…</span>) : (
+                        {load.driver_id ? (driverNames[load.driver_id] ?? <span className="text-muted-foreground">Loading...</span>) : (
                           <span className="text-red-400 font-medium">Unassigned</span>
                         )}
                       </td>
@@ -476,7 +476,7 @@ export default function Dashboard() {
                             {new Date(load.estimated_delivery).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">--</span>
                         )}
                       </td>
                       <td className="px-5 py-3 text-xs text-right font-mono text-green-400">
@@ -491,7 +491,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* ROW 3 — Driver Board + Activity Feed */}
+      {/* ROW 3 -- Driver Board + Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Driver Status Board */}
         <Card className="border border-border/50">
@@ -572,9 +572,9 @@ export default function Dashboard() {
                     </span>
                     <div className="flex-1 min-w-0 text-xs">
                       <span className="font-medium">{ev.driverName}</span>
-                      <span className="text-muted-foreground mx-1">→</span>
+                      <span className="text-muted-foreground mx-1">-></span>
                       <span className="font-mono text-blue-400">{ev.loadRef}</span>
-                      <span className="text-muted-foreground mx-1">→</span>
+                      <span className="text-muted-foreground mx-1">-></span>
                       <span className={
                         ev.new_status === "delivered" ? "text-green-400"
                           : ev.new_status === "in_progress" ? "text-yellow-400"
@@ -592,7 +592,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* ROW 4 — Weekly Quick Stats Bar */}
+      {/* ROW 4 -- Weekly Quick Stats Bar */}
       <Card className="border border-border/50">
         <CardContent className="px-5 py-4">
           <div className="flex flex-wrap gap-x-8 gap-y-4 items-center">
@@ -604,31 +604,31 @@ export default function Dashboard() {
               <div className="space-y-0.5">
                 <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Revenue</div>
                 <div className="font-mono font-bold text-emerald-400 text-base tabular-nums">
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : fmtMoney(weekStats.revenue)}
+                  {weekLoading ? <span className="animate-pulse opacity-50">--</span> : fmtMoney(weekStats.revenue)}
                 </div>
               </div>
               <div className="space-y-0.5">
                 <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Loads</div>
                 <div className="font-bold text-base tabular-nums">
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : weekStats.loads}
+                  {weekLoading ? <span className="animate-pulse opacity-50">--</span> : weekStats.loads}
                 </div>
               </div>
               <div className="space-y-0.5">
                 <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Avg On-Time</div>
                 <div className={`font-bold text-base tabular-nums ${weekStats.onTimePct !== null ? (weekStats.onTimePct >= 80 ? "text-green-400" : weekStats.onTimePct >= 60 ? "text-yellow-400" : "text-red-400") : "text-muted-foreground"}`}>
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.onTimePct !== null ? `${weekStats.onTimePct}%` : "—")}
+                  {weekLoading ? <span className="animate-pulse opacity-50">--</span> : (weekStats.onTimePct !== null ? `${weekStats.onTimePct}%` : "--")}
                 </div>
               </div>
               <div className="space-y-0.5">
                 <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Top Client</div>
                 <div className="font-semibold truncate max-w-[140px]">
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topClient ?? <span className="text-muted-foreground font-normal">No data</span>)}
+                  {weekLoading ? <span className="animate-pulse opacity-50">--</span> : (weekStats.topClient ?? <span className="text-muted-foreground font-normal">No data</span>)}
                 </div>
               </div>
               <div className="space-y-0.5">
                 <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Top Driver</div>
                 <div className="font-semibold truncate max-w-[140px]">
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topDriver ?? <span className="text-muted-foreground font-normal">No data</span>)}
+                  {weekLoading ? <span className="animate-pulse opacity-50">--</span> : (weekStats.topDriver ?? <span className="text-muted-foreground font-normal">No data</span>)}
                 </div>
               </div>
             </div>

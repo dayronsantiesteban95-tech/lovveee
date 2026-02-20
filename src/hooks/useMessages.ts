@@ -88,7 +88,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
   return { messages, loading, sendMessage, markAsRead };
 }
 
-// ─── Unread count hook ────────────────────────────────────────────────────────
+// --- Unread count hook --------------------------------------------------------
 export function useUnreadMessageCounts(userId: string | null) {
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
 

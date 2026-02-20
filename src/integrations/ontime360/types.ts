@@ -1,4 +1,4 @@
-// ─── OnTime 360 API Types ──────────────────────────────
+// --- OnTime 360 API Types ------------------------------
 // See: https://ontime360.com/developer
 
 export interface OT360Location {
@@ -70,7 +70,7 @@ export interface OT360GpsPosition {
     heading?: number;  // degrees
 }
 
-// ─── Mapping helpers ───────────────────────────────────
+// --- Mapping helpers -----------------------------------
 
 /** Maps OT360 order status to our load status */
 export function mapOT360Status(status: OT360OrderStatus): string {

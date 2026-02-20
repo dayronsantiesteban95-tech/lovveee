@@ -8,7 +8,7 @@ import {
     Plug, PlugZap, Settings2,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 type SyncSource = "onfleet" | "ontime360";
 
@@ -28,7 +28,7 @@ interface IntegrationSyncPanelProps {
     onOpenSettings?: () => void;
 }
 
-// ─── Component ─────────────────────────────────────────
+// --- Component -----------------------------------------
 
 export default function IntegrationSyncPanel({
     onSyncOnfleet,
@@ -62,13 +62,13 @@ export default function IntegrationSyncPanel({
 
                 if (result.errors.length > 0) {
                     toast({
-                        title: `⚠️ Synced with warnings`,
+                        title: `?? Synced with warnings`,
                         description: `${result.synced} loads synced, ${result.errors.length} errors from ${source}.`,
                         variant: "destructive",
                     });
                 } else {
                     toast({
-                        title: `✅ Sync complete`,
+                        title: `? Sync complete`,
                         description: `${result.synced} loads synced from ${source === "onfleet" ? "Onfleet" : "OnTime 360"}.`,
                     });
                 }
@@ -183,7 +183,7 @@ export default function IntegrationSyncPanel({
                             <strong>{results.synced}</strong> loads synced from{" "}
                             <strong>{results.source === "onfleet" ? "Onfleet" : "OnTime 360"}</strong>
                             {results.errors.length > 0 && (
-                                <span className="text-yellow-600"> · {results.errors.length} errors</span>
+                                <span className="text-yellow-600"> ? {results.errors.length} errors</span>
                             )}
                         </span>
                         <span className="ml-auto text-muted-foreground flex items-center gap-1">

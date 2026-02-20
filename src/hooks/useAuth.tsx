@@ -9,7 +9,7 @@ export function useAuth() {
 
   useEffect(() => {
     // onAuthStateChange fires immediately with the current session on subscription,
-    // so getSession() is redundant and creates a race condition — removed.
+    // so getSession() is redundant and creates a race condition -- removed.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         const currentUser = session?.user ?? null;

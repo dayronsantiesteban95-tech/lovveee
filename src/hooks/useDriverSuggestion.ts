@@ -1,5 +1,5 @@
 /**
- * useDriverSuggestion v2 — Auto-Dispatch Suggestion Hook
+ * useDriverSuggestion v2 -- Auto-Dispatch Suggestion Hook
  *
  * Calls get_driver_suggestion RPC with pickup coords + optional cutoff_time.
  * Returns top-scored driver suggestion (ETA-aware, cutoff-enforced) or null.
@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 export interface DriverSuggestion {
   driver_id: string;
@@ -37,7 +37,7 @@ interface UseDriverSuggestionResult {
   error: string | null;
 }
 
-// ─── RPC param shape ──────────────────────────────────────────────────────────
+// --- RPC param shape ----------------------------------------------------------
 
 interface GetDriverSuggestionParams {
   p_load_id: string;
@@ -46,7 +46,7 @@ interface GetDriverSuggestionParams {
   p_cutoff_time?: string | null;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+// --- Hook ---------------------------------------------------------------------
 
 export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSuggestionResult {
   const [suggestion, setSuggestion] = useState<DriverSuggestion | null>(null);
@@ -73,7 +73,7 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
       setLoading(true);
       setError(null);
 
-      // Use type assertion — RPC not yet in generated types
+      // Use type assertion -- RPC not yet in generated types
       const client = supabase as unknown as {
         rpc: (
           fn: string,
@@ -93,7 +93,7 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
       if (cancelled) return;
 
       if (rpcError) {
-        // Gracefully degrade — don't surface error state to dispatcher
+        // Gracefully degrade -- don't surface error state to dispatcher
         setSuggestion(null);
         setError(null);
         setLoading(false);

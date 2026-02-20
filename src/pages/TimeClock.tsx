@@ -1,7 +1,7 @@
 /**
- * TimeClock.tsx — Anika Control OS | Phase 8
- * Driver Time Clock — Clock in/out, breaks, payroll summary
- * Created by Jarvis — Feb 19, 2026 (overnight)
+ * TimeClock.tsx -- Anika Control OS | Phase 8
+ * Driver Time Clock -- Clock in/out, breaks, payroll summary
+ * Created by Jarvis -- Feb 19, 2026 (overnight)
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -31,7 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
-// ─── Types ───────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------
 
 interface Driver {
   id: string;
@@ -86,7 +86,7 @@ interface PayrollRow {
   total_pay: number;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", {
@@ -107,12 +107,12 @@ function fmtElapsed(minutes: number): string {
 }
 
 function fmtHours(h: number | null): string {
-  if (h == null) return "—";
+  if (h == null) return "--";
   return `${h.toFixed(2)}h`;
 }
 
 function fmtPay(pay: number | null): string {
-  if (pay == null) return "—";
+  if (pay == null) return "--";
   return new Intl.NumberFormat("en-US", {
     style: "currency", currency: "USD",
   }).format(pay);
@@ -121,7 +121,7 @@ function fmtPay(pay: number | null): string {
 const HUB_OPTIONS = ["PHX", "ATL", "LA"];
 const SHIFT_OPTIONS = ["day", "night", "weekend"];
 
-// ─── Sub-components ───────────────────────────────────────────────
+// --- Sub-components -----------------------------------------------
 
 interface ActiveCardProps {
   clock: ActiveClock;
@@ -211,7 +211,7 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------
 
 export default function TimeClock() {
   const { toast } = useToast();
@@ -246,7 +246,7 @@ export default function TimeClock() {
   const [breakType, setBreakType] = useState<"break" | "lunch">("break");
   const [breakLoading, setBreakLoading] = useState(false);
 
-  // ─── Data fetching ──────────────────────────────────────────────
+  // --- Data fetching ----------------------------------------------
 
   const fetchAll = useCallback(async () => {
     try {
@@ -264,7 +264,7 @@ export default function TimeClock() {
       if (activeRes.data) setActiveClocks(activeRes.data as ActiveClock[]);
       if (entriesRes.data) setRecentEntries(entriesRes.data as TimeEntry[]);
     } catch {
-      // Silent failure — will show empty state
+      // Silent failure -- will show empty state
     } finally {
       setLoading(false);
     }
@@ -284,7 +284,7 @@ export default function TimeClock() {
     fetchPayroll();
   };
 
-  // ─── Clock-in action ───────────────────────────────────────────
+  // --- Clock-in action -------------------------------------------
 
   const handleClockIn = async () => {
     if (!selectedDriver) return;
@@ -299,7 +299,7 @@ export default function TimeClock() {
       if (error) throw error;
 
       const driverName = drivers.find(d => d.id === selectedDriver)?.full_name ?? "Driver";
-      toast({ title: "Clocked In ✓", description: `${driverName} is now on shift.` });
+      toast({ title: "Clocked In v", description: `${driverName} is now on shift.` });
       setClockInOpen(false);
       setSelectedDriver("");
       setClockInNotes("");
@@ -312,7 +312,7 @@ export default function TimeClock() {
     }
   };
 
-  // ─── Clock-out action ──────────────────────────────────────────
+  // --- Clock-out action ------------------------------------------
 
   const openClockOut = (entryId: string, driverName: string) => {
     setClockOutEntry({ id: entryId, name: driverName });
@@ -346,7 +346,7 @@ export default function TimeClock() {
     setClockOutResult(null);
   };
 
-  // ─── Break actions ─────────────────────────────────────────────
+  // --- Break actions ---------------------------------------------
 
   const openStartBreak = (entryId: string, driverId: string, name: string) => {
     setBreakTarget({ entryId, driverId, name });
@@ -387,7 +387,7 @@ export default function TimeClock() {
     }
   };
 
-  // ─── Derived stats ─────────────────────────────────────────────
+  // --- Derived stats ---------------------------------------------
 
   const totalOnShift = activeClocks.length;
   const onBreakCount = activeClocks.filter(c => c.on_break).length;
@@ -403,11 +403,11 @@ export default function TimeClock() {
   const activeDriverIds = new Set(activeClocks.map(c => c.driver_id));
   const availableDrivers = drivers.filter(d => !activeDriverIds.has(d.id) && d.status !== "inactive");
 
-  // ─── Render ────────────────────────────────────────────────────
+  // --- Render ----------------------------------------------------
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -430,34 +430,34 @@ export default function TimeClock() {
         </div>
       </div>
 
-      {/* ── Summary KPIs ── */}
+      {/* -- Summary KPIs -- */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
             icon: <Users className="h-5 w-5 text-emerald-400" />,
             label: "On Shift",
-            value: loading ? "—" : `${totalOnShift}`,
+            value: loading ? "--" : `${totalOnShift}`,
             sub: `${onBreakCount} on break`,
             color: "text-emerald-400",
           },
           {
             icon: <Coffee className="h-5 w-5 text-amber-400" />,
             label: "On Break",
-            value: loading ? "—" : `${onBreakCount}`,
+            value: loading ? "--" : `${onBreakCount}`,
             sub: `of ${totalOnShift} drivers`,
             color: "text-amber-400",
           },
           {
             icon: <DollarSign className="h-5 w-5 text-accent" />,
             label: "Est. Live Pay",
-            value: loading ? "—" : fmtPay(totalEstPay),
+            value: loading ? "--" : fmtPay(totalEstPay),
             sub: "all active drivers",
             color: "text-accent",
           },
           {
             icon: <BarChart3 className="h-5 w-5 text-blue-400" />,
             label: "Today Payroll",
-            value: loading ? "—" : fmtPay(todayTotalPay),
+            value: loading ? "--" : fmtPay(todayTotalPay),
             sub: `${todayEntries.filter(e => e.clock_out).length} completed shifts`,
             color: "text-blue-400",
           },
@@ -475,7 +475,7 @@ export default function TimeClock() {
         ))}
       </div>
 
-      {/* ── Main Content ── */}
+      {/* -- Main Content -- */}
       <Tabs defaultValue="live" className="space-y-4">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="live" className="gap-2">
@@ -489,7 +489,7 @@ export default function TimeClock() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Live Clocks Tab ── */}
+        {/* -- Live Clocks Tab -- */}
         <TabsContent value="live" className="space-y-4">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -527,7 +527,7 @@ export default function TimeClock() {
           )}
         </TabsContent>
 
-        {/* ── History Tab ── */}
+        {/* -- History Tab -- */}
         <TabsContent value="history">
           <Card className="glass-panel border-0">
             <CardHeader className="pb-3">
@@ -558,7 +558,7 @@ export default function TimeClock() {
                     {recentEntries.map(entry => (
                       <TableRow key={entry.id} className="border-border/20 hover:bg-muted/20">
                         <TableCell className="font-medium text-sm">
-                          {(entry.drivers as { full_name: string } | undefined)?.full_name ?? "—"}
+                          {(entry.drivers as { full_name: string } | undefined)?.full_name ?? "--"}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {fmtDate(entry.work_date)}
@@ -576,15 +576,15 @@ export default function TimeClock() {
                         <TableCell className="text-xs">
                           {entry.overtime_hours && entry.overtime_hours > 0 ? (
                             <span className="text-amber-400 font-semibold">{fmtHours(entry.overtime_hours)}</span>
-                          ) : "—"}
+                          ) : "--"}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {entry.break_minutes ? `${entry.break_minutes}m` : "—"}
+                          {entry.break_minutes ? `${entry.break_minutes}m` : "--"}
                         </TableCell>
                         <TableCell className="text-right text-sm font-semibold">
                           {entry.total_pay != null ? (
                             <span className="text-emerald-400">{fmtPay(entry.total_pay)}</span>
-                          ) : "—"}
+                          ) : "--"}
                         </TableCell>
                         <TableCell>
                           {entry.clock_out ? (
@@ -609,7 +609,7 @@ export default function TimeClock() {
           </Card>
         </TabsContent>
 
-        {/* ── Payroll Tab ── */}
+        {/* -- Payroll Tab -- */}
         <TabsContent value="payroll">
           <Card className="glass-panel border-0">
             <CardHeader className="pb-3">
@@ -644,7 +644,7 @@ export default function TimeClock() {
                       <TableCell className="text-xs">
                         {row.total_overtime_hours > 0 ? (
                           <span className="text-amber-400 font-semibold">{fmtHours(row.total_overtime_hours)}</span>
-                        ) : "—"}
+                        ) : "--"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         ${row.hourly_rate}/hr
@@ -657,7 +657,7 @@ export default function TimeClock() {
                   {payrollRows.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        No payroll data yet — complete some shifts first
+                        No payroll data yet -- complete some shifts first
                       </TableCell>
                     </TableRow>
                   )}
@@ -668,11 +668,11 @@ export default function TimeClock() {
         </TabsContent>
       </Tabs>
 
-      {/* ════════════════════════════════════════
+      {/* ----------------------------------------
           DIALOGS
-      ════════════════════════════════════════ */}
+      ---------------------------------------- */}
 
-      {/* ── Clock In Dialog ── */}
+      {/* -- Clock In Dialog -- */}
       <Dialog open={clockInOpen} onOpenChange={setClockInOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -754,18 +754,18 @@ export default function TimeClock() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Clock Out Dialog ── */}
+      {/* -- Clock Out Dialog -- */}
       <Dialog open={clockOutOpen} onOpenChange={open => { if (!open) closeClockOut(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <LogOut className="h-5 w-5 text-red-400" />
-              Clock Out — {clockOutEntry?.name}
+              Clock Out -- {clockOutEntry?.name}
             </DialogTitle>
           </DialogHeader>
 
           {clockOutResult ? (
-            /* ─ Summary screen ─ */
+            /* - Summary screen - */
             <div className="space-y-4 py-2">
               <div className="bg-muted/30 rounded-xl p-5 space-y-3">
                 <p className="text-sm font-semibold text-center text-foreground">Shift Summary</p>
@@ -792,7 +792,7 @@ export default function TimeClock() {
               <Button className="w-full" onClick={closeClockOut}>Done</Button>
             </div>
           ) : (
-            /* ─ Confirmation screen ─ */
+            /* - Confirmation screen - */
             <div className="space-y-4 py-2">
               <p className="text-sm text-muted-foreground">
                 Clocking out <strong>{clockOutEntry?.name}</strong>. Their hours and pay will be calculated automatically.
@@ -826,13 +826,13 @@ export default function TimeClock() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Break Dialog ── */}
+      {/* -- Break Dialog -- */}
       <Dialog open={breakDialogOpen} onOpenChange={setBreakDialogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Coffee className="h-5 w-5 text-amber-400" />
-              Start Break — {breakTarget?.name}
+              Start Break -- {breakTarget?.name}
             </DialogTitle>
             <DialogDescription>Break time will be tracked and deducted from payroll.</DialogDescription>
           </DialogHeader>

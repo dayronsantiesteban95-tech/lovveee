@@ -1,5 +1,5 @@
 /**
- * sentry.ts — Anika Dispatcher: Scoped error capture helpers
+ * sentry.ts -- Anika Dispatcher: Scoped error capture helpers
  *
  * Usage:
  *   import { captureLoadError, captureBillingError, captureQBError } from '@/lib/sentry';
@@ -11,7 +11,7 @@
 
 import * as Sentry from "@sentry/react";
 
-// ─── Loads ────────────────────────────────────────────────────────────────────
+// --- Loads --------------------------------------------------------------------
 
 /**
  * Capture an error that occurred while processing a load / shipment.
@@ -32,7 +32,7 @@ export function captureLoadError(
   });
 }
 
-// ─── Billing ──────────────────────────────────────────────────────────────────
+// --- Billing ------------------------------------------------------------------
 
 /**
  * Capture a billing / invoice error.
@@ -48,7 +48,7 @@ export function captureBillingError(invoiceId: string, error: unknown): void {
   });
 }
 
-// ─── QuickBooks ───────────────────────────────────────────────────────────────
+// --- QuickBooks ---------------------------------------------------------------
 
 /**
  * Capture a QuickBooks API / OAuth error.
@@ -64,7 +64,7 @@ export function captureQBError(operation: string, error: unknown): void {
   });
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
+// --- Auth ---------------------------------------------------------------------
 
 /**
  * Capture an authentication error (login, session refresh, etc.).
@@ -80,7 +80,7 @@ export function captureAuthError(action: string, error: unknown): void {
   });
 }
 
-// ─── Driver / Fleet ───────────────────────────────────────────────────────────
+// --- Driver / Fleet -----------------------------------------------------------
 
 /**
  * Capture an error related to fleet tracking or driver operations.
@@ -101,7 +101,7 @@ export function captureFleetError(
   });
 }
 
-// ─── Generic scoped capture ───────────────────────────────────────────────────
+// --- Generic scoped capture ---------------------------------------------------
 
 /**
  * Generic scoped error capture for features not covered by the helpers above.
@@ -122,7 +122,7 @@ export function captureScopedError(
   });
 }
 
-// ─── Performance helpers ──────────────────────────────────────────────────────
+// --- Performance helpers ------------------------------------------------------
 
 /**
  * Wrap an async operation in a Sentry performance span.

@@ -1,4 +1,4 @@
-// Dispatch Tracker — orchestrates tabs: Load Board, Live Ops, Wait Time, Daily Report
+// Dispatch Tracker -- orchestrates tabs: Load Board, Live Ops, Wait Time, Daily Report
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,17 +44,17 @@ const WAIT_COLORS = [
 ];
 const DETENTION_THRESHOLD = 30;
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function DispatchTracker() {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    // ════════════════════Date range ────────────────
+    // --------------------Date range ----------------
     const [selectedDate, setSelectedDate] = useState(todayISO());
     const [dateRangeStart, setDateRangeStart] = useState(daysAgoISO(7));
     const [dateRangeEnd, setDateRangeEnd] = useState(todayISO());
 
-    // ════════════════════Data hook ─────────────────
+    // --------------------Data hook -----------------
     const {
         loads,
         loadsLoading,
@@ -70,13 +70,13 @@ export default function DispatchTracker() {
 
     const loading = loadsLoading;
 
-    // ════════════════════Live GPS ══════════════════
+    // --------------------Live GPS ------------------
     const { drivers: liveDrivers, loading: liveDriversLoading, connected: liveDriversConnected, refresh: refreshLiveDrivers } = useRealtimeDriverMap();
 
-    // ════════════════════Load Board Filters ════════
+    // --------------------Load Board Filters --------
     const [loadFilters, setLoadFilters] = useState<LoadFilters>(EMPTY_LOAD_FILTERS);
 
-    // ════════════════════Dialogs / Detail ═════════
+    // --------------------Dialogs / Detail ---------
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editLoad, setEditLoad] = useState<Load | null>(null);
     const [newLoadOpen, setNewLoadOpen] = useState(false);
@@ -84,15 +84,15 @@ export default function DispatchTracker() {
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [selectedLoadDetail, setSelectedLoadDetail] = useState<Load | null>(null);
 
-    // ════════════════════Auto-refresh counters ═════
+    // --------------------Auto-refresh counters -----
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [secondsAgo, setSecondsAgo] = useState(0);
 
-    // ════════════════════Status action hook ════════
+    // --------------------Status action hook --------
     const { updateStatus } = useLoadStatusActions();
     const db = supabase;
 
-    // ════════════════════Realtime: geofence arrival toasts ════════
+    // --------------------Realtime: geofence arrival toasts --------
     useEffect(() => {
         if (!user) return;
 
@@ -115,21 +115,21 @@ export default function DispatchTracker() {
                         .eq("id", evt.load_id)
                         .single();
 
-                    const refNumber = loadData?.reference_number ?? "—";
+                    const refNumber = loadData?.reference_number ?? "--";
                     const driverRecord = drivers.find(d => d.id === loadData?.driver_id);
                     const driverName = driverRecord?.full_name ?? "Driver";
                     const eventLabel = evt.new_status === "arrived_pickup" ? "pickup" : "delivery";
 
                     toast({
-                        title: "📍 Driver Arrived",
-                        description: `${driverName} arrived at ${eventLabel} — Ref #${refNumber}`,
+                        title: "?? Driver Arrived",
+                        description: `${driverName} arrived at ${eventLabel} -- Ref #${refNumber}`,
                     });
 
                     if (loadData?.driver_id) {
                         sendPushToDrivers(
                             [loadData.driver_id],
-                            '📍 Arrival Confirmed',
-                            `Dispatch has been notified of your arrival at ${eventLabel} — Ref #${refNumber}`,
+                            '?? Arrival Confirmed',
+                            `Dispatch has been notified of your arrival at ${eventLabel} -- Ref #${refNumber}`,
                             { load_id: evt.load_id, type: 'arrival_confirmation', event: evt.new_status }
                         ).catch((err: unknown) => {
                             console.warn('[DispatchTracker] Arrival push failed:', err);
@@ -159,7 +159,7 @@ export default function DispatchTracker() {
         };
     }, [user, drivers, refetchLoads, toast]);
 
-    // ════════════════════Keep lastRefreshed in sync ════════════════
+    // --------------------Keep lastRefreshed in sync ----------------
     useEffect(() => {
         if (loadsUpdatedAt) {
             setLastRefreshed(new Date(loadsUpdatedAt));
@@ -174,7 +174,7 @@ export default function DispatchTracker() {
         return () => clearInterval(ticker);
     }, [lastRefreshed]);
 
-    // ════════════════════CRUD =================================
+    // --------------------CRUD =================================
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -254,12 +254,12 @@ export default function DispatchTracker() {
         });
     };
 
-    // ════════════════════Lookups ══════════════════
-    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "—";
-    const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "—";
-    const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "—";
+    // --------------------Lookups ------------------
+    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "--";
+    const vehicleName = (id: string | null) => vehicles.find((v) => v.id === id)?.vehicle_name ?? "--";
+    const dispatcherName = (id: string | null) => profiles.find((p) => p.user_id === id)?.full_name ?? "--";
 
-    // ════════════════════Computed / Analytics ═════
+    // --------------------Computed / Analytics -----
     const todayLoads = useMemo(() => loads.filter((l) => l.load_date === todayISO()), [loads]);
     const todayStats = useMemo(() => ({
         count: todayLoads.length,
@@ -348,7 +348,7 @@ export default function DispatchTracker() {
         return { avgAll, detentionEligible, detentionBilled, clientWait, driverWait };
     }, [loads, drivers]);
 
-    // ════════════════════Skeleton ═════════════════
+    // --------------------Skeleton -----------------
     if (loading) return (
         <div className="space-y-4 animate-in">
             <Skeleton className="h-8 w-64" />
@@ -357,9 +357,9 @@ export default function DispatchTracker() {
         </div>
     );
 
-    // ═══════════════════════════════════════════
+    // -------------------------------------------
     // RENDER
-    // ═══════════════════════════════════════════
+    // -------------------------------------------
     return (
         <div className="space-y-6 animate-in">
             {/* Header */}
@@ -408,7 +408,7 @@ export default function DispatchTracker() {
                 <Button variant="outline" size="sm" onClick={refetchLoads}>Refresh</Button>
             </div>
 
-            {/* ═══ TABS ═══ */}
+            {/* --- TABS --- */}
             <Tabs defaultValue="board" className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="board" className="gap-1.5"><Package className="h-3.5 w-3.5" /> Load Board</TabsTrigger>
@@ -427,7 +427,7 @@ export default function DispatchTracker() {
                         boardLoads={boardLoads}
                         drivers={drivers}
                         onRefetchLoads={refetchLoads}
-                        onSettingsClick={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management → Integrations." })}
+                        onSettingsClick={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management -> Integrations." })}
                     />
                 </TabsContent>
 
@@ -468,7 +468,7 @@ export default function DispatchTracker() {
                 </TabsContent>
             </Tabs>
 
-            {/* ═══ NEW LOAD DIALOG (multi-step) ═══ */}
+            {/* --- NEW LOAD DIALOG (multi-step) --- */}
             <NewLoadForm
                 open={newLoadOpen}
                 onClose={() => setNewLoadOpen(false)}
@@ -479,7 +479,7 @@ export default function DispatchTracker() {
                 recentAddresses={recentAddresses}
             />
 
-            {/* ═══ EDIT LOAD DIALOG ═══ */}
+            {/* --- EDIT LOAD DIALOG --- */}
             {editLoad && (
                 <EditLoadDialog
                     open={dialogOpen}
@@ -510,7 +510,7 @@ export default function DispatchTracker() {
                     service_type: blastDialogLoad.service_type ?? "",
                 } : null}
                 onBlastSent={(_blastId, driverCount) => {
-                    toast({ title: `📡 Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
+                    toast({ title: `?? Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
                     refetchLoads();
                     setBlastDialogLoad(null);
                 }}
@@ -534,7 +534,7 @@ export default function DispatchTracker() {
 
             {/* Load Detail Slide-Over */}
             {selectedLoadDetail && (
-                <Suspense fallback={<div className="fixed inset-y-0 right-0 w-[520px] bg-background border-l border-border/50 flex items-center justify-center"><span className="text-muted-foreground text-sm animate-pulse">Loading…</span></div>}>
+                <Suspense fallback={<div className="fixed inset-y-0 right-0 w-[520px] bg-background border-l border-border/50 flex items-center justify-center"><span className="text-muted-foreground text-sm animate-pulse">Loading...</span></div>}>
                     <LoadDetailPanel
                         load={selectedLoadDetail as LoadDetail}
                         driverName={driverName(selectedLoadDetail.driver_id)}

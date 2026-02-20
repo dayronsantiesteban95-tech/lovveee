@@ -1,17 +1,17 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * LoadDetailPanel — Premium slide-over for load inspection
+ * -----------------------------------------------------------
+ * LoadDetailPanel -- Premium slide-over for load inspection
  *
  * Shows all OnTime-parity fields organized in sections:
- *   • Header (status, ref#, service type)
- *   • Shipper / Client details
- *   • Addresses + company names
- *   • Timing (collection, delivery windows, ETA)
- *   • Package / cargo details
- *   • Financials
- *   • Route data
- *   • Comments / notes
- * ═══════════════════════════════════════════════════════════
+ *   * Header (status, ref#, service type)
+ *   * Shipper / Client details
+ *   * Addresses + company names
+ *   * Timing (collection, delivery windows, ETA)
+ *   * Package / cargo details
+ *   * Financials
+ *   * Route data
+ *   * Comments / notes
+ * -----------------------------------------------------------
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +38,7 @@ import ETASection from "@/components/ETASection";
 import { fmtMoney, fmtWait } from "@/lib/formatters";
 import DriverSuggestionBadge from "@/components/dispatch/DriverSuggestionBadge";
 
-// ─── Types ──────────────────────────────────────────
+// --- Types ------------------------------------------
 export interface LoadDetail {
     id: string;
     load_date: string;
@@ -109,7 +109,7 @@ interface LoadDetailPanelProps {
     onRefresh: () => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────
+// --- Helpers -----------------------------------------
 
 const STATUSES = [
     { value: "pending", label: "Pending", color: "bg-gray-500" },
@@ -140,28 +140,28 @@ function EtaBadge({ status }: { status: string | null | undefined }) {
 }
 
 function fmtTimestamp(ts: string | null | undefined): string {
-    if (!ts) return "—";
+    if (!ts) return "--";
     try {
         return new Date(ts).toLocaleString("en-US", {
             month: "short", day: "numeric",
             hour: "numeric", minute: "2-digit",
         });
-    } catch { return "—"; }
+    } catch { return "--"; }
 }
 
 function fmtDuration(seconds: number | null | undefined): string {
-    if (!seconds) return "—";
+    if (!seconds) return "--";
     const h = Math.floor(seconds / 3600);
     const m = Math.round((seconds % 3600) / 60);
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 function fmtDistance(meters: number | null | undefined): string {
-    if (!meters) return "—";
+    if (!meters) return "--";
     return `${(meters / 1609.34).toFixed(1)} mi`;
 }
 
-// ─── Section helper ──────────────────────────────────
+// --- Section helper ----------------------------------
 
 function Section({ title, icon: Icon, children, accentColor = "bg-primary" }: {
     title: string;
@@ -192,12 +192,12 @@ function Field({ label, value, mono = false, className = "" }: {
     return (
         <div className={`flex items-start justify-between gap-4 py-1 ${className}`}>
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">{label}</span>
-            <span className={`text-[11px] text-foreground text-right ${mono ? "text-data" : ""}`}>{value || "—"}</span>
+            <span className={`text-[11px] text-foreground text-right ${mono ? "text-data" : ""}`}>{value || "--"}</span>
         </div>
     );
 }
 
-// ─── Chat Panel ─────────────────────────────────────────────────────────────
+// --- Chat Panel -------------------------------------------------------------
 
 interface ChatPanelProps {
     loadId: string;
@@ -293,7 +293,7 @@ function ChatPanel({ loadId, dispatcherName, userId, unreadCount }: ChatPanelPro
                                         </span>
                                         {isOwn && (
                                             <span className={`text-[10px] ${isRead ? "text-cyan-400" : "text-primary-foreground/50"}`}>
-                                                {isRead ? "✓✓" : "✓"}
+                                                {isRead ? "vv" : "v"}
                                             </span>
                                         )}
                                     </div>
@@ -333,9 +333,9 @@ function ChatPanel({ loadId, dispatcherName, userId, unreadCount }: ChatPanelPro
     );
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 export default function LoadDetailPanel({
     load,
@@ -391,7 +391,7 @@ export default function LoadDetailPanel({
             },
             driverName,
         );
-        toast({ title: "📄 Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+        toast({ title: "?? Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
     };
 
     const copyRef = () => {
@@ -440,7 +440,7 @@ export default function LoadDetailPanel({
                 .eq('id', load.id);
             if (dbError) throw dbError;
             setBolUrl(publicUrl);
-            toast({ title: "✅ BOL uploaded", description: "Driver can now download it from their app" });
+            toast({ title: "? BOL uploaded", description: "Driver can now download it from their app" });
             onRefresh();
         } catch (err: any) {
             toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -475,7 +475,7 @@ export default function LoadDetailPanel({
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* ────── Header ────── */}
+                {/* ------ Header ------ */}
                 <div className="sticky top-0 z-10 p-4 space-y-3"
                     style={{
                         background: "hsl(var(--cos-glass-bg))",
@@ -526,13 +526,13 @@ export default function LoadDetailPanel({
 
                         {load.pod_confirmed && (
                             <Badge className="bg-emerald-500/15 text-emerald-500 border-0 text-[10px]">
-                                POD ✓
+                                POD v
                             </Badge>
                         )}
 
                         {load.detention_eligible && (
                             <Badge className="bg-orange-500/15 text-orange-500 border-0 text-[10px]">
-                                ⚠ Detention
+                                ? Detention
                             </Badge>
                         )}
                     </div>
@@ -558,7 +558,7 @@ export default function LoadDetailPanel({
                             onClick={() => {
                                 const trackingUrl = `${window.location.origin}/track/${load.tracking_token || load.reference_number}`;
                                 navigator.clipboard.writeText(trackingUrl);
-                                toast({ title: "🔗 Link copied!", description: "Share with your client" });
+                                toast({ title: "?? Link copied!", description: "Share with your client" });
                             }}
                         >
                             <Link className="h-3 w-3" /> Share Tracking Link
@@ -595,7 +595,7 @@ export default function LoadDetailPanel({
                     </div>
                 </div>
 
-                {/* ────── Messages Tab ────── */}
+                {/* ------ Messages Tab ------ */}
                 {activeTab === 'messages' && user && (
                     <ChatPanel
                         loadId={load.id}
@@ -605,7 +605,7 @@ export default function LoadDetailPanel({
                     />
                 )}
 
-                {/* ────── Details Tab ────── */}
+                {/* ------ Details Tab ------ */}
                 {activeTab === 'details' && <div className="p-4 space-y-5">
                     {/* Shipper / Client */}
                     <Section title="Client & Shipper" icon={Building2} accentColor="bg-blue-500">
@@ -651,15 +651,15 @@ export default function LoadDetailPanel({
                             </span>
                         } />
                         <div className="h-px bg-border/20 my-1" />
-                        <Field label="Start Time" value={load.start_time || "—"} mono />
-                        <Field label="End Time" value={load.end_time || "—"} mono />
+                        <Field label="Start Time" value={load.start_time || "--"} mono />
+                        <Field label="End Time" value={load.end_time || "--"} mono />
                         <Field label="Wait Time" value={
                             load.wait_time_minutes > 0 ? (
                                 <span className={load.wait_time_minutes >= 30 ? "text-red-400 font-semibold" : load.wait_time_minutes >= 15 ? "text-amber-400" : "text-green-400"}>
                                     {fmtWait(load.wait_time_minutes)}
-                                    {load.wait_time_minutes >= 30 && " ⚠"}
+                                    {load.wait_time_minutes >= 30 && " ?"}
                                 </span>
-                            ) : "—"
+                            ) : "--"
                         } />
                     </Section>
 
@@ -679,7 +679,7 @@ export default function LoadDetailPanel({
                         <Field label="Outbound Tracking" value={load.outbound_tracking} mono />
                     </Section>
 
-                    {/* Documents — BOL Upload */}
+                    {/* Documents -- BOL Upload */}
                     <Section title="Documents" icon={FolderOpen} accentColor="bg-orange-500">
                         <div className="space-y-2">
                             {/* BOL */}
@@ -716,7 +716,7 @@ export default function LoadDetailPanel({
                                         onClick={() => bolInputRef.current?.click()}
                                     >
                                         {bolUploading ? (
-                                            <span className="animate-pulse">Uploading…</span>
+                                            <span className="animate-pulse">Uploading...</span>
                                         ) : (
                                             <>
                                                 <Upload className="h-3 w-3" />
@@ -729,7 +729,7 @@ export default function LoadDetailPanel({
                         </div>
                     </Section>
 
-                    {/* Auto-Dispatch Suggestion — only when no driver assigned and GPS coords available */}
+                    {/* Auto-Dispatch Suggestion -- only when no driver assigned and GPS coords available */}
                     {!load.driver_id && load.pickup_lat != null && load.pickup_lng != null && (
                         <DriverSuggestionBadge
                             load={{
@@ -749,7 +749,7 @@ export default function LoadDetailPanel({
                         <Field label="Vehicle" value={vehicleName} />
                         <Field label="Dispatcher" value={dispatcherName} />
                         <Field label="Hub" value={load.hub?.replace(/_/g, " ")} />
-                        <Field label="Shift" value={load.shift === "day" ? "☀️ Day" : "🌙 Night"} />
+                        <Field label="Shift" value={load.shift === "day" ? "?? Day" : "?? Night"} />
                     </Section>
 
                     {/* Financials */}

@@ -4,7 +4,7 @@
  * Handles updating daily_loads.status and inserting a load_status_events row.
  * Also updates actual_pickup / actual_delivery timestamps when status transitions occur.
  *
- * ── DESIGN INPUT NEEDED ──────────────────────────────────────────────────────
+ * -- DESIGN INPUT NEEDED ------------------------------------------------------
  * RACE CONDITION: Two dispatchers can assign the same driver to two loads
  * simultaneously. There is no DB-level lock or "is driver already active?"
  * check. Options:
@@ -20,7 +20,7 @@
  * time. Realtime updates (other dispatchers changing status) don't propagate to
  * the open panel unless onRefresh() is called. Consider subscribing to a
  * Supabase realtime channel on `load.id` inside the panel.
- * ─────────────────────────────────────────────────────────────────────────────
+ * -----------------------------------------------------------------------------
  */
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,10 +40,10 @@ export type LoadStatus =
   | "cancelled"
   | "failed";
 
-// ─── Status state machine ────────────────────────────────────
+// --- Status state machine ------------------------------------
 // Maps each status to the set of statuses it is allowed to transition TO.
 // Any transition not in this map is blocked.
-// Note: "completed", "cancelled", "failed" are terminal — no forward transitions.
+// Note: "completed", "cancelled", "failed" are terminal -- no forward transitions.
 // Backwards transitions (reopen) are explicitly allowed from failed/cancelled.
 const ALLOWED_TRANSITIONS: Record<string, LoadStatus[]> = {
   pending:          ["assigned", "blasted", "cancelled"],
@@ -136,7 +136,7 @@ export function useLoadStatusActions() {
         });
 
       if (evtErr) {
-        // Non-fatal — load was already updated; event record failed
+        // Non-fatal -- load was already updated; event record failed
         // Log so the status timeline gap is detectable in production
         console.warn("[useLoadStatusActions] Failed to insert load_status_events:", evtErr.message);
       }
@@ -153,7 +153,7 @@ export function useLoadStatusActions() {
       };
 
       toast({
-        title: `✅ Status → ${statusLabels[newStatus] ?? newStatus}`,
+        title: `? Status -> ${statusLabels[newStatus] ?? newStatus}`,
         description:
           newStatus === "in_progress"
             ? "Actual pickup time recorded."

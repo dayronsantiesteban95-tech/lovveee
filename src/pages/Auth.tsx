@@ -79,7 +79,7 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="h-11" />
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" required className="h-11" />
                 </div>
                 <Button type="submit" className="w-full h-11 btn-gradient text-white font-medium pulse-glow" disabled={loading}>
                   {loading ? "Signing in..." : (
@@ -96,7 +96,7 @@ export default function Auth() {
 
         {/* Branded footer */}
         <p className="text-center text-xs text-muted-foreground/60 mt-6">
-          Last-Mile Delivery · I-10 Corridor · Atlanta · Phoenix · LA
+          Last-Mile Delivery ? I-10 Corridor ? Atlanta ? Phoenix ? LA
         </p>
       </div>
     </div>

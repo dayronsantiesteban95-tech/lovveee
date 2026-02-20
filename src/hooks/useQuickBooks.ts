@@ -1,10 +1,10 @@
-// ═══════════════════════════════════════════════════════════
-// useQuickBooks — QB connection + invoice sync hook
+// -----------------------------------------------------------
+// useQuickBooks -- QB connection + invoice sync hook
 // Phase 2: Billing Module Integration
 //
 // SECURITY: All QB API calls (token refresh, invoice creation)
 // are delegated to Supabase Edge Functions. No secrets in frontend.
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getQBAuthUrl } from '@/lib/quickbooks';
@@ -74,7 +74,7 @@ export function useQuickBooks() {
     }
 
     if (!data?.success || !data.qbInvoiceId) {
-      throw new Error('QB returned no invoice ID — sync may have failed.');
+      throw new Error('QB returned no invoice ID -- sync may have failed.');
     }
 
     return {

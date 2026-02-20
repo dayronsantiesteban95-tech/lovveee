@@ -25,7 +25,7 @@ import type {
     Driver, Company, RateCard, AddLoadForm, CompanyContact, AnikaModifiers, AnikaBreakdown,
 } from "./types";
 
-// ════════════════════Anika Rate Calculator ==============================
+// --------------------Anika Rate Calculator ==============================
 const ANIKA_RATES = {
     cargo_van: { base: 105, perMile: 2.0, deadheadPerMile: 2.0, weightThreshold: 100, weightRate: 0.10 },
     box_truck:  { base: 170, perMile: 2.5, deadheadPerMile: 2.5, weightThreshold: 600, weightRate: 0.15 },
@@ -113,9 +113,9 @@ const EMPTY_ANIKA_MODIFIERS: AnikaModifiers = {
 };
 
 const AOG_SERVICE_TYPES = [
-    { value: "AOG",      label: "✈️ AOG",      hub_key: "hotshot" },
-    { value: "Courier",  label: "⚡ Courier",   hub_key: "courier" },
-    { value: "Standard", label: "📦 Standard",  hub_key: "last_mile" },
+    { value: "AOG",      label: "?? AOG",      hub_key: "hotshot" },
+    { value: "Courier",  label: "? Courier",   hub_key: "courier" },
+    { value: "Standard", label: "?? Standard",  hub_key: "last_mile" },
 ];
 const PKG_TYPES = ["PLT", "CTN", "BOX", "OTHER"];
 const VEHICLE_TYPES_DISPATCH = [
@@ -282,7 +282,7 @@ export default function NewLoadForm({
             setClientSearch(data.name);
             setShowNewClient(false);
             setNewClientName(""); setNewClientPhone(""); setNewClientAddress(""); setNewClientCity(""); setNewClientState("");
-            toast({ title: "✅ Client saved", description: `${data.name} added to company database` });
+            toast({ title: "? Client saved", description: `${data.name} added to company database` });
         }
     };
 
@@ -379,7 +379,7 @@ export default function NewLoadForm({
         if (error) {
             toast({ title: "Failed to create load", description: error.message, variant: "destructive" });
         } else {
-            toast({ title: "✅ Load created!", description: `${addForm.reference_number} added to the board` });
+            toast({ title: "? Load created!", description: `${addForm.reference_number} added to the board` });
             onClose();
             onSuccess();
         }
@@ -452,7 +452,7 @@ export default function NewLoadForm({
                                         active ? "bg-primary text-primary-foreground" :
                                         "bg-muted text-muted-foreground"
                                     }`}>
-                                        {done ? "✔" : step}
+                                        {done ? "v" : step}
                                     </div>
                                     <span className={`text-xs font-medium hidden sm:block ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
                                 </button>
@@ -467,12 +467,12 @@ export default function NewLoadForm({
                 {/* Form body */}
                 <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-                    {/* ═══ STEP 1: LOAD INFO ═══ */}
+                    {/* --- STEP 1: LOAD INFO --- */}
                     {addStep === 1 && (
                         <div className="space-y-5">
                             {/* Reference & Consol */}
                             <div>
-                                <p className="form-section-label">📋 Load Reference</p>
+                                <p className="form-section-label">?? Load Reference</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <Label className="text-xs">Reference Number <span className="text-red-500">*</span></Label>
@@ -493,14 +493,14 @@ export default function NewLoadForm({
                                     <div className="col-span-2">
                                         <Label className="text-xs">Cutoff Time (optional)</Label>
                                         <Input type="datetime-local" value={af.cutoff_time} onChange={(e) => setAf({ cutoff_time: e.target.value })} className="mt-1" />
-                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff — maximum delivery time before flight is missed</p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">Airline cutoff -- maximum delivery time before flight is missed</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Client */}
                             <div>
-                                <p className="form-section-label">🏢 Client</p>
+                                <p className="form-section-label">?? Client</p>
                                 <div className="relative">
                                     <Label className="text-xs">Client / Account <span className="text-red-500">*</span></Label>
                                     <div className="relative mt-1">
@@ -598,7 +598,7 @@ export default function NewLoadForm({
 
                             {/* Service type */}
                             <div>
-                                <p className="form-section-label">⚡ Service</p>
+                                <p className="form-section-label">? Service</p>
                                 <div className="grid grid-cols-3 gap-2 mt-1">
                                     {AOG_SERVICE_TYPES.map((s) => (
                                         <button key={s.value} type="button"
@@ -612,7 +612,7 @@ export default function NewLoadForm({
 
                             {/* Vehicle & Distance */}
                             <div>
-                                <p className="form-section-label">🚐 Vehicle & Distance</p>
+                                <p className="form-section-label">?? Vehicle & Distance</p>
                                 <div className="grid grid-cols-2 gap-3 mt-1">
                                     <div>
                                         <Label className="text-xs">Vehicle Type</Label>
@@ -676,7 +676,7 @@ export default function NewLoadForm({
 
                             {/* Revenue */}
                             <div>
-                                <p className="form-section-label">💵 Revenue</p>
+                                <p className="form-section-label">?? Revenue</p>
                                 <div className="mt-1">
                                     <div className="relative">
                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
@@ -692,7 +692,7 @@ export default function NewLoadForm({
                                                 <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                                                     Rate card estimate: <strong>${computedRevenue.toFixed(2)}</strong>
                                                 </p>
-                                                <p className="text-[10px] text-muted-foreground">{af.service_type} · {VEHICLE_TYPES_DISPATCH.find(v => v.value === af.vehicle_type)?.label} · {af.distance_miles || 0} mi</p>
+                                                <p className="text-[10px] text-muted-foreground">{af.service_type} ? {VEHICLE_TYPES_DISPATCH.find(v => v.value === af.vehicle_type)?.label} ? {af.distance_miles || 0} mi</p>
                                             </div>
                                             <Button size="sm" variant="outline" className="h-6 text-[10px] px-2"
                                                 onClick={() => setAf({ revenue: computedRevenue.toFixed(2) })}>
@@ -705,12 +705,12 @@ export default function NewLoadForm({
                         </div>
                     )}
 
-                    {/* ═══ STEP 2: PICKUP & DELIVERY ═══ */}
+                    {/* --- STEP 2: PICKUP & DELIVERY --- */}
                     {addStep === 2 && (
                         <div className="space-y-5">
                             {/* PICKUP */}
                             <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/5">
-                                <p className="form-section-label text-green-700 dark:text-green-400">📍 Pickup Location</p>
+                                <p className="form-section-label text-green-700 dark:text-green-400">?? Pickup Location</p>
 
                                 <div className="relative mt-2">
                                     <Label className="text-xs">Company / Facility *</Label>
@@ -718,7 +718,7 @@ export default function NewLoadForm({
                                         <Input value={pickupSearch}
                                             onChange={(e) => { setPickupSearch(e.target.value); setShowPickupDropdown(true); setAf({ pickup_company: e.target.value }); }}
                                             onFocus={() => setShowPickupDropdown(true)}
-                                            placeholder="Search or enter company name…"
+                                            placeholder="Search or enter company name..."
                                         />
                                     </div>
                                     {showPickupDropdown && (pickupSuggestions.length > 0 || recentAddresses.length > 0) && (
@@ -763,7 +763,7 @@ export default function NewLoadForm({
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <Label className="text-xs">Open Hours</Label>
-                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00—17:00 Mon—Fri" className="mt-1" />
+                                            <Input value={af.pickup_open_hours} onChange={(e) => setAf({ pickup_open_hours: e.target.value })} placeholder="09:00--17:00 Mon--Fri" className="mt-1" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
@@ -791,7 +791,7 @@ export default function NewLoadForm({
 
                             {/* DELIVERY */}
                             <div className="p-4 rounded-xl border border-orange-500/30 bg-orange-500/5">
-                                <p className="form-section-label text-orange-700 dark:text-orange-400">🏁 Delivery Location</p>
+                                <p className="form-section-label text-orange-700 dark:text-orange-400">?? Delivery Location</p>
 
                                 <div className="relative mt-2">
                                     <Label className="text-xs">Company / Facility *</Label>
@@ -799,7 +799,7 @@ export default function NewLoadForm({
                                         <Input value={deliverySearch}
                                             onChange={(e) => { setDeliverySearch(e.target.value); setShowDeliveryDropdown(true); setAf({ delivery_company: e.target.value }); }}
                                             onFocus={() => setShowDeliveryDropdown(true)}
-                                            placeholder="Search or enter company name…"
+                                            placeholder="Search or enter company name..."
                                         />
                                     </div>
                                     {showDeliveryDropdown && (deliverySuggestions.length > 0 || recentAddresses.length > 0) && (
@@ -856,12 +856,12 @@ export default function NewLoadForm({
                         </div>
                     )}
 
-                    {/* ═══ STEP 3: CARGO & DRIVER ═══ */}
+                    {/* --- STEP 3: CARGO & DRIVER --- */}
                     {addStep === 3 && (
                         <div className="space-y-5">
                             {/* Cargo */}
                             <div>
-                                <p className="form-section-label">📦 Cargo Details</p>
+                                <p className="form-section-label">?? Cargo Details</p>
                                 <div className="grid grid-cols-3 gap-3 mt-1">
                                     <div>
                                         <Label className="text-xs">Packages *</Label>
@@ -892,16 +892,16 @@ export default function NewLoadForm({
                                     </div>
                                     {cubic > 0 && (
                                         <p className="text-xs text-muted-foreground mt-1.5">
-                                            Cubic: <strong>{cubic.toLocaleString()} cm³</strong>
-                                            {af.weight_kg && <> · Dim wt: <strong>{(cubic / 5000).toFixed(1)} kg</strong></>}
-                                            {af.dimensions_text && <> · <span className="font-mono">{af.dimensions_text}</span></>}
+                                            Cubic: <strong>{cubic.toLocaleString()} cm?</strong>
+                                            {af.weight_kg && <> ? Dim wt: <strong>{(cubic / 5000).toFixed(1)} kg</strong></>}
+                                            {af.dimensions_text && <> ? <span className="font-mono">{af.dimensions_text}</span></>}
                                         </p>
                                     )}
                                 </div>
 
                                 <div className="mt-3">
                                     <Label className="text-xs">Cargo Description</Label>
-                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART — LH ENGINE SEAL" className="mt-1" />
+                                    <Input value={af.description} onChange={(e) => setAf({ description: e.target.value })} placeholder="e.g. CIVIL AIRCRAFT PART -- LH ENGINE SEAL" className="mt-1" />
                                 </div>
                             </div>
 
@@ -921,10 +921,10 @@ export default function NewLoadForm({
 
                                         {/* Time & Access */}
                                         <div className="space-y-2">
-                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">⏰ Time &amp; Access</p>
+                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">? Time &amp; Access</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {[
-                                                    { key: "afterHours" as const, label: "After Hours (20:00—07:59)", price: 25 },
+                                                    { key: "afterHours" as const, label: "After Hours (20:00--07:59)", price: 25 },
                                                     { key: "weekend" as const, label: "Weekend (Sat & Sun)", price: 25 },
                                                     { key: "holiday" as const, label: "Holiday", price: 50 },
                                                     { key: "tenderingFee" as const, label: "Tendering Fee (airport)", price: 15 },
@@ -945,7 +945,7 @@ export default function NewLoadForm({
                                                 <Label className="text-xs">Additional Stops (+$50 each)</Label>
                                                 <div className="flex items-center gap-2">
                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>−</Button>
+                                                        onClick={() => setMod({ additionalStops: Math.max(0, anikaModifiers.additionalStops - 1) })}>?</Button>
                                                     <span className="text-sm font-mono w-5 text-center">{anikaModifiers.additionalStops}</span>
                                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                         onClick={() => setMod({ additionalStops: anikaModifiers.additionalStops + 1 })}>+</Button>
@@ -957,7 +957,7 @@ export default function NewLoadForm({
 
                                         {/* Accessorial Services */}
                                         <div className="space-y-2">
-                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">📋 Accessorial Services</p>
+                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">?? Accessorial Services</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {[
                                                     { key: "specialHandling" as const, label: "Special Handling", price: 20 },
@@ -986,7 +986,7 @@ export default function NewLoadForm({
                                                     <Label className="text-xs">{label}</Label>
                                                     <div className="flex items-center gap-2">
                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
-                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>−</Button>
+                                                            onClick={() => setMod({ [key]: Math.max(0, (anikaModifiers[key] as number) - 1) })}>?</Button>
                                                         <span className="text-sm font-mono w-5 text-center">{anikaModifiers[key] as number}</span>
                                                         <Button type="button" variant="outline" size="icon" className="h-6 w-6"
                                                             onClick={() => setMod({ [key]: (anikaModifiers[key] as number) + 1 })}>+</Button>
@@ -1030,7 +1030,7 @@ export default function NewLoadForm({
 
                             {/* Driver Assignment */}
                             <div>
-                                <p className="form-section-label">🚗 Driver Assignment <span className="text-red-500">*</span></p>
+                                <p className="form-section-label">?? Driver Assignment <span className="text-red-500">*</span></p>
                                 <div className="space-y-2 mt-1">
                                     {drivers.length === 0 && (
                                         <p className="text-sm text-muted-foreground">No active drivers found.</p>
@@ -1058,7 +1058,7 @@ export default function NewLoadForm({
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-muted-foreground capitalize">{d.hub} hub · {d.status}</p>
+                                                    <p className="text-xs text-muted-foreground capitalize">{d.hub} hub ? {d.status}</p>
                                                 </div>
                                                 {isSelected && <CheckCircle className="h-5 w-5 text-primary shrink-0" />}
                                             </button>
@@ -1074,7 +1074,7 @@ export default function NewLoadForm({
 
                             {/* BOL Upload */}
                             <div>
-                                <p className="form-section-label">📔 BOL Document</p>
+                                <p className="form-section-label">?? BOL Document</p>
                                 <div className="mt-1">
                                     <input ref={bolInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) setBolFile(f); }} />
@@ -1083,7 +1083,7 @@ export default function NewLoadForm({
                                             className="w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all flex flex-col items-center gap-2 text-muted-foreground">
                                             <Upload className="h-5 w-5" />
                                             <p className="text-sm">Click to upload BOL (PDF / image)</p>
-                                            <p className="text-xs">Optional — can be added later</p>
+                                            <p className="text-xs">Optional -- can be added later</p>
                                         </button>
                                     ) : (
                                         <div className="flex items-center gap-3 p-3 rounded-xl border bg-muted/20">
@@ -1092,7 +1092,7 @@ export default function NewLoadForm({
                                                 <p className="text-sm font-medium truncate">{bolFile.name}</p>
                                                 <p className="text-xs text-muted-foreground">{(bolFile.size / 1024).toFixed(0)} KB</p>
                                             </div>
-                                            {bolUploading && <span className="text-xs text-muted-foreground animate-pulse">Uploading…</span>}
+                                            {bolUploading && <span className="text-xs text-muted-foreground animate-pulse">Uploading...</span>}
                                             <button onClick={() => { setBolFile(null); setAf({ bol_url: "" }); }}>
                                                 <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                                             </button>
@@ -1105,17 +1105,17 @@ export default function NewLoadForm({
                             <div className="p-4 rounded-xl bg-muted/30 border space-y-2 text-sm">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Summary</p>
                                 <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "—"}</span>
-                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "—"}</span>
+                                    <span className="text-muted-foreground">Ref #</span><span className="font-mono font-medium">{af.reference_number || "--"}</span>
+                                    <span className="text-muted-foreground">Client</span><span className="font-medium truncate">{af.client_name || "--"}</span>
                                     <span className="text-muted-foreground">Service</span><span>{af.service_type}</span>
                                     <span className="text-muted-foreground">Revenue</span>
                                     <span className="font-semibold text-green-600">
                                         ${af.revenue ? parseFloat(af.revenue).toFixed(2) : computedRevenue ? computedRevenue.toFixed(2) : "0.00"}
                                     </span>
-                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "—"}</span>
-                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "—"}</span>
+                                    <span className="text-muted-foreground">Pickup</span><span className="truncate">{af.pickup_company || af.pickup_address || "--"}</span>
+                                    <span className="text-muted-foreground">Delivery</span><span className="truncate">{af.delivery_company || af.delivery_address || "--"}</span>
                                     <span className="text-muted-foreground">Driver</span><span>{drivers.find(d => d.id === af.driver_id)?.full_name || <span className="text-red-500">Not assigned</span>}</span>
-                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "—"}</span>
+                                    <span className="text-muted-foreground">BOL</span><span>{bolFile ? bolFile.name : "--"}</span>
                                 </div>
                             </div>
                         </div>
@@ -1139,7 +1139,7 @@ export default function NewLoadForm({
                             </Button>
                         ) : (
                             <Button className="btn-gradient gap-1.5" disabled={!canSubmit || bolUploading} onClick={handleAddLoad}>
-                                {bolUploading ? "Uploading…" : <><Plus className="h-4 w-4" /> Create Load</>}
+                                {bolUploading ? "Uploading..." : <><Plus className="h-4 w-4" /> Create Load</>}
                             </Button>
                         )}
                     </div>

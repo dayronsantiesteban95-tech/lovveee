@@ -1,13 +1,13 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * CUSTOMER ORDER HISTORY — Full Delivery History by Client
+ * -----------------------------------------------------------
+ * CUSTOMER ORDER HISTORY -- Full Delivery History by Client
  *
  * Quick drawer/panel that shows all past deliveries for a
  * given client or customer. Includes stats, repeat frequency,
  * and one-click clone to create a similar load.
  *
  * Inspired by Onfleet's recipient history feature.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +20,7 @@ import {
     TrendingUp, MapPin, DollarSign, RefreshCw, X, User,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface OrderHistoryEntry {
     id: string;
@@ -52,7 +52,7 @@ interface CustomerOrderHistoryProps {
     onClose?: () => void;
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 export default function CustomerOrderHistory({
     clientName: initialClient, onClone, onClose,
@@ -245,12 +245,12 @@ export default function CustomerOrderHistory({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
                                         <span className="font-mono text-[10px] text-muted-foreground">
-                                            {order.reference_number ?? "—"}
+                                            {order.reference_number ?? "--"}
                                         </span>
-                                        <span className="text-muted-foreground/30">·</span>
+                                        <span className="text-muted-foreground/30">?</span>
                                         <span className="text-muted-foreground">{order.load_date}</span>
                                     </div>
-                                    <p className="truncate text-muted-foreground">{order.delivery_address ?? "—"}</p>
+                                    <p className="truncate text-muted-foreground">{order.delivery_address ?? "--"}</p>
                                 </div>
                                 <div className="text-right shrink-0">
                                     <p className="font-medium">${order.revenue}</p>

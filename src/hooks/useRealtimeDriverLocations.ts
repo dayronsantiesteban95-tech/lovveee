@@ -1,10 +1,10 @@
 /**
- * useRealtimeDriverLocations — Singleton realtime subscription for driver GPS data.
+ * useRealtimeDriverLocations -- Singleton realtime subscription for driver GPS data.
  *
  * PERFORMANCE NOTES:
  * - Only ONE Supabase channel is created regardless of how many components mount this hook.
  * - GPS render updates are throttled: a marker only re-renders if position changed by
- *   >10 meters OR >15 seconds since last render update — whichever comes first.
+ *   >10 meters OR >15 seconds since last render update -- whichever comes first.
  * - Reconnects automatically when the websocket drops (wifi blip, etc.)
  *
  * Usage:
@@ -15,7 +15,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 export interface DriverLocation {
     id: string;
@@ -35,13 +35,13 @@ export interface UseRealtimeDriverLocationsReturn {
     refresh: () => Promise<void>;
 }
 
-// ─── Constants ─────────────────────────────────────────
+// --- Constants -----------------------------------------
 
-const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000;   // 10 minutes — driver considered stale
-const MIN_UPDATE_INTERVAL_MS = 15_000;         // 15 seconds — minimum time between re-renders per driver
-const MIN_DISTANCE_METERS = 10;                // 10 meters — minimum position delta to force re-render
+const ACTIVE_THRESHOLD_MS = 10 * 60 * 1000;   // 10 minutes -- driver considered stale
+const MIN_UPDATE_INTERVAL_MS = 15_000;         // 15 seconds -- minimum time between re-renders per driver
+const MIN_DISTANCE_METERS = 10;                // 10 meters -- minimum position delta to force re-render
 
-// ─── Haversine distance (meters) ───────────────────────
+// --- Haversine distance (meters) -----------------------
 
 function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6_371_000;
@@ -54,12 +54,12 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── Module-level singleton state ──────────────────────
+// --- Module-level singleton state ----------------------
 
 let channelInstance: RealtimeChannel | null = null;
 let subscriberCount = 0;
 
-// Shared mutable state — listeners get notified on change
+// Shared mutable state -- listeners get notified on change
 let sharedDrivers: DriverLocation[] = [];
 let sharedStatus: RealtimeStatus = "disconnected";
 
@@ -88,7 +88,7 @@ function setStatus(s: RealtimeStatus) {
     }
 }
 
-// ─── Fetch all active driver locations ─────────────────
+// --- Fetch all active driver locations -----------------
 
 async function fetchAllDriverLocations(): Promise<void> {
     try {
@@ -141,11 +141,11 @@ async function fetchAllDriverLocations(): Promise<void> {
         sharedDrivers = deduped;
         notifyDrivers();
     } catch {
-        // Never crash — network or unexpected errors are silently absorbed
+        // Never crash -- network or unexpected errors are silently absorbed
     }
 }
 
-// ─── Singleton channel lifecycle ───────────────────────
+// --- Singleton channel lifecycle -----------------------
 
 function ensureChannel(): void {
     if (channelInstance) return;
@@ -166,7 +166,7 @@ function ensureChannel(): void {
                 } | undefined;
 
                 if (!row?.driver_id || row.latitude == null || row.longitude == null) {
-                    // Unknown event shape — just re-fetch
+                    // Unknown event shape -- just re-fetch
                     void fetchAllDriverLocations();
                     return;
                 }
@@ -174,7 +174,7 @@ function ensureChannel(): void {
                 const driverId = row.driver_id;
                 const now = Date.now();
 
-                // ── Throttle: skip update if too soon AND position hasn't moved enough ──
+                // -- Throttle: skip update if too soon AND position hasn't moved enough --
                 const lastTime = lastRenderTimeRef[driverId] ?? 0;
                 const lastPos = lastRenderPosRef[driverId];
                 const timeDelta = now - lastTime;
@@ -182,15 +182,15 @@ function ensureChannel(): void {
                 if (timeDelta < MIN_UPDATE_INTERVAL_MS && lastPos) {
                     const distMoved = haversineMeters(lastPos.lat, lastPos.lng, row.latitude, row.longitude);
                     if (distMoved < MIN_DISTANCE_METERS) {
-                        return; // Skip — not enough time elapsed AND driver barely moved
+                        return; // Skip -- not enough time elapsed AND driver barely moved
                     }
                 }
 
-                // Commit the render — update throttle tracking
+                // Commit the render -- update throttle tracking
                 lastRenderTimeRef[driverId] = now;
                 lastRenderPosRef[driverId] = { lat: row.latitude, lng: row.longitude };
 
-                // Update shared state — replace or add driver entry
+                // Update shared state -- replace or add driver entry
                 const existing = sharedDrivers.find((d) => d.driver_id === driverId);
                 if (existing) {
                     sharedDrivers = sharedDrivers.map((d) =>
@@ -205,7 +205,7 @@ function ensureChannel(): void {
                             : d
                     );
                 } else {
-                    // New driver — re-fetch to get their name
+                    // New driver -- re-fetch to get their name
                     void fetchAllDriverLocations();
                     return;
                 }
@@ -223,7 +223,7 @@ function ensureChannel(): void {
             }
         });
 
-    // ── Reconnection logic via websocket-level events ──
+    // -- Reconnection logic via websocket-level events --
     supabase.realtime.onOpen(() => setStatus("connected"));
     supabase.realtime.onClose(() => {
         setStatus("disconnected");
@@ -245,7 +245,7 @@ function destroyChannel(): void {
     sharedStatus = "disconnected";
 }
 
-// ─── Hook ──────────────────────────────────────────────
+// --- Hook ----------------------------------------------
 
 export function useRealtimeDriverLocations(): UseRealtimeDriverLocationsReturn {
     const [drivers, setDrivers] = useState<DriverLocation[]>(sharedDrivers);

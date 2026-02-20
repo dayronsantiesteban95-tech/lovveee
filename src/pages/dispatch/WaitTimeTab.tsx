@@ -106,12 +106,12 @@ export default function WaitTimeTab({ analytics, driverName }: WaitTimeTabProps)
             <Card className="glass-card rounded-2xl">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-orange-500" /> Detention-Eligible Loads (≥{DETENTION_THRESHOLD}min)
+                        <AlertTriangle className="h-4 w-4 text-orange-500" /> Detention-Eligible Loads (?{DETENTION_THRESHOLD}min)
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {analytics.detentionEligible.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-6">No detention-eligible loads in this period 🎉</p>
+                        <p className="text-sm text-muted-foreground text-center py-6">No detention-eligible loads in this period ??</p>
                     ) : (
                         <Table>
                             <TableHeader>
@@ -128,8 +128,8 @@ export default function WaitTimeTab({ analytics, driverName }: WaitTimeTabProps)
                                 {analytics.detentionEligible.map((l) => (
                                     <TableRow key={l.id}>
                                         <TableCell className="text-sm">{l.load_date}</TableCell>
-                                        <TableCell className="font-mono text-xs">{l.reference_number || "—"}</TableCell>
-                                        <TableCell className="text-sm">{l.client_name || "—"}</TableCell>
+                                        <TableCell className="font-mono text-xs">{l.reference_number || "--"}</TableCell>
+                                        <TableCell className="text-sm">{l.client_name || "--"}</TableCell>
                                         <TableCell className="text-sm">{driverName(l.driver_id)}</TableCell>
                                         <TableCell><Badge className={`${waitBadgeClass(l.wait_time_minutes)} text-xs`}>{fmtWait(l.wait_time_minutes)}</Badge></TableCell>
                                         <TableCell className="text-right font-mono">{l.detention_billed > 0 ? fmtMoney(l.detention_billed) : <span className="text-red-500 text-xs">Not billed</span>}</TableCell>

@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════════
-// CONTACTS — Company contact management
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
+// CONTACTS -- Company contact management
+// -----------------------------------------------------------
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +26,7 @@ import { Plus, Search, Pencil, Trash2, Mail, Phone, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-// ─── Types ───────────────────────────────────────────────
+// --- Types -----------------------------------------------
 type Contact = {
   id: string;
   first_name: string;
@@ -41,7 +41,7 @@ type Contact = {
 
 type Company = { id: string; name: string };
 
-// ─── Contact Form ────────────────────────────────────────
+// --- Contact Form ----------------------------------------
 function ContactForm({
   initial,
   companies,
@@ -104,7 +104,7 @@ function ContactForm({
               <SelectValue placeholder="Select company" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">— None —</SelectItem>
+              <SelectItem value="">-- None --</SelectItem>
               {companies.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
@@ -118,14 +118,14 @@ function ContactForm({
       </div>
       <DialogFooter>
         <Button type="submit" disabled={loading} className="btn-gradient">
-          {loading ? "Saving…" : initial ? "Save Changes" : "Add Contact"}
+          {loading ? "Saving..." : initial ? "Save Changes" : "Add Contact"}
         </Button>
       </DialogFooter>
     </form>
   );
 }
 
-// ─── Main Component ──────────────────────────────────────
+// --- Main Component --------------------------------------
 export default function Contacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -202,7 +202,7 @@ export default function Contacts() {
   };
 
   const getCompanyName = (id: string | null) =>
-    companies.find((c) => c.id === id)?.name ?? "—";
+    companies.find((c) => c.id === id)?.name ?? "--";
 
   const filtered = contacts.filter((c) => {
     if (!search) return true;
@@ -227,7 +227,7 @@ export default function Contacts() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight gradient-text">Contacts</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {contacts.length} contact{contacts.length !== 1 ? "s" : ""} · Manage your contact database
+            {contacts.length} contact{contacts.length !== 1 ? "s" : ""} ? Manage your contact database
           </p>
         </div>
         <Button
@@ -242,7 +242,7 @@ export default function Contacts() {
       <div className="relative w-72">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name, company, email…"
+          placeholder="Search by name, company, email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -289,7 +289,7 @@ export default function Contacts() {
                         {c.first_name} {c.last_name}
                       </div>
                     </TableCell>
-                    <TableCell>{c.job_title ?? "—"}</TableCell>
+                    <TableCell>{c.job_title ?? "--"}</TableCell>
                     <TableCell>
                       <span className="text-accent">{getCompanyName(c.company_id)}</span>
                     </TableCell>
@@ -301,7 +301,7 @@ export default function Contacts() {
                         >
                           <Phone className="h-3 w-3" /> {c.phone}
                         </a>
-                      ) : "—"}
+                      ) : "--"}
                     </TableCell>
                     <TableCell>
                       {c.email ? (
@@ -311,7 +311,7 @@ export default function Contacts() {
                         >
                           <Mail className="h-3 w-3" /> {c.email}
                         </a>
-                      ) : "—"}
+                      ) : "--"}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

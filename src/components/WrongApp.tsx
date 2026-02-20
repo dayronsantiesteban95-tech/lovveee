@@ -30,14 +30,14 @@ export function WrongApp() {
         </p>
       </div>
 
-      {/* APK download link — only shown on mobile */}
+      {/* APK download link -- only shown on mobile */}
       {isMobile && (
         <a
           href={APK_URL}
           className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors"
           download
         >
-          📦 Download the Driver App (APK)
+          ?? Download the Driver App (APK)
         </a>
       )}
 

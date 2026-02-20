@@ -1,10 +1,10 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * BlastStatusPanel — Real-time blast response tracker
+ * -----------------------------------------------------------
+ * BlastStatusPanel -- Real-time blast response tracker
  *
  * Shows who accepted/declined after a blast is sent.
  * Dispatcher can cancel the blast or see auto-assignment.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface BlastResponse {
     id: string;
@@ -57,7 +57,7 @@ interface BlastStatusPanelProps {
     compact?: boolean;
 }
 
-// ─── Component ─────────────────────────────────────────
+// --- Component -----------------------------------------
 
 export default function BlastStatusPanel({
     blastId,
@@ -139,12 +139,12 @@ export default function BlastStatusPanel({
                     if (updated.status === "accepted" && updated.accepted_by) {
                         onAssigned?.(updated.accepted_by);
                         toast({
-                            title: "✅ Load Assigned!",
-                            description: "A driver accepted the blast — load has been assigned.",
+                            title: "? Load Assigned!",
+                            description: "A driver accepted the blast -- load has been assigned.",
                         });
                     } else if (updated.status === "expired") {
                         toast({
-                            title: "⏰ Blast Expired",
+                            title: "? Blast Expired",
                             description: "No driver accepted in time. Load is back to unassigned.",
                             variant: "destructive",
                         });
@@ -217,7 +217,7 @@ export default function BlastStatusPanel({
         }
     };
 
-    // ── Render ──────────────────────────────────
+    // -- Render ----------------------------------
 
     if (loading) {
         return (
@@ -251,7 +251,7 @@ export default function BlastStatusPanel({
     };
 
     const formatTime = (iso: string | null) => {
-        if (!iso) return "—";
+        if (!iso) return "--";
         const d = new Date(iso);
         return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     };
@@ -406,7 +406,7 @@ export default function BlastStatusPanel({
                     <p className="text-xs text-center text-muted-foreground">
                         {isCancelled
                             ? "This blast was cancelled by the dispatcher."
-                            : "No driver accepted — load has been returned to unassigned."}
+                            : "No driver accepted -- load has been returned to unassigned."}
                     </p>
                 )}
             </CardContent>
@@ -414,7 +414,7 @@ export default function BlastStatusPanel({
     );
 }
 
-// ─── Sub-components ────────────────────────────────────
+// --- Sub-components ------------------------------------
 
 function StatusBadge({ status }: { status: string }) {
     const configs: Record<string, { label: string; className: string }> = {
@@ -507,7 +507,7 @@ function ResponseRow({
                 </Badge>
             )}
             <span className="text-[10px] text-muted-foreground shrink-0 ml-auto">
-                {response.responded_at ? responseTime : "—"}
+                {response.responded_at ? responseTime : "--"}
             </span>
         </div>
     );

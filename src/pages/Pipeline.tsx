@@ -408,7 +408,7 @@ export default function Pipeline() {
                           })()}
                           {ghosting && (
                             <Badge className="text-[10px] px-1.5 py-0 bg-accent text-accent-foreground">
-                              ⚠ {ghostingDays(lead.id)}d no contact
+                              ? {ghostingDays(lead.id)}d no contact
                             </Badge>
                           )}
                         </div>

@@ -11,7 +11,7 @@ import {
 import { CITY_HUBS } from "@/lib/constants";
 import type { Load, Driver, Vehicle } from "./types";
 
-const SHIFTS = [{ value: "day", label: "Día" }, { value: "night", label: "Noche" }];
+const SHIFTS = [{ value: "day", label: "D?a" }, { value: "night", label: "Noche" }];
 const HUBS = CITY_HUBS;
 const STATUSES = [
     { value: "pending", label: "Pending" },

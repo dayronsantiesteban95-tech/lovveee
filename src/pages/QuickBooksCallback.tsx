@@ -1,12 +1,12 @@
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // QuickBooks OAuth Callback Page
-// Route: /auth/quickbooks/callback (PUBLIC — no auth required)
+// Route: /auth/quickbooks/callback (PUBLIC -- no auth required)
 // QB redirects here after user authorizes the app.
 //
 // SECURITY: Token exchange is handled server-side via the
 // qb-token-exchange Supabase Edge Function. The client secret
 // never touches the browser.
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +29,7 @@ export default function QuickBooksCallback() {
       return;
     }
 
-    // ── CSRF State Validation ──────────────────────────────────────────────
+    // -- CSRF State Validation ----------------------------------------------
     // Verify the state param returned by QB matches what we stored when
     // initiating the OAuth flow. This prevents CSRF / open-redirect attacks.
     const returnedState = searchParams.get('state');
@@ -40,12 +40,12 @@ export default function QuickBooksCallback() {
       return;
     }
     sessionStorage.removeItem('qb_oauth_state');
-    // ─────────────────────────────────────────────────────────────────────
+    // ---------------------------------------------------------------------
 
     const handleCallback = async () => {
       try {
         // Delegate token exchange to the server-side Edge Function.
-        // The client secret lives in Supabase secrets — never in the bundle.
+        // The client secret lives in Supabase secrets -- never in the bundle.
         const response = await supabase.functions.invoke('qb-token-exchange', {
           body: { code, realmId },
         });
@@ -83,26 +83,26 @@ export default function QuickBooksCallback() {
         {status === 'processing' && (
           <>
             <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-lg font-semibold">Connecting QuickBooks…</p>
+            <p className="text-lg font-semibold">Connecting QuickBooks...</p>
             <p className="text-muted-foreground text-sm">
-              Exchanging authorization code for tokens…
+              Exchanging authorization code for tokens...
             </p>
           </>
         )}
         {status === 'success' && (
           <>
-            <div className="text-5xl">✅</div>
+            <div className="text-5xl">?</div>
             <p className="text-lg font-semibold text-green-700">
               QuickBooks Connected!
             </p>
             <p className="text-muted-foreground text-sm">
-              Redirecting to Billing…
+              Redirecting to Billing...
             </p>
           </>
         )}
         {status === 'error' && (
           <>
-            <div className="text-5xl">❌</div>
+            <div className="text-5xl">?</div>
             <p className="text-lg font-semibold text-destructive">
               Connection Failed
             </p>
@@ -111,7 +111,7 @@ export default function QuickBooksCallback() {
               onClick={() => navigate('/billing')}
               className="text-primary underline text-sm mt-2 block mx-auto"
             >
-              ← Go back to Billing
+              <- Go back to Billing
             </button>
           </>
         )}

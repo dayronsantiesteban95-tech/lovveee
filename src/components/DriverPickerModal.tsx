@@ -1,5 +1,5 @@
 /**
- * DriverPickerModal — Smart driver picker with AI scoring.
+ * DriverPickerModal -- Smart driver picker with AI scoring.
  *
  * Replaces the flat driver dropdown in NewLoadForm and LoadBoard.
  * Shows distance from pickup, current workload, hub match, and AI suggestion.
@@ -18,7 +18,7 @@ import { useDriverAvailability } from "@/hooks/useDriverAvailability";
 import { geocodeAddress } from "@/utils/geocodeAddress";
 import type { DriverScore } from "@/utils/scoreDrivers";
 
-// ─── Props ────────────────────────────────────────────────────────────────────
+// --- Props --------------------------------------------------------------------
 
 interface DriverPickerModalProps {
   open: boolean;
@@ -30,19 +30,19 @@ interface DriverPickerModalProps {
   currentDriverId?: string | null;
 }
 
-// ─── Hub filter config ────────────────────────────────────────────────────────
+// --- Hub filter config --------------------------------------------------------
 // Default = hub-locked (only drivers matching the load's hub).
 // "override" = dispatcher manually bypasses for cross-hub emergency assign.
 
 type HubMode = "locked" | "override";
 
-// ─── Status helpers ───────────────────────────────────────────────────────────
+// --- Status helpers -----------------------------------------------------------
 
 function statusDot(status: string): string {
   const s = status.toLowerCase();
-  if (s === "idle" || s === "active") return "🟢";
-  if (s === "finishing_soon" || s === "on_load" || s === "in_progress") return "🟡";
-  return "🔴";
+  if (s === "idle" || s === "active") return "??";
+  if (s === "finishing_soon" || s === "on_load" || s === "in_progress") return "??";
+  return "??";
 }
 
 function statusLabel(status: string): string {
@@ -53,7 +53,7 @@ function statusLabel(status: string): string {
   return "Off";
 }
 
-// ─── Driver Card ─────────────────────────────────────────────────────────────
+// --- Driver Card -------------------------------------------------------------
 
 interface DriverCardProps {
   entry: DriverScore;
@@ -116,7 +116,7 @@ function DriverCard({ entry, isSelected, isSuggested, onAssign }: DriverCardProp
           </Badge>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {label} · {reasoning}
+          {label} ? {reasoning}
         </p>
       </div>
 
@@ -136,14 +136,14 @@ function DriverCard({ entry, isSelected, isSuggested, onAssign }: DriverCardProp
             onAssign();
           }}
         >
-          {isSelected ? "Selected ✓" : "Assign"}
+          {isSelected ? "Selected v" : "Assign"}
         </Button>
       </div>
     </div>
   );
 }
 
-// ─── Main Modal ───────────────────────────────────────────────────────────────
+// --- Main Modal ---------------------------------------------------------------
 
 export default function DriverPickerModal({
   open,
@@ -223,7 +223,7 @@ export default function DriverPickerModal({
 
   const truncatedAddress =
     pickupAddress && pickupAddress.length > 48
-      ? pickupAddress.slice(0, 48) + "…"
+      ? pickupAddress.slice(0, 48) + "..."
       : pickupAddress;
 
   return (
@@ -261,7 +261,7 @@ export default function DriverPickerModal({
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search drivers…"
+              placeholder="Search drivers..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 h-8 text-sm"
@@ -290,7 +290,7 @@ export default function DriverPickerModal({
                   : "bg-muted text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600"
               }`}
             >
-              {hubMode === "override" ? "⚠ Override — All Hubs" : "Override — All Hubs"}
+              {hubMode === "override" ? "? Override -- All Hubs" : "Override -- All Hubs"}
             </button>
           </div>
         </div>
@@ -298,8 +298,8 @@ export default function DriverPickerModal({
         {/* Override warning banner */}
         {hubMode === "override" && (
           <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-xs text-amber-700 dark:text-amber-400">
-            <span className="shrink-0 font-bold">⚠ Cross-hub override active.</span>
-            <span>Showing all hubs — use only in emergencies.</span>
+            <span className="shrink-0 font-bold">? Cross-hub override active.</span>
+            <span>Showing all hubs -- use only in emergencies.</span>
           </div>
         )}
 
@@ -308,7 +308,7 @@ export default function DriverPickerModal({
           {loading && (
             <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              Loading drivers…
+              Loading drivers...
             </div>
           )}
 
@@ -317,7 +317,7 @@ export default function DriverPickerModal({
               <p className="text-sm">No {inferredHub.toUpperCase()} drivers available</p>
               <p className="text-xs opacity-60">
                 {hubMode === "locked"
-                  ? 'Use "Override — All Hubs" to cross-assign in an emergency'
+                  ? 'Use "Override -- All Hubs" to cross-assign in an emergency'
                   : "Try adjusting your search"}
               </p>
             </div>
@@ -356,7 +356,7 @@ export default function DriverPickerModal({
             <p className="text-[11px] text-orange-700 dark:text-orange-400 leading-snug">
               <Star className="mr-1 inline h-3 w-3" />
               <strong>AI Pick:</strong>{" "}
-              {suggestionEntry.driver.full_name} — {suggestionEntry.reasoning}
+              {suggestionEntry.driver.full_name} -- {suggestionEntry.reasoning}
             </p>
           </div>
         )}

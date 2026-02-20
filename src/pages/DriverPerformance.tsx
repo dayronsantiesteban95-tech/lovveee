@@ -25,7 +25,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 interface DriverPerf {
   driver_id: string;
@@ -54,7 +54,7 @@ type SortKey = keyof Pick<
 
 type SortDir = "asc" | "desc";
 
-// ─── Hub colour map ───────────────────────────────────────────────────────────
+// --- Hub colour map -----------------------------------------------------------
 
 const HUB_COLORS: Record<string, string> = {
   Miami: "bg-blue-500",
@@ -78,7 +78,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// --- Progress Bar -------------------------------------------------------------
 
 function ProgressBar({ value, label }: { value: number; label: string }) {
   const pct = Math.min(Math.max(value, 0), 100);
@@ -105,7 +105,7 @@ function ProgressBar({ value, label }: { value: number; label: string }) {
   );
 }
 
-// ─── Sort Icon ────────────────────────────────────────────────────────────────
+// --- Sort Icon ----------------------------------------------------------------
 
 function SortIcon({
   col,
@@ -124,7 +124,7 @@ function SortIcon({
   );
 }
 
-// ─── Row highlight for top 3 ─────────────────────────────────────────────────
+// --- Row highlight for top 3 -------------------------------------------------
 
 const rankStyle: Record<number, string> = {
   0: "border-l-4 border-l-yellow-400",
@@ -132,7 +132,7 @@ const rankStyle: Record<number, string> = {
   2: "border-l-4 border-l-amber-600",
 };
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------------------
 
 const RANGE_OPTIONS = [
   { label: "Last 7 days", days: 7 },
@@ -147,7 +147,7 @@ export default function DriverPerformance() {
   const [sortKey, setSortKey] = useState<SortKey>("total_revenue");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  // -- Fetch ------------------------------------------------------------------
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -182,7 +182,7 @@ export default function DriverPerformance() {
     void fetchData();
   }, [fetchData]);
 
-  // ── Sort ───────────────────────────────────────────────────────────────────
+  // -- Sort -------------------------------------------------------------------
   const handleSort = (col: SortKey) => {
     if (col === sortKey) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -205,7 +205,7 @@ export default function DriverPerformance() {
       : (bv as number) - (av as number);
   });
 
-  // ── KPIs ───────────────────────────────────────────────────────────────────
+  // -- KPIs -------------------------------------------------------------------
   const topDriver = data[0] ?? null; // already ordered by revenue desc from DB
   const totalRevenue = data.reduce((s, d) => s + d.total_revenue, 0);
   const avgOnTime =
@@ -217,7 +217,7 @@ export default function DriverPerformance() {
       ? data.reduce((s, d) => s + d.pod_compliance_rate, 0) / data.length
       : 0;
 
-  // ── Th helper ─────────────────────────────────────────────────────────────
+  // -- Th helper -------------------------------------------------------------
   const Th = ({
     col,
     children,
@@ -234,14 +234,14 @@ export default function DriverPerformance() {
     </TableHead>
   );
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // --- Render ----------------------------------------------------------------
   return (
     <div className="space-y-6 animate-in">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* -- Header ----------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight gradient-text">Driver Performance</h1>
-          <p className="text-muted-foreground text-sm mt-1">Ranked by revenue · Sortable table · {days}-day window</p>
+          <p className="text-muted-foreground text-sm mt-1">Ranked by revenue ? Sortable table ? {days}-day window</p>
         </div>
         <div className="flex gap-1.5">
           {RANGE_OPTIONS.map((opt) => (
@@ -258,7 +258,7 @@ export default function DriverPerformance() {
         </div>
       </div>
 
-      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
+      {/* -- KPI Cards -------------------------------------------------------- */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Top Driver */}
         <Card className="border border-yellow-500/20">
@@ -347,14 +347,14 @@ export default function DriverPerformance() {
         </Card>
       </div>
 
-      {/* ── Loading spinner ─────────────────────────────────────────────────── */}
+      {/* -- Loading spinner --------------------------------------------------- */}
       {loading && (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {/* ── Empty state ─────────────────────────────────────────────────────── */}
+      {/* -- Empty state ------------------------------------------------------- */}
       {!loading && data.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-3">
@@ -367,7 +367,7 @@ export default function DriverPerformance() {
         </Card>
       )}
 
-      {/* ── Driver Cards Grid ───────────────────────────────────────────────── */}
+      {/* -- Driver Cards Grid ------------------------------------------------- */}
       {!loading && data.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {data.map((d) => (
@@ -421,7 +421,7 @@ export default function DriverPerformance() {
                 {/* Footer row */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40">
                   <span className="flex items-center gap-1">
-                    <span className="text-muted-foreground">🛣️</span>
+                    <span className="text-muted-foreground">???</span>
                     {d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi driven
                   </span>
                   {d.failed_loads > 0 ? (
@@ -430,7 +430,7 @@ export default function DriverPerformance() {
                       {d.failed_loads} failed
                     </span>
                   ) : (
-                    <span className="text-emerald-500 font-medium text-[10px]">✓ Zero failures</span>
+                    <span className="text-emerald-500 font-medium text-[10px]">v Zero failures</span>
                   )}
                 </div>
               </CardContent>
@@ -439,7 +439,7 @@ export default function DriverPerformance() {
         </div>
       )}
 
-      {/* ── Rankings Table ──────────────────────────────────────────────────── */}
+      {/* -- Rankings Table ---------------------------------------------------- */}
       {!loading && data.length > 0 && (
         <Card>
           <CardHeader>
@@ -477,11 +477,11 @@ export default function DriverPerformance() {
                       >
                         <TableCell className="pl-4 font-medium text-muted-foreground">
                           {revenueRank === 0
-                            ? "🥇"
+                            ? "??"
                             : revenueRank === 1
-                            ? "🥈"
+                            ? "??"
                             : revenueRank === 2
-                            ? "🥉"
+                            ? "??"
                             : i + 1}
                         </TableCell>
                         <TableCell>

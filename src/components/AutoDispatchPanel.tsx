@@ -1,6 +1,6 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * AUTO-DISPATCH PANEL — Smart Driver Assignment (Onfleet-Style)
+ * -----------------------------------------------------------
+ * AUTO-DISPATCH PANEL -- Smart Driver Assignment (Onfleet-Style)
  *
  * When a load is unassigned, this panel shows the best driver
  * candidates ranked by:
@@ -9,7 +9,7 @@
  *   3. Availability (on-duty, not at capacity)
  *
  * One-click to assign. No more guessing "who's nearby?"
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,7 @@ import {
     CheckCircle2, User, RefreshCw, Target,
 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface Driver {
     id: string;
@@ -49,7 +49,7 @@ interface AutoDispatchPanelProps {
     onClose?: () => void;
 }
 
-// ─── Haversine ─────────────────────────────────────────
+// --- Haversine -----------------------------------------
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 3959;
@@ -62,7 +62,7 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 
 export default function AutoDispatchPanel({
     loadId, loadPickupAddress, loadPickupLat, loadPickupLng, loadHub, onAssigned, onClose,
@@ -100,7 +100,7 @@ export default function AutoDispatchPanel({
             if (lc.driver_id) countMap.set(lc.driver_id, (countMap.get(lc.driver_id) ?? 0) + 1);
         }
 
-        // 3. Get latest GPS positions — graceful fallback if RPC doesn't exist
+        // 3. Get latest GPS positions -- graceful fallback if RPC doesn't exist
         const posMap = new Map<string, { lat: number; lng: number }>();
         try {
             const { data: positions } = await supabase
@@ -110,7 +110,7 @@ export default function AutoDispatchPanel({
                 posMap.set(pos.driver_id, { lat: pos.latitude, lng: pos.longitude });
             }
         } catch {
-            // RPC may not exist yet — GPS scoring will be skipped
+            // RPC may not exist yet -- GPS scoring will be skipped
         }
 
         // 4. Score each driver
@@ -126,7 +126,7 @@ export default function AutoDispatchPanel({
                 distanceScore = distanceMiles;
             }
 
-            // Hub preference — meaningful bonus so same-hub drivers rank higher
+            // Hub preference -- meaningful bonus so same-hub drivers rank higher
             const hubBonus = (loadHub && driver.hub === loadHub) ? -15 : 0;
 
             // Workload penalty (more loads = higher score)
@@ -142,7 +142,7 @@ export default function AutoDispatchPanel({
             } else {
                 reason = driver.hub === loadHub ? "Same hub" : `${driver.hub} hub`;
             }
-            if (activeLoads > 0) reason += ` · ${activeLoads} active loads`;
+            if (activeLoads > 0) reason += ` ? ${activeLoads} active loads`;
 
             return { driver, activeLoads, distanceMiles, score, reason };
         });
@@ -169,7 +169,7 @@ export default function AutoDispatchPanel({
         } else {
             const driver = candidates.find((c) => c.driver.id === driverId);
             toast({
-                title: "🚛 Driver assigned!",
+                title: "?? Driver assigned!",
                 description: `${driver?.driver.full_name ?? "Driver"} assigned to this load`,
             });
             onAssigned?.(driverId);
@@ -192,7 +192,7 @@ export default function AutoDispatchPanel({
                             <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                         </Button>
                         {onClose && (
-                            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={onClose}>✕</Button>
+                            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={onClose}>x</Button>
                         )}
                     </div>
                 </div>
@@ -218,7 +218,7 @@ export default function AutoDispatchPanel({
                         {bestCandidate && (
                             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
                                 <div className="flex items-center gap-2">
-                                    <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[9px]">⭐ Best Match</Badge>
+                                    <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[9px]">? Best Match</Badge>
                                     <span className="text-xs text-muted-foreground">{bestCandidate.reason}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -230,7 +230,7 @@ export default function AutoDispatchPanel({
                                             <p className="text-sm font-semibold">{bestCandidate.driver.full_name}</p>
                                             <p className="text-[10px] text-muted-foreground">
                                                 {bestCandidate.distanceMiles !== null ? `${bestCandidate.distanceMiles} mi away` : bestCandidate.driver.hub}
-                                                {bestCandidate.activeLoads > 0 ? ` · ${bestCandidate.activeLoads} loads today` : " · Available"}
+                                                {bestCandidate.activeLoads > 0 ? ` ? ${bestCandidate.activeLoads} loads today` : " ? Available"}
                                             </p>
                                         </div>
                                     </div>

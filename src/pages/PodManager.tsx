@@ -1,8 +1,8 @@
-// ═══════════════════════════════════════════════════════════
-// POD MANAGER — Proof of Delivery & Load Documents
+// -----------------------------------------------------------
+// POD MANAGER -- Proof of Delivery & Load Documents
 // Dispatchers upload load docs (BOL, pickup, delivery photos).
-// Full 4-section layout: Search → Selected Load → Upload → All PODs
-// ═══════════════════════════════════════════════════════════
+// Full 4-section layout: Search -> Selected Load -> Upload -> All PODs
+// -----------------------------------------------------------
 import { useEffect, useState, useCallback, useRef, useDeferredValue } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-// ─── Types ──────────────────────────────────────────
+// --- Types ------------------------------------------
 type Load = {
     id: string;
     load_date: string;
@@ -69,7 +69,7 @@ type PodSubmission = {
 
 type DocType = "bol" | "pickup" | "delivery" | "other";
 
-// ─── Constants ──────────────────────────────────────
+// --- Constants --------------------------------------
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const POD_BUCKET = "pod-photos";
 const DOC_BUCKET = "documents";
@@ -99,7 +99,7 @@ function isPickup(sub: PodSubmission): boolean {
               sub.notes?.toLowerCase().startsWith("pickup:"));
 }
 
-// ─── Tiny helpers ────────────────────────────────────
+// --- Tiny helpers ------------------------------------
 function StatusIcon({ ok }: { ok: boolean }) {
     return ok
         ? <CheckCircle className="h-4 w-4 text-emerald-500 mx-auto" />
@@ -178,14 +178,14 @@ function DocCard({
     );
 }
 
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 // MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════
+// -----------------------------------------------------------
 export default function PodManager() {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    // ── React Query ──────────────────────────────────
+    // -- React Query ----------------------------------
     const queryClient = useQueryClient();
 
     const { data: loads = [], isLoading: loadsLoading } = useQuery({
@@ -233,14 +233,14 @@ export default function PodManager() {
 
     const loading = loadsLoading || subsLoading;
 
-    // ── Search / Selection ────────────────────────────
+    // -- Search / Selection ----------------------------
     const [search, setSearch] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
     const [selectedLoad, setSelectedLoad] = useState<Load | null>(null);
     const searchRef = useRef<HTMLDivElement>(null);
     const deferredSearch = useDeferredValue(search);
 
-    // ── Upload Panel ──────────────────────────────────
+    // -- Upload Panel ----------------------------------
     const [uploadType, setUploadType] = useState<DocType>("bol");
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -248,7 +248,7 @@ export default function PodManager() {
     const [dragOver, setDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ── Refetch helper for mutations ──────────────────
+    // -- Refetch helper for mutations ------------------
     const fetchData = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["pod-loads"] });
         queryClient.invalidateQueries({ queryKey: ["pod-submissions"] });
@@ -265,9 +265,9 @@ export default function PodManager() {
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    // ── Lookups ──────────────────────────────────────
+    // -- Lookups --------------------------------------
     const driverName = (id: string | null) =>
-        id ? (drivers.find(d => d.id === id)?.full_name ?? "—") : "—";
+        id ? (drivers.find(d => d.id === id)?.full_name ?? "--") : "--";
 
     const subsForLoad = (loadId: string) =>
         submissions.filter(s => s.load_id === loadId);
@@ -285,7 +285,7 @@ export default function PodManager() {
             .filter(s => s.load_id === loadId && !!s.signature_url)
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
-    // ── Search filter ────────────────────────────────
+    // -- Search filter --------------------------------
     const searchResults = deferredSearch.trim().length === 0
         ? loads.slice(0, 10)
         : loads.filter(l => {
@@ -300,7 +300,7 @@ export default function PodManager() {
         setShowDropdown(false);
     };
 
-    // ── Upload handler ───────────────────────────────
+    // -- Upload handler -------------------------------
     const handleUpload = async () => {
         if (!uploadFile || !selectedLoad || !user) return;
         setUploading(true);
@@ -341,7 +341,7 @@ export default function PodManager() {
             setUploadProgress(100);
 
             toast({
-                title: "Upload complete ✓",
+                title: "Upload complete v",
                 description: `${DOC_TYPE_OPTIONS.find(d => d.value === uploadType)?.label} saved.`,
             });
 
@@ -362,10 +362,10 @@ export default function PodManager() {
         setUploading(false);
     };
 
-    // ── Signature dialog ─────────────────────────────
+    // -- Signature dialog -----------------------------
     const [sigDialogUrl, setSigDialogUrl] = useState<string | null>(null);
 
-    // ── Drag & Drop ──────────────────────────────────
+    // -- Drag & Drop ----------------------------------
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setDragOver(false);
@@ -373,7 +373,7 @@ export default function PodManager() {
         if (file) setUploadFile(file);
     };
 
-    // ── Loading skeleton ─────────────────────────────
+    // -- Loading skeleton -----------------------------
     if (loading) {
         return (
             <div className="space-y-4 animate-in">
@@ -385,7 +385,7 @@ export default function PodManager() {
         );
     }
 
-    // ── Derived data for selected load ───────────────
+    // -- Derived data for selected load ---------------
     const selPickup   = selectedLoad ? pickupSub(selectedLoad.id)   : undefined;
     const selDelivery = selectedLoad ? deliverySub(selectedLoad.id) : undefined;
     const selSig      = selectedLoad ? signatureSub(selectedLoad.id): undefined;
@@ -393,14 +393,14 @@ export default function PodManager() {
     return (
         <div className="space-y-6 animate-in">
 
-            {/* ══════════════════════════════════════════
-                SECTION 1 — HEADER + SEARCH
-            ══════════════════════════════════════════ */}
+            {/* ------------------------------------------
+                SECTION 1 -- HEADER + SEARCH
+            ------------------------------------------ */}
             <div className="flex flex-col gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight gradient-text">POD Manager</h1>
                     <p className="text-muted-foreground text-sm mt-1">
-                        Search loads · View &amp; upload BOL / Pickup / Delivery photos · Track all PODs
+                        Search loads ? View &amp; upload BOL / Pickup / Delivery photos ? Track all PODs
                     </p>
                 </div>
 
@@ -410,7 +410,7 @@ export default function PodManager() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             className="pl-9 pr-10 h-11 text-sm"
-                            placeholder="Search by reference # or client name…"
+                            placeholder="Search by reference # or client name..."
                             value={search}
                             onChange={e => { setSearch(e.target.value); setShowDropdown(true); }}
                             onFocus={() => setShowDropdown(true)}
@@ -437,7 +437,7 @@ export default function PodManager() {
                                             {load.reference_number || "No Ref"}
                                         </div>
                                         <div className="text-xs text-muted-foreground truncate">
-                                            {load.client_name || "—"} · {format(new Date(load.load_date), "MM/dd/yy")} · {driverName(load.driver_id)}
+                                            {load.client_name || "--"} ? {format(new Date(load.load_date), "MM/dd/yy")} ? {driverName(load.driver_id)}
                                         </div>
                                     </div>
                                     <Badge
@@ -453,9 +453,9 @@ export default function PodManager() {
                 </div>
             </div>
 
-            {/* ══════════════════════════════════════════
-                SECTION 2 — SELECTED LOAD DOCUMENT PANEL
-            ══════════════════════════════════════════ */}
+            {/* ------------------------------------------
+                SECTION 2 -- SELECTED LOAD DOCUMENT PANEL
+            ------------------------------------------ */}
             {selectedLoad ? (
                 <Card className="relative overflow-hidden">
                     {/* Header strip */}
@@ -465,7 +465,7 @@ export default function PodManager() {
                             <div>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <Package className="h-4 w-4 text-blue-500" />
-                                    Load #{selectedLoad.reference_number || "—"}
+                                    Load #{selectedLoad.reference_number || "--"}
                                     <Badge
                                         variant="secondary"
                                         className={`text-[10px] ml-1 ${LOAD_STATUS_COLORS[selectedLoad.status] || ""}`}
@@ -475,14 +475,14 @@ export default function PodManager() {
                                 </CardTitle>
                                 <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
                                     <div>
-                                        <span className="font-medium text-foreground">{selectedLoad.client_name || "—"}</span>
-                                        {" · "}Driver: <span className="font-medium text-foreground">{driverName(selectedLoad.driver_id)}</span>
-                                        {" · "}Date: <span className="font-medium text-foreground">{format(new Date(selectedLoad.load_date), "MMM d, yyyy")}</span>
+                                        <span className="font-medium text-foreground">{selectedLoad.client_name || "--"}</span>
+                                        {" ? "}Driver: <span className="font-medium text-foreground">{driverName(selectedLoad.driver_id)}</span>
+                                        {" ? "}Date: <span className="font-medium text-foreground">{format(new Date(selectedLoad.load_date), "MMM d, yyyy")}</span>
                                     </div>
                                     <div className="text-xs flex items-center gap-1">
-                                        <span className="truncate max-w-[200px]">{selectedLoad.pickup_address || "—"}</span>
-                                        <span className="text-muted-foreground">→</span>
-                                        <span className="truncate max-w-[200px]">{selectedLoad.delivery_address || "—"}</span>
+                                        <span className="truncate max-w-[200px]">{selectedLoad.pickup_address || "--"}</span>
+                                        <span className="text-muted-foreground">-></span>
+                                        <span className="truncate max-w-[200px]">{selectedLoad.delivery_address || "--"}</span>
                                     </div>
                                 </div>
                             </div>
@@ -581,7 +581,7 @@ export default function PodManager() {
                                                 ? <Camera className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                                                 : <Shield className="h-3.5 w-3.5 text-purple-500 shrink-0" />
                                             }
-                                            <span className="truncate flex-1 text-muted-foreground">{sub.notes || "—"}</span>
+                                            <span className="truncate flex-1 text-muted-foreground">{sub.notes || "--"}</span>
                                             <span className="text-muted-foreground shrink-0">
                                                 {sub.captured_at
                                                     ? format(new Date(sub.captured_at), "MM/dd h:mm a")
@@ -609,9 +609,9 @@ export default function PodManager() {
                 </Card>
             )}
 
-            {/* ══════════════════════════════════════════
-                SECTION 3 — UPLOAD PANEL
-            ══════════════════════════════════════════ */}
+            {/* ------------------------------------------
+                SECTION 3 -- UPLOAD PANEL
+            ------------------------------------------ */}
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -701,7 +701,7 @@ export default function PodManager() {
                     {uploading && uploadProgress > 0 && (
                         <div className="space-y-1">
                             <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>Uploading…</span>
+                                <span>Uploading...</span>
                                 <span>{uploadProgress}%</span>
                             </div>
                             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -719,17 +719,17 @@ export default function PodManager() {
                         onClick={handleUpload}
                     >
                         {uploading ? (
-                            <><Loader2 className="h-4 w-4 animate-spin" /> Uploading…</>
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</>
                         ) : (
-                            <><Upload className="h-4 w-4" /> Upload to {selectedLoad ? `Load #${selectedLoad.reference_number || "—"}` : "Load"}</>
+                            <><Upload className="h-4 w-4" /> Upload to {selectedLoad ? `Load #${selectedLoad.reference_number || "--"}` : "Load"}</>
                         )}
                     </Button>
                 </CardContent>
             </Card>
 
-            {/* ══════════════════════════════════════════
-                SECTION 4 — ALL PODs TABLE
-            ══════════════════════════════════════════ */}
+            {/* ------------------------------------------
+                SECTION 4 -- ALL PODs TABLE
+            ------------------------------------------ */}
             <Card>
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -796,10 +796,10 @@ export default function PodManager() {
                                                 {format(new Date(load.load_date), "MM/dd")}
                                             </TableCell>
                                             <TableCell className="font-mono text-xs font-semibold">
-                                                {load.reference_number || "—"}
+                                                {load.reference_number || "--"}
                                             </TableCell>
                                             <TableCell className="text-sm max-w-[130px] truncate">
-                                                {load.client_name || "—"}
+                                                {load.client_name || "--"}
                                             </TableCell>
                                             <TableCell className="text-sm">
                                                 {driverName(load.driver_id)}
@@ -817,7 +817,7 @@ export default function PodManager() {
                                                 {hasSig ? (
                                                     <PenLine className="h-4 w-4 text-purple-500 mx-auto" title="Signature on file" />
                                                 ) : (
-                                                    <span className="text-muted-foreground/30 text-xs mx-auto block text-center">—</span>
+                                                    <span className="text-muted-foreground/30 text-xs mx-auto block text-center">--</span>
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-center">
@@ -838,7 +838,7 @@ export default function PodManager() {
                 </CardContent>
             </Card>
 
-            {/* ── Signature full-size dialog ─────────────────────────────────── */}
+            {/* -- Signature full-size dialog ----------------------------------- */}
             <Dialog open={!!sigDialogUrl} onOpenChange={() => setSigDialogUrl(null)}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>

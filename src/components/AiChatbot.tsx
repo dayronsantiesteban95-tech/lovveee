@@ -169,7 +169,7 @@ export default function AiChatbot() {
             {messages.length === 0 && (
               <div className="space-y-3 pt-4">
                 <p className="text-sm text-muted-foreground text-center">
-                  👋 Hi! I'm your CRM assistant. Try one of these:
+                  ?? Hi! I'm your CRM assistant. Try one of these:
                 </p>
                 <div className="flex flex-col gap-2">
                   {SUGGESTIONS.map((s) => (

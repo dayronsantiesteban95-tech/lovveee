@@ -3,14 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 // Role hierarchy for the Anika dispatcher app:
-//   owner      → Full access. Can delete loads, manage QB OAuth, delete users.
-//   dispatcher → Operational access. Can add/remove users, see billing, create/edit loads.
+//   owner      -> Full access. Can delete loads, manage QB OAuth, delete users.
+//   dispatcher -> Operational access. Can add/remove users, see billing, create/edit loads.
 //                Cannot delete loads permanently or access QB OAuth settings.
-//   driver     → No dispatcher app access (redirected to WrongApp). Uses driver mobile app only.
+//   driver     -> No dispatcher app access (redirected to WrongApp). Uses driver mobile app only.
 //
 // TODO(driver-rls): Driver data isolation must be enforced at the Supabase RLS level
 // on the driver app side. Drivers should only be able to SELECT/UPDATE their own rows
-// in daily_loads (WHERE driver_id = auth.uid()). Do NOT implement here — enforce via
+// in daily_loads (WHERE driver_id = auth.uid()). Do NOT implement here -- enforce via
 // Supabase RLS policies on the driver app's Supabase project.
 
 export type UserRole = "owner" | "dispatcher" | "driver";
@@ -34,10 +34,10 @@ export function useUserRole() {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) {
-          // Don't crash — default to dispatcher
+          // Don't crash -- default to dispatcher
           setRole("dispatcher");
         } else if (!data || !data.role) {
-          // No role row yet (new user) — default to dispatcher
+          // No role row yet (new user) -- default to dispatcher
           setRole("dispatcher");
         } else {
           setRole((data.role as UserRole) ?? "dispatcher");
@@ -45,7 +45,7 @@ export function useUserRole() {
         setLoading(false);
       })
       .catch(() => {
-        // Unexpected error — never crash, default gracefully
+        // Unexpected error -- never crash, default gracefully
         setRole("dispatcher");
         setLoading(false);
       });

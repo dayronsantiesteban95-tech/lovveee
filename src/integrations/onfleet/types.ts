@@ -1,4 +1,4 @@
-// ─── Onfleet API Types ─────────────────────────────────
+// --- Onfleet API Types ---------------------------------
 // See: https://docs.onfleet.com/reference
 
 export interface OnfleetLocation {
@@ -123,7 +123,7 @@ export interface OnfleetWebhookPayload {
     triggerName: OnfleetWebhookTrigger;
 }
 
-// ─── Mapping helpers ───────────────────────────────────
+// --- Mapping helpers -----------------------------------
 
 /** Maps Onfleet task state to our load status */
 export function mapOnfleetStatus(state: OnfleetTaskState, success?: boolean): string {
@@ -144,7 +144,7 @@ export function calcWaitMinutes(events: OnfleetCompletionEvent[]): number {
     return Math.round((departure.time - arrival.time) / 60_000);
 }
 
-/** Extracts service time (arrival → completion) in minutes */
+/** Extracts service time (arrival -> completion) in minutes */
 export function calcServiceMinutes(events: OnfleetCompletionEvent[]): number {
     const arrival = events.find((e) => e.name === "arrival");
     const completion = events.find((e) => e.name === "completion");

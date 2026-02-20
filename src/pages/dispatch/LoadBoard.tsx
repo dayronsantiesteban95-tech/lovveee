@@ -36,7 +36,7 @@ import DispatchBlastPanel from "@/components/DispatchBlast";
 import type { Load, Driver } from "./types";
 import { useState } from "react";
 
-// ════════════════════Constants ======================================
+// --------------------Constants ======================================
 const STATUSES = [
     { value: "pending", label: "Pending", color: "bg-slate-400", pill: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
     { value: "assigned", label: "Assigned", color: "bg-blue-500", pill: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
@@ -107,7 +107,7 @@ export default function LoadBoard({
     const [clonePrefill, setClonePrefill] = useState<ReturnType<typeof cloneLoadData> | null>(null);
 
     const statusInfo = (s: string) => STATUSES.find((st) => st.value === s) ?? STATUSES[0];
-    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "—";
+    const driverName = (id: string | null) => drivers.find((d) => d.id === id)?.full_name ?? "--";
 
     return (
         <>
@@ -215,7 +215,7 @@ export default function LoadBoard({
                                                         <Package className="h-6 w-6 opacity-50" />
                                                     </div>
                                                     <p className="text-sm font-semibold text-foreground">No loads for {selectedDate}</p>
-                                                    <p className="text-xs opacity-60">Open the Tools panel → New to add the first load for this date.</p>
+                                                    <p className="text-xs opacity-60">Open the Tools panel -> New to add the first load for this date.</p>
                                                 </div>
                                             )}
                                         </TableCell>
@@ -227,7 +227,7 @@ export default function LoadBoard({
                                         <TableRow key={load.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => onLoadClick(load)}>
                                             <TableCell className="font-mono text-xs">
                                                 <div className="flex items-center gap-1.5">
-                                                    {load.reference_number || "—"}
+                                                    {load.reference_number || "--"}
                                                     {unreadMap[load.id] > 0 && (
                                                         <span className="inline-flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] px-0.5">
                                                             {unreadMap[load.id] > 99 ? '99+' : unreadMap[load.id]}
@@ -235,19 +235,19 @@ export default function LoadBoard({
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "☀️ Día" : "🌙 Noche"}</Badge></TableCell>
+                                            <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "?? D?a" : "?? Noche"}</Badge></TableCell>
                                             <TableCell className="font-medium text-sm">{driverName(load.driver_id)}</TableCell>
-                                            <TableCell className="text-sm">{load.client_name || "—"}</TableCell>
-                                            <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "—"}</TableCell>
+                                            <TableCell className="text-sm">{load.client_name || "--"}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "--"}</TableCell>
                                             <TableCell className="text-right font-mono text-sm">{Number(load.miles).toFixed(0)}</TableCell>
-                                            <TableCell className="text-right font-mono text-sm">{Number(load.revenue) > 0 ? fmtMoney(Number(load.revenue)) : "—"}</TableCell>
+                                            <TableCell className="text-right font-mono text-sm">{Number(load.revenue) > 0 ? fmtMoney(Number(load.revenue)) : "--"}</TableCell>
                                             <TableCell>
                                                 {load.wait_time_minutes > 0 ? (
                                                     <Badge className={`${waitBadgeClass(load.wait_time_minutes)} text-[10px]`}>
                                                         {fmtWait(load.wait_time_minutes)}
-                                                        {load.wait_time_minutes >= DETENTION_THRESHOLD && " ⚠️"}
+                                                        {load.wait_time_minutes >= DETENTION_THRESHOLD && " ??"}
                                                     </Badge>
-                                                ) : <span className="text-muted-foreground text-xs">—</span>}
+                                                ) : <span className="text-muted-foreground text-xs">--</span>}
                                             </TableCell>
                                             <TableCell>
                                                 <ETABadge
@@ -266,7 +266,7 @@ export default function LoadBoard({
                                                     </span>
                                                 )}
                                                 {load.status !== "in_progress" && (!load.eta_status || load.eta_status === "unknown") && (
-                                                    <span className="text-muted-foreground text-xs">—</span>
+                                                    <span className="text-muted-foreground text-xs">--</span>
                                                 )}
                                             </TableCell>
                                             {/* == Status cell: badge + next-action button == */}
@@ -331,7 +331,7 @@ export default function LoadBoard({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground">
-                                                {load.start_time && load.end_time ? `${load.start_time}—${load.end_time}` : load.start_time || "—"}
+                                                {load.start_time && load.end_time ? `${load.start_time}--${load.end_time}` : load.start_time || "--"}
                                             </TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex gap-1">
@@ -339,7 +339,7 @@ export default function LoadBoard({
                                                         <Pencil className="h-3 w-3" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" className="h-7 w-7" title="Clone load"
-                                                        onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "📋 Load cloned", description: "Edit and save the cloned load" }); }}>
+                                                        onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "?? Load cloned", description: "Edit and save the cloned load" }); }}>
                                                         <Copy className="h-3 w-3" />
                                                     </Button>
                                                     {!load.driver_id && (
@@ -391,7 +391,7 @@ export default function LoadBoard({
                                                                                 },
                                                                                 driverName(load.driver_id),
                                                                             );
-                                                                            toast({ title: "📔 Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                            toast({ title: "?? Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
                                                                         }}
                                                                     >
                                                                         <ReceiptText className="h-3.5 w-3.5" />

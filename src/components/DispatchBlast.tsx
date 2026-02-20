@@ -1,13 +1,13 @@
 /**
- * ═══════════════════════════════════════════════════════════
- * DispatchBlast — Load Broadcasting System
+ * -----------------------------------------------------------
+ * DispatchBlast -- Load Broadcasting System
  *
- * The dispatcher's "blast button" — select a load, pick drivers,
+ * The dispatcher's "blast button" -- select a load, pick drivers,
  * and broadcast availability. Drivers express interest,
  * dispatcher confirms the assignment.
  *
  * Rule: Dispatcher assigns all loads. Blast = availability check.
- * ═══════════════════════════════════════════════════════════
+ * -----------------------------------------------------------
  */
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +32,7 @@ import {
     type BlastPriority,
 } from "@/hooks/useDispatchBlast";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 interface Driver {
     id: string;
@@ -64,16 +64,16 @@ interface DispatchBlastPanelProps {
     onLoadAssigned?: (loadId: string, driverId: string) => void;
 }
 
-// ─── Priority config ───────────────────────────────────
+// --- Priority config -----------------------------------
 
 const PRIORITY_CONFIG: Record<BlastPriority, { label: string; color: string; icon: string; defaultMinutes: number }> = {
-    low: { label: "Low", color: "bg-slate-500/15 text-slate-600 border-slate-500/20", icon: "📋", defaultMinutes: 60 },
-    normal: { label: "Normal", color: "bg-blue-500/15 text-blue-600 border-blue-500/20", icon: "📡", defaultMinutes: 30 },
-    high: { label: "High", color: "bg-orange-500/15 text-orange-600 border-orange-500/20", icon: "🔥", defaultMinutes: 15 },
-    urgent: { label: "URGENT", color: "bg-red-500/15 text-red-600 border-red-500/20", icon: "🚨", defaultMinutes: 5 },
+    low: { label: "Low", color: "bg-slate-500/15 text-slate-600 border-slate-500/20", icon: "??", defaultMinutes: 60 },
+    normal: { label: "Normal", color: "bg-blue-500/15 text-blue-600 border-blue-500/20", icon: "??", defaultMinutes: 30 },
+    high: { label: "High", color: "bg-orange-500/15 text-orange-600 border-orange-500/20", icon: "??", defaultMinutes: 15 },
+    urgent: { label: "URGENT", color: "bg-red-500/15 text-red-600 border-red-500/20", icon: "??", defaultMinutes: 5 },
 };
 
-// ─── Component ─────────────────────────────────────────
+// --- Component -----------------------------------------
 
 export default function DispatchBlastPanel({
     loads,
@@ -84,7 +84,7 @@ export default function DispatchBlastPanel({
 }: DispatchBlastPanelProps) {
     const { blasts, loading, analytics, createBlast, cancelBlast, confirmAssignment, refresh } = useDispatchBlast();
 
-    // ── Form state ──────────────────────────────
+    // -- Form state ------------------------------
     const [selectedLoad, setSelectedLoad] = useState<string>(selectedLoadId ?? "");
     const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set());
     const [message, setMessage] = useState("");
@@ -92,7 +92,7 @@ export default function DispatchBlastPanel({
     const [expiryMinutes, setExpiryMinutes] = useState(30);
     const [sending, setSending] = useState(false);
 
-    // ── UI state ────────────────────────────────
+    // -- UI state --------------------------------
     const [showCreate, setShowCreate] = useState(!compact);
     const [expandedBlast, setExpandedBlast] = useState<string | null>(null);
 
@@ -106,7 +106,7 @@ export default function DispatchBlastPanel({
         setExpiryMinutes(PRIORITY_CONFIG[priority].defaultMinutes);
     }, [priority]);
 
-    // ── Eligible loads (unassigned / not already blasted) ──
+    // -- Eligible loads (unassigned / not already blasted) --
     const eligibleLoads = useMemo(
         () => loads.filter((l) => ["assigned", "pending", "unassigned"].includes(l.status) || l.id === selectedLoad),
         [loads, selectedLoad],
@@ -117,7 +117,7 @@ export default function DispatchBlastPanel({
         [loads, selectedLoad],
     );
 
-    // ── Filter drivers by hub ───────────────────
+    // -- Filter drivers by hub -------------------
     const hubDrivers = useMemo(() => {
         if (!currentLoad) return drivers.filter((d) => d.status === "active");
         return drivers.filter(
@@ -130,7 +130,7 @@ export default function DispatchBlastPanel({
         [drivers, hubDrivers],
     );
 
-    // ── Driver selection ────────────────────────
+    // -- Driver selection ------------------------
     const toggleDriver = (id: string) => {
         setSelectedDrivers((prev) => {
             const next = new Set(prev);
@@ -149,7 +149,7 @@ export default function DispatchBlastPanel({
 
     const clearSelection = () => setSelectedDrivers(new Set());
 
-    // ── Send blast ──────────────────────────────
+    // -- Send blast ------------------------------
     const handleBlast = async () => {
         if (!selectedLoad || selectedDrivers.size === 0) return;
         setSending(true);
@@ -172,17 +172,17 @@ export default function DispatchBlastPanel({
         setSending(false);
     };
 
-    // ── Active blasts for the selected load ─────
+    // -- Active blasts for the selected load -----
     const loadBlasts = useMemo(
         () => blasts.filter((b) => b.load_id === selectedLoad && b.status === "active"),
         [blasts, selectedLoad],
     );
 
-    // ── Render ──────────────────────────────────
+    // -- Render ----------------------------------
 
     return (
         <div className="space-y-4">
-            {/* ── Header with stats ─────────────────── */}
+            {/* -- Header with stats ------------------- */}
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold flex items-center gap-2">
                     <Radio className="h-4 w-4 text-primary" />
@@ -214,7 +214,7 @@ export default function DispatchBlastPanel({
                 </div>
             </div>
 
-            {/* ── Quick Stats ──────────────────────── */}
+            {/* -- Quick Stats ------------------------ */}
             {!compact && (
                 <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5 text-center">
@@ -236,7 +236,7 @@ export default function DispatchBlastPanel({
                 </div>
             )}
 
-            {/* ── Create Blast Form ─────────────────── */}
+            {/* -- Create Blast Form ------------------- */}
             {showCreate && (
                 <Card className="border-primary/20 shadow-md shadow-primary/5">
                     <CardContent className="pt-4 pb-3 space-y-3">
@@ -252,7 +252,7 @@ export default function DispatchBlastPanel({
                                         <SelectItem key={l.id} value={l.id} className="text-xs">
                                             <span className="font-mono">{l.reference_number ?? l.id.slice(0, 8)}</span>
                                             <span className="text-muted-foreground ml-2">
-                                                {l.client_name ?? "—"} · {l.miles}mi · ${l.revenue}
+                                                {l.client_name ?? "--"} ? {l.miles}mi ? ${l.revenue}
                                             </span>
                                         </SelectItem>
                                     ))}
@@ -272,7 +272,7 @@ export default function DispatchBlastPanel({
                                 </div>
                                 <div className="flex items-center gap-1 text-muted-foreground">
                                     <MapPin className="h-3 w-3" />
-                                    {currentLoad.pickup_address ?? "—"} → {currentLoad.delivery_address ?? "—"}
+                                    {currentLoad.pickup_address ?? "--"} -> {currentLoad.delivery_address ?? "--"}
                                 </div>
                                 <div className="flex items-center gap-3 text-muted-foreground">
                                     <span className="flex items-center gap-1">
@@ -443,7 +443,7 @@ export default function DispatchBlastPanel({
                 </Card>
             )}
 
-            {/* ── Active Blasts ─────────────────────── */}
+            {/* -- Active Blasts ----------------------- */}
             <div className="space-y-2">
                 {loading && (
                     <div className="text-xs text-muted-foreground text-center py-4 flex items-center justify-center gap-2">
@@ -477,7 +477,7 @@ export default function DispatchBlastPanel({
     );
 }
 
-// ─── Sub-components ────────────────────────────────────
+// --- Sub-components ------------------------------------
 
 function DriverChip({
     driver,
@@ -603,7 +603,7 @@ function BlastCard({
                         )}
                         {isAccepted && acceptedDriver && (
                             <span className="text-[10px] text-green-600 font-medium">
-                                ✓ {acceptedDriver}
+                                v {acceptedDriver}
                             </span>
                         )}
                     </div>

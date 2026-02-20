@@ -1,5 +1,5 @@
 /**
- * useDriverGPS — Real-time GPS tracking hook for the Driver Portal
+ * useDriverGPS -- Real-time GPS tracking hook for the Driver Portal
  *
  * Uses the browser's Geolocation API (FREE, works on every phone)
  * and sends position pings to Supabase every N seconds.
@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 export interface GPSPosition {
     latitude: number;
@@ -38,11 +38,11 @@ interface UseDriverGPSOptions {
     enabled?: boolean;         // master on/off switch
 }
 
-// ─── Battery API helper ────────────────────────────────
+// --- Battery API helper --------------------------------
 
 async function getBatteryLevel(): Promise<number | null> {
     try {
-        // @ts-expect-error — Battery API exists on phones/chrome but not typed
+        // @ts-expect-error -- Battery API exists on phones/chrome but not typed
         const battery = await navigator.getBattery?.();
         return battery ? Math.round(battery.level * 100) : null;
     } catch {
@@ -50,11 +50,11 @@ async function getBatteryLevel(): Promise<number | null> {
     }
 }
 
-// ─── Movement detection ────────────────────────────────
+// --- Movement detection --------------------------------
 
 function isMoving(speed: number | null, prevPos: GPSPosition | null, newPos: GPSPosition): boolean {
     // Speed-based (most reliable on mobile)
-    if (speed !== null && speed > 1.5) return true; // > 1.5 m/s ≈ > 3.3 mph
+    if (speed !== null && speed > 1.5) return true; // > 1.5 m/s ? > 3.3 mph
     // Fallback: distance-based if speed not available
     if (prevPos) {
         const dLat = Math.abs(newPos.latitude - prevPos.latitude);
@@ -64,7 +64,7 @@ function isMoving(speed: number | null, prevPos: GPSPosition | null, newPos: GPS
     return false;
 }
 
-// ─── Hook ──────────────────────────────────────────────
+// --- Hook ----------------------------------------------
 
 export function useDriverGPS({
     driverId,
@@ -135,7 +135,7 @@ export function useDriverGPS({
                 lastPingAt: new Date().toISOString(),
             }));
         } else {
-            // GPS ping failed — will retry on next position update
+            // GPS ping failed -- will retry on next position update
         }
     }, [driverId, activeLoadId]);
 

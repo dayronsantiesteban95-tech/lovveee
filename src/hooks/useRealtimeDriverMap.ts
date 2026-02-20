@@ -1,16 +1,16 @@
 /**
- * useRealtimeDriverMap — Subscribe to live GPS updates via Supabase Realtime
+ * useRealtimeDriverMap -- Subscribe to live GPS updates via Supabase Realtime
  *
  * Used by the dispatch dashboard to show real-time driver positions
  * without polling. Updates arrive via WebSocket the moment a driver
  * inserts a new GPS ping.
  *
- * Cost: $0 — included in Supabase plan.
+ * Cost: $0 -- included in Supabase plan.
  */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// ─── Types ─────────────────────────────────────────────
+// --- Types ---------------------------------------------
 
 export interface LiveDriver {
     driverId: string;
@@ -34,7 +34,7 @@ interface UseRealtimeDriverMapReturn {
     refresh: () => Promise<void>;
 }
 
-// ─── Hook ──────────────────────────────────────────────
+// --- Hook ----------------------------------------------
 
 export function useRealtimeDriverMap(): UseRealtimeDriverMapReturn {
     const [drivers, setDrivers] = useState<LiveDriver[]>([]);
@@ -116,7 +116,7 @@ export function useRealtimeDriverMap(): UseRealtimeDriverMapReturn {
                                     : d,
                             );
                         }
-                        // New driver appeared — we need their name, so re-fetch
+                        // New driver appeared -- we need their name, so re-fetch
                         fetchPositions();
                         return prev;
                     });

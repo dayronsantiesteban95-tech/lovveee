@@ -274,7 +274,7 @@ export function NotificationCenter() {
                                 className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
                                 onClick={handleNavigateToTask}
                             >
-                                View Task Board →
+                                View Task Board ->
                             </Button>
                         </div>
                     </>
