@@ -214,27 +214,25 @@ function ensureChannel(): void {
             }
         )
         .subscribe((status) => {
+            // Channel-level status from Supabase Realtime
             if (status === "SUBSCRIBED") {
                 setStatus("connected");
             } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
                 setStatus("reconnecting");
+                // Schedule a reconnect attempt
+                setTimeout(() => {
+                    if (subscriberCount > 0) {
+                        void fetchAllDriverLocations();
+                        supabase.realtime.connect();
+                    }
+                }, 3_000);
             } else if (status === "CLOSED") {
                 setStatus("disconnected");
             }
         });
-
-    // -- Reconnection logic via websocket-level events --
-    supabase.realtime.onOpen(() => setStatus("connected"));
-    supabase.realtime.onClose(() => {
-        setStatus("disconnected");
-        // Attempt to reconnect after a brief delay
-        setTimeout(() => {
-            if (subscriberCount > 0) {
-                supabase.realtime.connect();
-            }
-        }, 3_000);
-    });
-    supabase.realtime.onError(() => setStatus("disconnected"));
+    // NOTE: supabase.realtime.onOpen/onClose/onError are not part of the public
+    // Supabase JS v2 API -- status changes are handled exclusively via the
+    // .subscribe() callback above.
 }
 
 function destroyChannel(): void {
