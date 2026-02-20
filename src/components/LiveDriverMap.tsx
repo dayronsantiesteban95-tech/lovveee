@@ -1,10 +1,10 @@
 /**
- * LiveDriverMap — Bulletproof Google Maps JS API integration.
+ * LiveDriverMap -- Bulletproof Google Maps JS API integration.
  *
  * Key design decisions:
  * - Uses `declare const google: any` to avoid @types/google.maps dependency issues
  * - Polls window.google?.maps every 200ms (max 15s) before initializing
- * - Never calls document.createElement — Maps is already in index.html static tag
+ * - Never calls document.createElement -- Maps is already in index.html static tag
  * - Singleton useRealtimeDriverLocations hook (no duplicate subscriptions)
  * - Status-colored SVG markers with info windows
  * - Auto-fits bounds when drivers update
@@ -17,14 +17,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Truck } from "lucide-react";
 import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// -- Constants -----------------------------------------------------------------
 
 const PHOENIX_CENTER = { lat: 33.4484, lng: -112.074 };
 const DEFAULT_ZOOM = 11;
 const POLL_INTERVAL_MS = 200;
 const POLL_TIMEOUT_MS = 15_000;
 
-// ── Status color map ──────────────────────────────────────────────────────────
+// -- Status color map ----------------------------------------------------------
 
 const STATUS_COLORS: Record<string, string> = {
   in_progress:      "#22c55e", // green
@@ -40,7 +40,7 @@ function statusColor(status?: string | null): string {
   return STATUS_COLORS[status ?? "idle"] ?? STATUS_COLORS.idle;
 }
 
-// ── Dark map styles matching app theme ────────────────────────────────────────
+// -- Dark map styles matching app theme ----------------------------------------
 
 const DARK_MAP_STYLES = [
   { elementType: "geometry",              stylers: [{ color: "#0f172a" }] },
@@ -61,11 +61,11 @@ const DARK_MAP_STYLES = [
   { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#0f172a" }] },
 ];
 
-// ── Wait for Maps API (loaded via static script tag in index.html) ────────────
+// -- Wait for Maps API (loaded via static script tag in index.html) ------------
 
 function waitForMaps(): Promise<boolean> {
   return new Promise((resolve) => {
-    // Already available — resolve immediately
+    // Already available -- resolve immediately
     try {
       if (
         typeof window !== "undefined" &&
@@ -75,7 +75,7 @@ function waitForMaps(): Promise<boolean> {
         return;
       }
     } catch {
-      // ignore — keep polling
+      // ignore -- keep polling
     }
 
     let elapsed = 0;
@@ -92,13 +92,13 @@ function waitForMaps(): Promise<boolean> {
       }
       if (elapsed >= POLL_TIMEOUT_MS) {
         clearInterval(interval);
-        resolve(false); // timed out — caller shows error state
+        resolve(false); // timed out -- caller shows error state
       }
     }, POLL_INTERVAL_MS);
   });
 }
 
-// ── Build SVG marker icon ─────────────────────────────────────────────────────
+// -- Build SVG marker icon -----------------------------------------------------
 
 function buildMarkerIcon(
   initials: string,
@@ -126,7 +126,7 @@ function buildMarkerIcon(
   };
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// -- Component -----------------------------------------------------------------
 
 export default function LiveDriverMap() {
   const { drivers, realtimeStatus } = useRealtimeDriverLocations();
@@ -141,7 +141,7 @@ export default function LiveDriverMap() {
   const infoWindowRef  = useRef<any>(null);
   const initStartedRef = useRef(false);
 
-  // ── Initialize map once Google Maps API is available ──────────────────────
+  // -- Initialize map once Google Maps API is available ----------------------
   useEffect(() => {
     if (initStartedRef.current) return;
     initStartedRef.current = true;
@@ -175,14 +175,14 @@ export default function LiveDriverMap() {
     });
   }, []);
 
-  // ── Build marker icon (stable callback) ──────────────────────────────────
+  // -- Build marker icon (stable callback) ----------------------------------
   const makeIcon = useCallback(
     (initials: string, color: string, isSelected: boolean) =>
       buildMarkerIcon(initials, color, isSelected, mapInstanceRef.current),
     [],
   );
 
-  // ── Sync markers whenever drivers or selection changes ───────────────────
+  // -- Sync markers whenever drivers or selection changes -------------------
   useEffect(() => {
     if (!mapReady || !mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
@@ -219,7 +219,7 @@ export default function LiveDriverMap() {
           optimized: false,
         });
 
-        // Click — show info window + select driver
+        // Click -- show info window + select driver
         marker.addListener("click", () => {
           setSelectedDriverId((prev) =>
             prev === driver.driver_id ? null : driver.driver_id,
@@ -241,7 +241,7 @@ export default function LiveDriverMap() {
                 <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">Last ping: ${lastSeen}</div>
                 ${
                   activeLoad
-                    ? `<div style="font-size:11px;background:#1e3a5f;border-radius:6px;padding:4px 8px;color:#60a5fa;">🚚 On active load</div>`
+                    ? `<div style="font-size:11px;background:#1e3a5f;border-radius:6px;padding:4px 8px;color:#60a5fa;">?? On active load</div>`
                     : `<div style="font-size:11px;color:#64748b;">No active load</div>`
                 }
               </div>
@@ -274,14 +274,14 @@ export default function LiveDriverMap() {
     }
   }, [drivers, mapReady, selectedDriverId, makeIcon]);
 
-  // ── Status dot config ─────────────────────────────────────────────────────
+  // -- Status dot config -----------------------------------------------------
   const statusDot = {
     connected:    { color: "bg-emerald-400", label: "Live" },
     reconnecting: { color: "bg-amber-400",   label: "Reconnecting" },
     disconnected: { color: "bg-red-400",      label: "Disconnected" },
   }[realtimeStatus];
 
-  // ── Timed-out / no-key state ──────────────────────────────────────────────
+  // -- Timed-out / no-key state ----------------------------------------------
   if (mapsTimedOut) {
     return (
       <div className="absolute inset-0 bg-[hsl(224,40%,4%)] flex items-center justify-center">
@@ -317,7 +317,7 @@ export default function LiveDriverMap() {
       {/* Google Maps container */}
       <div ref={mapDivRef} className="absolute inset-0 w-full h-full" />
 
-      {/* Loading skeleton — shown while waiting for Maps API */}
+      {/* Loading skeleton -- shown while waiting for Maps API */}
       {!mapReady && !mapsTimedOut && (
         <div className="absolute inset-0 bg-[hsl(224,40%,4%)] flex items-center justify-center z-10">
           <div className="text-center space-y-3">
@@ -336,7 +336,7 @@ export default function LiveDriverMap() {
         </div>
       )}
 
-      {/* Driver list overlay — bottom left */}
+      {/* Driver list overlay -- bottom left */}
       {mapReady && drivers.length > 0 && (
         <div className="absolute bottom-16 left-4 z-20 space-y-1 max-h-52 overflow-y-auto">
           {drivers.map((driver) => {
@@ -388,7 +388,7 @@ export default function LiveDriverMap() {
         </div>
       )}
 
-      {/* Live indicator pill — bottom left */}
+      {/* Live indicator pill -- bottom left */}
       <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10 pointer-events-none">
         <span className="relative flex h-2 w-2">
           {realtimeStatus === "connected" && (
