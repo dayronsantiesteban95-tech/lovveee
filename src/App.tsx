@@ -146,7 +146,14 @@ const App = () => (
                 <Route path="/sop-wiki" element={<SopWiki />} />
                 <Route path="/team" element={<TeamManagement />} />
                 <Route path="/rate-calculator" element={<RateCalculator />} />
-                <Route path="/command-center" element={<CommandCenter />} />
+                <Route
+                  path="/command-center"
+                  element={
+                    <Sentry.ErrorBoundary fallback={<RouteFallback />}>
+                      <CommandCenter />
+                    </Sentry.ErrorBoundary>
+                  }
+                />
                 <Route
                   path="/dispatch"
                   element={
