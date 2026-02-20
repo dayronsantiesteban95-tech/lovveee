@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -41,7 +42,7 @@ type Task = {
 type Profile = { user_id: string; full_name: string };
 type TaskLeadLink = { task_id: string; lead_id: string; leads?: { company_name: string } };
 
-export default function TaskBoard() {
+function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [leads, setLeads] = useState<{ id: string; company_name: string }[]>([]);
@@ -91,7 +92,8 @@ export default function TaskBoard() {
 
   const handleDrop = async (status: "todo" | "in_progress" | "done") => {
     if (!draggedId) return;
-    await supabase.from("tasks").update({ status }).eq("id", draggedId);
+    const { error: dragErr } = await supabase.from("tasks").update({ status }).eq("id", draggedId);
+    if (dragErr) toast({ title: "Error updating task", description: dragErr.message, variant: "destructive" });
     setDraggedId(null);
   };
 
@@ -143,7 +145,8 @@ export default function TaskBoard() {
       else {
         const leadId = fd.get("linked_lead") as string;
         if (leadId && newTask) {
-          await supabase.from("task_lead_links").insert({ task_id: newTask.id, lead_id: leadId });
+          const { error: linkErr } = await supabase.from("task_lead_links").insert({ task_id: newTask.id, lead_id: leadId });
+        if (linkErr) console.warn("task_lead_links insert failed:", linkErr.message);
         }
         const assigneeName = payload.assigned_to ? profiles.find(p => p.user_id === payload.assigned_to)?.full_name : null;
         if (assigneeName && payload.assigned_to !== user.id) {
@@ -157,7 +160,8 @@ export default function TaskBoard() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await supabase.from("tasks").delete().eq("id", deleteId);
+    const { error: delErr } = await supabase.from("tasks").delete().eq("id", deleteId);
+    if (delErr) { toast({ title: "Error deleting task", description: delErr.message, variant: "destructive" }); return; }
     setDeleteId(null);
     fetchTasks();
   };
@@ -451,5 +455,13 @@ export default function TaskBoard() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function TaskBoardPage() {
+  return (
+    <ErrorBoundary>
+      <TaskBoard />
+    </ErrorBoundary>
   );
 }

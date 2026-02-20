@@ -2,6 +2,7 @@
 // CONTACTS -- Company contact management
 // -----------------------------------------------------------
 import { useEffect, useState, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,7 @@ function ContactForm({
 }
 
 // --- Main Component --------------------------------------
-export default function Contacts() {
+function Contacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -385,5 +386,13 @@ export default function Contacts() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function ContactsPage() {
+  return (
+    <ErrorBoundary>
+      <Contacts />
+    </ErrorBoundary>
   );
 }

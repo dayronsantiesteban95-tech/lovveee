@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { LEAD_STAGES, CITY_HUBS, INDUSTRIES, ACTION_ZONE_CITIES, SERVICE_TYPES, VEHICLE_TYPES } from "@/lib/constants";
@@ -86,7 +87,7 @@ const STAGE_TOP_COLORS = [
   "hsl(30, 100%, 55%)",
 ];
 
-export default function Pipeline() {
+function Pipeline() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editLead, setEditLead] = useState<Lead | null>(null);
@@ -217,7 +218,8 @@ export default function Pipeline() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await supabase.from("leads").delete().eq("id", deleteId);
+    const { error: delErr } = await supabase.from("leads").delete().eq("id", deleteId);
+    if (delErr) { toast({ title: "Error", description: delErr.message, variant: "destructive" }); return; }
     setDeleteId(null);
     if (selectedLead?.id === deleteId) setSelectedLead(null);
     fetchLeads();
@@ -561,5 +563,13 @@ export default function Pipeline() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function PipelinePage() {
+  return (
+    <ErrorBoundary>
+      <Pipeline />
+    </ErrorBoundary>
   );
 }

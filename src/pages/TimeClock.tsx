@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -213,7 +214,7 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
 
 // --- Main Page ----------------------------------------------------
 
-export default function TimeClock() {
+function TimeClock() {
   const { toast } = useToast();
   const { isOwner } = useUserRole();
 
@@ -865,5 +866,13 @@ export default function TimeClock() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function TimeClockPage() {
+  return (
+    <ErrorBoundary>
+      <TimeClock />
+    </ErrorBoundary>
   );
 }

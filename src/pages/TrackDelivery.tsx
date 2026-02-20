@@ -10,6 +10,7 @@
  * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,7 +82,7 @@ function timeAgo(iso: string): string {
 }
 
 // -----------------------------------------------------------
-export default function TrackDelivery() {
+function TrackDelivery() {
     const { token: urlToken } = useParams<{ token?: string }>();
     const [token, setToken] = useState(urlToken ?? "");
     const [searchInput, setSearchInput] = useState(urlToken ?? "");
@@ -438,4 +439,12 @@ export default function TrackDelivery() {
             </footer>
         </div>
     );
+}
+
+export default function TrackDeliveryPage() {
+  return (
+    <ErrorBoundary>
+      <TrackDelivery />
+    </ErrorBoundary>
+  );
 }

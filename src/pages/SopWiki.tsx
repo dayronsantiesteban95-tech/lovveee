@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { SOP_CATEGORIES } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +34,7 @@ type SopArticle = {
 
 type ViewMode = "cheatsheet" | "grid";
 
-export default function SopWiki() {
+function SopWiki() {
   const [articles, setArticles] = useState<SopArticle[]>([]);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -78,7 +79,8 @@ export default function SopWiki() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await supabase.from("sop_articles").delete().eq("id", deleteId);
+    const { error: delErr } = await supabase.from("sop_articles").delete().eq("id", deleteId);
+    if (delErr) { toast({ title: "Error deleting article", description: delErr.message, variant: "destructive" }); return; }
     setDeleteId(null);
     if (viewArticle?.id === deleteId) setViewArticle(null);
     fetchArticles();
@@ -289,5 +291,13 @@ export default function SopWiki() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function SopWikiPage() {
+  return (
+    <ErrorBoundary>
+      <SopWiki />
+    </ErrorBoundary>
   );
 }

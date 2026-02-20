@@ -2,6 +2,7 @@
 // COMPANIES -- Client CRM with load history & contact detail
 // -----------------------------------------------------------
 import { useEffect, useState, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -380,7 +381,7 @@ function CompanyDetail({
 }
 
 // --- Main Component --------------------------------------
-export default function Companies() {
+function Companies() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loadStats, setLoadStats] = useState<Record<string, LoadSummary>>({});
   const [showForm, setShowForm] = useState(false);
@@ -648,5 +649,13 @@ export default function Companies() {
         }}
       />
     </div>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <ErrorBoundary>
+      <Companies />
+    </ErrorBoundary>
   );
 }

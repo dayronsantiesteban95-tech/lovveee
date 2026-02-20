@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney, daysAgoISO, todayISO } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,7 +141,7 @@ const RANGE_OPTIONS = [
   { label: "Last 90 days", days: 90 },
 ];
 
-export default function DriverPerformance() {
+function DriverPerformance() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<DriverPerf[]>([]);
   const [loading, setLoading] = useState(true);
@@ -540,5 +541,13 @@ export default function DriverPerformance() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function DriverPerformancePage() {
+  return (
+    <ErrorBoundary>
+      <DriverPerformance />
+    </ErrorBoundary>
   );
 }

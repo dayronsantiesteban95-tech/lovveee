@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +74,7 @@ const JOB_TITLES = [
     "Director of Logistics",
 ];
 
-export default function LeadFinder() {
+function LeadFinder() {
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -518,4 +519,12 @@ export default function LeadFinder() {
             )}
         </div>
     );
+}
+
+export default function LeadFinderPage() {
+  return (
+    <ErrorBoundary>
+      <LeadFinder />
+    </ErrorBoundary>
+  );
 }

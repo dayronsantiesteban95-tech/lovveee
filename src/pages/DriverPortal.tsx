@@ -16,6 +16,7 @@
  * -----------------------------------------------------------
  */
 import { useState, useEffect, useCallback } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -82,7 +83,7 @@ function timeAgo(iso: string): string {
 }
 
 // -----------------------------------------------------------
-export default function DriverPortal() {
+function DriverPortal() {
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -183,12 +184,13 @@ export default function DriverPortal() {
         } else {
             // Go off duty
             if (shiftId) {
-                await supabase.from("driver_shifts").update({
+                const { error: shiftErr } = await supabase.from("driver_shifts").update({
                     shift_end: new Date().toISOString(),
                     status: "off_duty",
                     end_lat: gps.position?.latitude,
                     end_lng: gps.position?.longitude,
                 }).eq("id", shiftId);
+      if (shiftErr) { toast({ title: "Error updating shift", description: shiftErr.message, variant: "destructive" }); return; }
             }
             gps.stopTracking();
             setOnDuty(false);
@@ -223,7 +225,7 @@ export default function DriverPortal() {
         }
 
         // Log the status event with GPS
-        await supabase.from("load_status_events").insert({
+        const { error: evtErr } = await supabase.from("load_status_events").insert({
             load_id: load.id,
             driver_id: driver.id,
             old_status: load.status,
@@ -232,6 +234,7 @@ export default function DriverPortal() {
             longitude: gps.position?.longitude,
             note: statusNote || null,
         });
+      if (evtErr) console.warn("load_status_events insert failed:", evtErr.message);
 
         setStatusNote("");
         setUpdatingLoadId(null);
@@ -448,7 +451,8 @@ export default function DriverPortal() {
                                                             if (uploadErr) {
                                                                 toast({ title: "Upload failed", description: uploadErr.message, variant: "destructive" });
                                                             } else {
-                                                                await supabase.from("daily_loads").update({ pod_confirmed: true }).eq("id", load.id);
+                                                                const { error: podErr } = await supabase.from("daily_loads").update({ pod_confirmed: true }).eq("id", load.id);
+      if (podErr) console.warn("POD confirm update failed:", podErr.message);
                                                                 toast({ title: "?? POD captured!", description: "Photo uploaded successfully." });
                                                                 fetchLoads();
                                                             }
@@ -544,4 +548,12 @@ export default function DriverPortal() {
             </div>
         </div>
     );
+}
+
+export default function DriverPortalPage() {
+  return (
+    <ErrorBoundary>
+      <DriverPortal />
+    </ErrorBoundary>
+  );
 }

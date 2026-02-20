@@ -8,10 +8,11 @@
 // never touches the browser.
 // -----------------------------------------------------------
 import { useEffect, useState } from 'react';
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
-export default function QuickBooksCallback() {
+function QuickBooksCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>(
@@ -117,5 +118,13 @@ export default function QuickBooksCallback() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function QuickBooksCallbackPage() {
+  return (
+    <ErrorBoundary>
+      <QuickBooksCallback />
+    </ErrorBoundary>
   );
 }

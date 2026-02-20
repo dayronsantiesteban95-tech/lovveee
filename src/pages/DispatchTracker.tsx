@@ -1,5 +1,6 @@
 // Dispatch Tracker -- orchestrates tabs: Load Board, Live Ops, Wait Time, Daily Report
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
@@ -45,7 +46,7 @@ const WAIT_COLORS = [
 const DETENTION_THRESHOLD = 30;
 
 // -----------------------------------------------------------
-export default function DispatchTracker() {
+function DispatchTracker() {
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -549,4 +550,12 @@ export default function DispatchTracker() {
             )}
         </div>
     );
+}
+
+export default function DispatchTrackerPage() {
+  return (
+    <ErrorBoundary>
+      <DispatchTracker />
+    </ErrorBoundary>
+  );
 }
