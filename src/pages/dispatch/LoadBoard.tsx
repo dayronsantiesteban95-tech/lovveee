@@ -38,17 +38,17 @@ import { useState } from "react";
 
 // ════════════════════Constants ======================================
 const STATUSES = [
-    { value: "pending", label: "Pending", color: "bg-gray-500" },
-    { value: "assigned", label: "Assigned", color: "bg-blue-500" },
-    { value: "blasted", label: "Blasted", color: "bg-violet-500" },
-    { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_pickup", label: "At Pickup 📍", color: "bg-blue-400" },
-    { value: "in_transit", label: "In Transit", color: "bg-yellow-500" },
-    { value: "arrived_delivery", label: "At Delivery 📍", color: "bg-purple-400" },
-    { value: "delivered", label: "Delivered", color: "bg-green-500" },
-    { value: "completed", label: "Completed", color: "bg-green-600" },
-    { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
-    { value: "failed", label: "Failed", color: "bg-red-500" },
+    { value: "pending", label: "Pending", color: "bg-slate-400", pill: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
+    { value: "assigned", label: "Assigned", color: "bg-blue-500", pill: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+    { value: "blasted", label: "Blasted", color: "bg-violet-500", pill: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
+    { value: "in_progress", label: "In Transit", color: "bg-yellow-500", pill: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+    { value: "arrived_pickup", label: "At Pickup", color: "bg-blue-400", pill: "bg-blue-400/15 text-blue-300 border-blue-400/30" },
+    { value: "in_transit", label: "In Transit", color: "bg-yellow-500", pill: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+    { value: "arrived_delivery", label: "At Delivery", color: "bg-purple-400", pill: "bg-purple-400/15 text-purple-300 border-purple-400/30" },
+    { value: "delivered", label: "Delivered", color: "bg-green-500", pill: "bg-green-500/15 text-green-400 border-green-500/30" },
+    { value: "completed", label: "Completed", color: "bg-green-600", pill: "bg-green-600/15 text-green-400 border-green-600/30" },
+    { value: "cancelled", label: "Cancelled", color: "bg-slate-500", pill: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
+    { value: "failed", label: "Failed", color: "bg-red-500", pill: "bg-red-500/15 text-red-400 border-red-500/30" },
 ];
 
 const WAIT_COLORS = [
@@ -111,18 +111,20 @@ export default function LoadBoard({
 
     return (
         <>
-            <div className="flex items-center gap-3 mb-3">
-                <Label className="text-xs text-muted-foreground">Board Date</Label>
-                <Input type="date" className="w-40 h-9" value={selectedDate} onChange={(e) => onSelectedDateChange(e.target.value)} />
-                <Badge variant="secondary">{rawLoads.length} loads</Badge>
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                    <Label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider whitespace-nowrap">Board Date</Label>
+                    <Input type="date" className="w-36 h-8 text-xs" value={selectedDate} onChange={(e) => onSelectedDateChange(e.target.value)} />
+                </div>
+                <Badge variant="secondary" className="text-[10px] font-mono">{rawLoads.length} loads</Badge>
                 {/* Last updated indicator */}
-                <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70 select-none">
+                <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60 select-none">
                     <RefreshCw className="h-2.5 w-2.5" />
                     {secondsAgo < 10
                         ? "Just updated"
                         : secondsAgo < 60
-                        ? `Updated ${secondsAgo}s ago`
-                        : `Updated ${Math.floor(secondsAgo / 60)}m ago`}
+                        ? `${secondsAgo}s ago`
+                        : `${Math.floor(secondsAgo / 60)}m ago`}
                 </span>
                 <div className="ml-auto flex items-center gap-2">
                     <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs"
@@ -191,25 +193,29 @@ export default function LoadBoard({
                                     <TableRow>
                                         <TableCell colSpan={12}>
                                             {rawLoads.length > 0 ? (
-                                                <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-                                                    <Layers className="h-10 w-10 opacity-30" />
-                                                    <p className="text-sm font-medium">No loads match your filters</p>
-                                                    <p className="text-xs opacity-60">Try adjusting your search or clear all filters.</p>
+                                                <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground">
+                                                    <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-1">
+                                                        <Layers className="h-6 w-6 opacity-50" />
+                                                    </div>
+                                                    <p className="text-sm font-semibold text-foreground">No matches</p>
+                                                    <p className="text-xs opacity-60">No loads match your active filters.</p>
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => onFiltersChange(EMPTY_LOAD_FILTERS)}
-                                                        className="gap-1.5 mt-1"
+                                                        className="gap-1.5 mt-2 h-8 text-xs"
                                                     >
                                                         <X className="h-3.5 w-3.5" />
-                                                        Clear filters
+                                                        Clear all filters
                                                     </Button>
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-                                                    <Package className="h-10 w-10 opacity-30" />
-                                                    <p className="text-sm font-medium">No loads for {selectedDate}</p>
-                                                    <p className="text-xs opacity-60">Click &quot;New Load&quot; to add the first load for this date.</p>
+                                                <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground">
+                                                    <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-1">
+                                                        <Package className="h-6 w-6 opacity-50" />
+                                                    </div>
+                                                    <p className="text-sm font-semibold text-foreground">No loads for {selectedDate}</p>
+                                                    <p className="text-xs opacity-60">Open the Tools panel → New to add the first load for this date.</p>
                                                 </div>
                                             )}
                                         </TableCell>
@@ -265,12 +271,12 @@ export default function LoadBoard({
                                             </TableCell>
                                             {/* == Status cell: badge + next-action button == */}
                                             <TableCell onClick={(e) => e.stopPropagation()}>
-                                                <div className="flex flex-col gap-1 items-start">
-                                                    {/* Status badge */}
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className={`h-2 w-2 rounded-full ${si.color}`} />
-                                                        <span className="text-[10px] font-medium">{si.label}</span>
-                                                    </div>
+                                                <div className="flex flex-col gap-1.5 items-start">
+                                                    {/* Status pill */}
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${si.pill ?? "bg-muted text-muted-foreground border-border"}`}>
+                                                        <span className={`h-1.5 w-1.5 rounded-full ${si.color}`} />
+                                                        {si.label}
+                                                    </span>
                                                     {/* Next-action button */}
                                                     {load.status === "pending" && (
                                                         <Button size="sm" variant="outline"

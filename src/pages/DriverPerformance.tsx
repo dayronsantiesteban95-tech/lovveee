@@ -236,19 +236,20 @@ export default function DriverPerformance() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
+    <div className="space-y-6 animate-in">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <TrendingUp className="h-6 w-6 text-accent" />
-          <h1 className="text-2xl font-bold tracking-tight">Driver Performance</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight gradient-text">Driver Performance</h1>
+          <p className="text-muted-foreground text-sm mt-1">Ranked by revenue · Sortable table · {days}-day window</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {RANGE_OPTIONS.map((opt) => (
             <Button
               key={opt.days}
               size="sm"
               variant={days === opt.days ? "default" : "outline"}
+              className="h-8 text-xs"
               onClick={() => setDays(opt.days)}
             >
               {opt.label}
@@ -258,47 +259,47 @@ export default function DriverPerformance() {
       </div>
 
       {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Top Driver */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Top Driver
-            </CardTitle>
-            <Trophy className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
+        <Card className="border border-yellow-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Top Driver</span>
+              <div className="p-1.5 rounded-md bg-yellow-500/10">
+                <Trophy className="h-4 w-4 text-yellow-500" />
+              </div>
+            </div>
             {loading ? (
               <div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
             ) : topDriver ? (
               <>
-                <p className="text-lg font-bold truncate">{topDriver.driver_name}</p>
+                <p className="text-base font-bold truncate leading-tight">{topDriver.driver_name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {fmtMoney(topDriver.total_revenue)} revenue
                 </p>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">No data</p>
+              <p className="text-sm text-muted-foreground">No data yet</p>
             )}
           </CardContent>
         </Card>
 
         {/* Avg On-Time */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg On-Time Rate
-            </CardTitle>
-            <Clock className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
+        <Card className="border border-blue-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Avg On-Time</span>
+              <div className="p-1.5 rounded-md bg-blue-500/10">
+                <Clock className="h-4 w-4 text-blue-500" />
+              </div>
+            </div>
             {loading ? (
               <div className="h-6 w-1/2 bg-muted rounded animate-pulse" />
             ) : (
               <>
-                <p className="text-2xl font-bold">{avgOnTime.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  across {data.length} driver{data.length !== 1 ? "s" : ""}
+                <p className="text-2xl font-bold tabular-nums leading-none">{avgOnTime.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {data.length} driver{data.length !== 1 ? "s" : ""}
                 </p>
               </>
             )}
@@ -306,44 +307,40 @@ export default function DriverPerformance() {
         </Card>
 
         {/* Total Revenue */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
+        <Card className="border border-emerald-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Total Revenue</span>
+              <div className="p-1.5 rounded-md bg-emerald-500/10">
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+              </div>
+            </div>
             {loading ? (
               <div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
             ) : (
               <>
-                <p className="text-2xl font-bold">{fmtMoney(totalRevenue)}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  all active drivers
-                </p>
+                <p className="text-2xl font-bold text-emerald-400 tabular-nums leading-none">{fmtMoney(totalRevenue)}</p>
+                <p className="text-xs text-muted-foreground mt-1">all active drivers</p>
               </>
             )}
           </CardContent>
         </Card>
 
         {/* Avg POD */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg POD Compliance
-            </CardTitle>
-            <ClipboardCheck className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
+        <Card className="border border-purple-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">POD Compliance</span>
+              <div className="p-1.5 rounded-md bg-purple-500/10">
+                <ClipboardCheck className="h-4 w-4 text-purple-500" />
+              </div>
+            </div>
             {loading ? (
               <div className="h-6 w-1/2 bg-muted rounded animate-pulse" />
             ) : (
               <>
-                <p className="text-2xl font-bold">{avgPOD.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  proof of delivery
-                </p>
+                <p className="text-2xl font-bold tabular-nums leading-none">{avgPOD.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground mt-1">proof of delivery</p>
               </>
             )}
           </CardContent>
@@ -372,67 +369,68 @@ export default function DriverPerformance() {
 
       {/* ── Driver Cards Grid ───────────────────────────────────────────────── */}
       {!loading && data.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {data.map((d) => (
-            <Card key={d.driver_id} className="overflow-hidden">
-              <CardContent className="p-4 space-y-4">
+            <Card key={d.driver_id} className="overflow-hidden border border-border/50 hover:border-border transition-colors">
+              <CardContent className="p-4 space-y-3">
                 {/* Header row */}
                 <div className="flex items-center gap-3">
                   <div
-                    className={`h-10 w-10 rounded-full ${hubColor(d.hub)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}
+                    className={`h-9 w-9 rounded-full ${hubColor(d.hub)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm`}
                   >
                     {initials(d.driver_name)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold truncate">{d.driver_name}</p>
-                    <Badge variant="secondary" className="text-xs mt-0.5">
+                    <p className="font-semibold truncate text-sm">{d.driver_name}</p>
+                    <Badge variant="secondary" className="text-[10px] mt-0.5 h-4 px-1.5">
                       {d.hub}
                     </Badge>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-base font-bold text-emerald-400 tabular-nums">{fmtMoney(d.total_revenue)}</p>
+                    <p className="text-[10px] text-muted-foreground">{d.total_loads} loads</p>
                   </div>
                 </div>
 
                 {/* 4 stat boxes */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1.5">
                   {(
                     [
-                      { label: "Loads", value: String(d.total_loads) },
-                      { label: "Revenue", value: fmtMoney(d.total_revenue) },
                       { label: "Rev/Load", value: fmtMoney(d.avg_revenue_per_load) },
-                      {
-                        label: "On-Time",
-                        value: `${d.on_time_rate.toFixed(1)}%`,
-                      },
+                      { label: "Miles", value: d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
+                      { label: "On-Time", value: `${d.on_time_rate.toFixed(1)}%` },
+                      { label: "POD%", value: `${d.pod_compliance_rate.toFixed(1)}%` },
                     ] as const
                   ).map((s) => (
                     <div
                       key={s.label}
-                      className="bg-muted/50 rounded-lg p-2 text-center"
+                      className="bg-muted/40 rounded-lg p-2 text-center"
                     >
-                      <p className="text-[10px] text-muted-foreground mb-1">{s.label}</p>
-                      <p className="text-xs font-bold truncate">{s.value}</p>
+                      <p className="text-[9px] text-muted-foreground mb-0.5 uppercase tracking-wide">{s.label}</p>
+                      <p className="text-xs font-bold truncate tabular-nums">{s.value}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Progress bars */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <ProgressBar value={d.on_time_rate} label="On-Time Rate" />
                   <ProgressBar value={d.pod_compliance_rate} label="POD Compliance" />
                 </div>
 
                 {/* Footer row */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-                  <span>
-                    🛣️{" "}
-                    {d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40">
+                  <span className="flex items-center gap-1">
+                    <span className="text-muted-foreground">🛣️</span>
+                    {d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi driven
                   </span>
                   {d.failed_loads > 0 ? (
-                    <span className="flex items-center gap-1 text-red-500 font-medium">
+                    <span className="flex items-center gap-1 text-red-400 font-medium">
                       <AlertTriangle className="h-3 w-3" />
                       {d.failed_loads} failed
                     </span>
                   ) : (
-                    <span className="text-emerald-500 font-medium">✓ No failures</span>
+                    <span className="text-emerald-500 font-medium text-[10px]">✓ Zero failures</span>
                   )}
                 </div>
               </CardContent>

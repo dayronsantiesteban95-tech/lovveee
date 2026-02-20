@@ -26,19 +26,22 @@ export function GlobalHeader() {
   }, []);
 
   return (
-    <header className="h-16 bg-card/90 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 shadow-sm">
+    <header className="h-14 bg-card/95 backdrop-blur-md flex items-center justify-between px-6 shrink-0 border-b border-border/50">
       <div className="flex items-center gap-3">
-        <img src={logoAzul} alt="Anika Logistics" className="h-9 w-auto object-contain" />
+        <img src={logoAzul} alt="Anika Logistics" className="h-8 w-auto object-contain" />
       </div>
-      <div className="flex items-center gap-6">
-        {times.map((tz) => (
+      <div className="flex items-center gap-5">
+        {times.map((tz, i) => (
           <div key={tz.city} className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {tz.city}
-            </span>
-            <span className="font-mono text-sm font-semibold text-foreground tabular-nums">
-              {tz.time}
-            </span>
+            {i > 0 && <div className="h-4 w-px bg-border/40" />}
+            <div className="text-right">
+              <div className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold leading-none mb-0.5">
+                {tz.city}
+              </div>
+              <div className="font-mono text-xs font-semibold text-foreground tabular-nums leading-none">
+                {tz.time}
+              </div>
+            </div>
           </div>
         ))}
         <div className="h-6 w-px bg-border/50" />

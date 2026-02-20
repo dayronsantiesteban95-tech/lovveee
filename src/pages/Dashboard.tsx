@@ -326,38 +326,44 @@ export default function Dashboard() {
     {
       title: "Today's Loads",
       value: loading ? null : kpis.totalLoads,
-      icon: <Truck className="h-4 w-4 text-muted-foreground" />,
+      icon: <Truck className="h-4 w-4 text-blue-400" />,
       color: "text-foreground",
+      accent: "border-blue-500/20",
     },
     {
       title: "In Transit",
       value: loading ? null : kpis.inTransit,
       icon: <Radio className="h-4 w-4 text-yellow-400" />,
       color: "text-yellow-400",
+      accent: kpis.inTransit > 0 ? "border-yellow-500/30" : "border-border/50",
     },
     {
       title: "Delivered",
       value: loading ? null : kpis.delivered,
       icon: <PackageCheck className="h-4 w-4 text-green-400" />,
       color: "text-green-400",
+      accent: kpis.delivered > 0 ? "border-green-500/30" : "border-border/50",
     },
     {
       title: "Unassigned",
       value: loading ? null : kpis.unassigned,
       icon: <AlertCircle className="h-4 w-4 text-red-400" />,
-      color: kpis.unassigned > 0 ? "text-red-400" : "text-foreground",
+      color: kpis.unassigned > 0 ? "text-red-400" : "text-muted-foreground",
+      accent: kpis.unassigned > 0 ? "border-red-500/40 bg-red-500/5" : "border-border/50",
     },
     {
       title: "On-Time %",
       value: loading ? null : (kpis.onTimePct !== null ? `${kpis.onTimePct}%` : "—"),
       icon: <Percent className="h-4 w-4 text-blue-400" />,
       color: kpis.onTimePct !== null ? (kpis.onTimePct >= 80 ? "text-green-400" : kpis.onTimePct >= 60 ? "text-yellow-400" : "text-red-400") : "text-muted-foreground",
+      accent: "border-border/50",
     },
     {
       title: "Today's Revenue",
       value: loading ? null : fmtMoney(kpis.revenue),
-      icon: <DollarSign className="h-4 w-4 text-green-400" />,
-      color: "text-green-400",
+      icon: <DollarSign className="h-4 w-4 text-emerald-400" />,
+      color: "text-emerald-400",
+      accent: kpis.revenue > 0 ? "border-emerald-500/30" : "border-border/50",
     },
   ];
 
@@ -379,17 +385,19 @@ export default function Dashboard() {
       </div>
 
       {/* ROW 1 — KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <SkeletonKPI key={i} />)
           : kpiCards.map((k) => (
-              <Card key={k.title} className="border border-border/50">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{k.title}</span>
-                    {k.icon}
+              <Card key={k.title} className={`border ${k.accent} transition-colors`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest leading-none">{k.title}</span>
+                    <div className="p-1.5 rounded-md bg-muted/40">
+                      {k.icon}
+                    </div>
                   </div>
-                  <div className={`text-2xl font-bold tabular-nums ${k.color}`}>
+                  <div className={`text-2xl font-bold tabular-nums leading-none ${k.color}`}>
                     {k.value ?? <Pulse />}
                   </div>
                 </CardContent>
@@ -400,9 +408,9 @@ export default function Dashboard() {
       {/* ROW 2 — Active Loads Table */}
       <Card className="border border-border/50">
         <CardHeader className="pb-2 px-5 pt-4">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-            <Truck className="h-4 w-4" /> Today's Loads
-            <Badge variant="secondary" className="ml-auto text-xs">{loads.length}</Badge>
+          <CardTitle className="text-sm font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Truck className="h-4 w-4 text-blue-400" /> Today's Loads
+            {!loading && <Badge variant="secondary" className="ml-auto text-[10px] font-mono">{loads.length}</Badge>}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
@@ -422,21 +430,21 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border/50 text-xs text-muted-foreground uppercase tracking-wide">
-                    <th className="text-left px-5 py-2 font-medium">Ref #</th>
-                    <th className="text-left px-3 py-2 font-medium">Client</th>
-                    <th className="text-left px-3 py-2 font-medium hidden md:table-cell">Route</th>
-                    <th className="text-left px-3 py-2 font-medium">Driver</th>
-                    <th className="text-left px-3 py-2 font-medium">Status</th>
-                    <th className="text-left px-3 py-2 font-medium hidden lg:table-cell">ETA</th>
-                    <th className="text-right px-5 py-2 font-medium">Revenue</th>
+                  <tr className="border-b border-border/50 text-[10px] text-muted-foreground uppercase tracking-widest">
+                    <th className="text-left px-5 py-2.5 font-semibold">Ref #</th>
+                    <th className="text-left px-3 py-2.5 font-semibold">Client</th>
+                    <th className="text-left px-3 py-2.5 font-semibold hidden md:table-cell">Route</th>
+                    <th className="text-left px-3 py-2.5 font-semibold">Driver</th>
+                    <th className="text-left px-3 py-2.5 font-semibold">Status</th>
+                    <th className="text-left px-3 py-2.5 font-semibold hidden lg:table-cell">ETA</th>
+                    <th className="text-right px-5 py-2.5 font-semibold">Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loads.map((load, idx) => (
                     <tr
                       key={load.id}
-                      className={`border-b border-border/30 hover:bg-muted/20 transition-colors ${idx % 2 === 0 ? "" : "bg-muted/5"}`}
+                      className={`border-b border-border/20 hover:bg-muted/30 transition-colors ${idx % 2 === 0 ? "" : "bg-muted/[0.03]"}`}
                     >
                       <td className="px-5 py-3 font-mono text-xs text-blue-400">
                         {load.reference_number ?? "—"}
@@ -587,39 +595,40 @@ export default function Dashboard() {
       {/* ROW 4 — Weekly Quick Stats Bar */}
       <Card className="border border-border/50">
         <CardContent className="px-5 py-4">
-          <div className="flex flex-wrap gap-6 items-center">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
-              This Week
-            </span>
-            <div className="flex flex-wrap gap-6 text-sm">
-              <div>
-                <span className="text-muted-foreground text-xs">Revenue</span>
-                <div className="font-mono font-semibold text-green-400">
+          <div className="flex flex-wrap gap-x-8 gap-y-4 items-center">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">7-Day Summary</span>
+            </div>
+            <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Revenue</div>
+                <div className="font-mono font-bold text-emerald-400 text-base tabular-nums">
                   {weekLoading ? <span className="animate-pulse opacity-50">—</span> : fmtMoney(weekStats.revenue)}
                 </div>
               </div>
-              <div>
-                <span className="text-muted-foreground text-xs">Loads</span>
-                <div className="font-semibold">
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Loads</div>
+                <div className="font-bold text-base tabular-nums">
                   {weekLoading ? <span className="animate-pulse opacity-50">—</span> : weekStats.loads}
                 </div>
               </div>
-              <div>
-                <span className="text-muted-foreground text-xs">Avg On-Time</span>
-                <div className={`font-semibold ${weekStats.onTimePct !== null ? (weekStats.onTimePct >= 80 ? "text-green-400" : weekStats.onTimePct >= 60 ? "text-yellow-400" : "text-red-400") : ""}`}>
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Avg On-Time</div>
+                <div className={`font-bold text-base tabular-nums ${weekStats.onTimePct !== null ? (weekStats.onTimePct >= 80 ? "text-green-400" : weekStats.onTimePct >= 60 ? "text-yellow-400" : "text-red-400") : "text-muted-foreground"}`}>
                   {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.onTimePct !== null ? `${weekStats.onTimePct}%` : "—")}
                 </div>
               </div>
-              <div>
-                <span className="text-muted-foreground text-xs">Top Client</span>
-                <div className="font-semibold truncate max-w-[120px]">
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topClient ?? "—")}
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Top Client</div>
+                <div className="font-semibold truncate max-w-[140px]">
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topClient ?? <span className="text-muted-foreground font-normal">No data</span>)}
                 </div>
               </div>
-              <div>
-                <span className="text-muted-foreground text-xs">Top Driver</span>
-                <div className="font-semibold truncate max-w-[120px]">
-                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topDriver ?? "—")}
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Top Driver</div>
+                <div className="font-semibold truncate max-w-[140px]">
+                  {weekLoading ? <span className="animate-pulse opacity-50">—</span> : (weekStats.topDriver ?? <span className="text-muted-foreground font-normal">No data</span>)}
                 </div>
               </div>
             </div>

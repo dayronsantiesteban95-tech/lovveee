@@ -86,6 +86,14 @@ type InspectionRecord = {
     created_at: string;
 };
 
+// ─── Checklist Normalizer ────────────────────────────
+function normalizeChecklistItem(val: unknown): { result: 'pass' | 'issue' | null; note: string | null } {
+  if (val === null || val === undefined) return { result: null, note: null };
+  if (typeof val === 'boolean') return { result: val ? 'pass' : 'issue', note: null };
+  if (typeof val === 'object' && val !== null && 'result' in val) return val as { result: 'pass' | 'issue' | null; note: string | null };
+  return { result: null, note: null };
+}
+
 // ─── Constants ──────────────────────────────────────
 const VEHICLE_TYPES = [
     { value: "cargo_van", label: "Cargo Van" },
@@ -1075,12 +1083,30 @@ export default function FleetTracker() {
                                                     {insp.checklist.fuel_level && <span>⛽ {insp.checklist.fuel_level}</span>}
                                                 </div>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {insp.checklist.tires_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Tires ✓</Badge>}
-                                                    {insp.checklist.lights_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Lights ✓</Badge>}
-                                                    {insp.checklist.brakes_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Brakes ✓</Badge>}
-                                                    {insp.checklist.fluids_ok && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Fluids ✓</Badge>}
-                                                    {insp.checklist.interior_clean && <Badge variant="secondary" className="text-[9px] bg-green-500/10 text-green-700">Interior ✓</Badge>}
-                                                    {insp.checklist.exterior_damage && <Badge variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700">Damage ⚠️</Badge>}
+                                                    {(() => {
+                                                        const cl = insp.checklist as Record<string, unknown>;
+                                                        const checks: { key: string; label: string; invertBad?: boolean }[] = [
+                                                            { key: 'tires_ok', label: 'Tires' },
+                                                            { key: 'lights_ok', label: 'Lights' },
+                                                            { key: 'brakes_ok', label: 'Brakes' },
+                                                            { key: 'fluids_ok', label: 'Fluids' },
+                                                            { key: 'interior_clean', label: 'Interior' },
+                                                            { key: 'exterior_damage', label: 'Damage', invertBad: true },
+                                                        ];
+                                                        return checks.map(({ key, label, invertBad }) => {
+                                                            const norm = normalizeChecklistItem(cl[key]);
+                                                            if (norm.result === null) return null;
+                                                            const isGood = invertBad ? norm.result === 'issue' : norm.result === 'pass';
+                                                            const isBad = invertBad ? norm.result === 'pass' : norm.result === 'issue';
+                                                            if (isGood) return (
+                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-green-500/10 text-green-700 dark:text-green-400">{label} ✓{norm.note ? ` (${norm.note})` : ''}</Badge>
+                                                            );
+                                                            if (isBad) return (
+                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700 dark:text-orange-400">{label} ⚠️{norm.note ? ` (${norm.note})` : ''}</Badge>
+                                                            );
+                                                            return null;
+                                                        });
+                                                    })()}
                                                 </div>
                                                 {insp.photos && insp.photos.length > 0 && (
                                                     <div className="flex gap-1.5 flex-wrap">
