@@ -428,7 +428,7 @@ function DispatchTracker() {
                         boardLoads={boardLoads}
                         drivers={drivers}
                         onRefetchLoads={refetchLoads}
-                        onSettingsClick={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management -> Integrations." })}
+                        onSettingsClick={() => toast({ title: "Coming soon", description: "Integration settings will be in Team Management > Integrations." })}
                     />
                 </TabsContent>
 

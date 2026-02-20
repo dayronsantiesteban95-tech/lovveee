@@ -160,7 +160,7 @@ function LeadFinder() {
                     const hub = assignHub(contact.state, contact.city);
                     toast({
                         title: "Lead Imported + Sequence Started",
-                        description: `${contact.firstName} ${contact.lastName} from ${contact.companyName} -> Hub: ${hub.charAt(0).toUpperCase() + hub.slice(1)} -> 3-step outreach created. Email #1 will auto-send.`,
+                        description: `${contact.firstName} ${contact.lastName} from ${contact.companyName} | Hub: ${hub.charAt(0).toUpperCase() + hub.slice(1)} -> 3-step outreach created. Email #1 will auto-send.`,
                     });
                 } else {
                     toast({

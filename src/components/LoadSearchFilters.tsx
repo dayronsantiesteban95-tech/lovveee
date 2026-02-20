@@ -79,7 +79,7 @@ const DATE_RANGES = [
 const SORT_OPTIONS = [
     { value: "newest", label: "Newest First" },
     { value: "oldest", label: "Oldest First" },
-    { value: "revenue_desc", label: "Revenue (High->Low)" },
+    { value: "revenue_desc", label: "Revenue (High to Low)" },
     { value: "status", label: "By Status" },
 ];
 

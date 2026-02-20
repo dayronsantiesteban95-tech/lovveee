@@ -105,8 +105,8 @@ export default function ActivityLog({
                         entity_type: "load",
                         entity_id: evt.load_id,
                         details: evt.note
-                            ? `${evt.old_status ?? "--"} -> ${evt.new_status}: "${evt.note}"`
-                            : `${evt.old_status ?? "--"} -> ${evt.new_status}`,
+                            ? `${evt.old_status ?? "--"} to ${evt.new_status}: "${evt.note}"`
+                            : `${evt.old_status ?? "--"} to ${evt.new_status}`,
                         timestamp: evt.recorded_at,
                     });
                 }

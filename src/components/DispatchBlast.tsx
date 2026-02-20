@@ -272,7 +272,7 @@ export default function DispatchBlastPanel({
                                 </div>
                                 <div className="flex items-center gap-1 text-muted-foreground">
                                     <MapPin className="h-3 w-3" />
-                                    {currentLoad.pickup_address ?? "--"} -> {currentLoad.delivery_address ?? "--"}
+                                    {currentLoad.pickup_address ?? "--"} &rarr; {currentLoad.delivery_address ?? "--"}
                                 </div>
                                 <div className="flex items-center gap-3 text-muted-foreground">
                                     <span className="flex items-center gap-1">
