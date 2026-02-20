@@ -169,7 +169,7 @@ export default function AutoDispatchPanel({
         } else {
             const driver = candidates.find((c) => c.driver.id === driverId);
             toast({
-                title: "?? Driver assigned!",
+                title: "Driver assigned!",
                 description: `${driver?.driver.full_name ?? "Driver"} assigned to this load`,
             });
             onAssigned?.(driverId);

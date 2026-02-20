@@ -241,7 +241,7 @@ export default function LiveDriverMap() {
                 <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">Last ping: ${lastSeen}</div>
                 ${
                   activeLoad
-                    ? `<div style="font-size:11px;background:#1e3a5f;border-radius:6px;padding:4px 8px;color:#60a5fa;">?? On active load</div>`
+                    ? `<div style="font-size:11px;background:#1e3a5f;border-radius:6px;padding:4px 8px;color:#60a5fa;">? On active load</div>`
                     : `<div style="font-size:11px;color:#64748b;">No active load</div>`
                 }
               </div>

@@ -188,18 +188,19 @@ export default function BlastLoadDialog({
                 notified_at: now,
             }));
 
-            await supabase.from("blast_responses").insert(responseRows);
+            const { error: respErr } = await supabase.from("blast_responses").insert(responseRows);
+            if (respErr) console.warn("blast_responses insert failed:", respErr.message);
 
             // 4. Insert driver_notifications for each driver
             const notifRows = driverIdsArray.map((driverId) => ({
                 driver_id: driverId,
                 type: "blast",
-                title: "?? New Load Available!",
+                title: "New Load Available!",
                 body: [
                     load.reference_number ? `Ref: ${load.reference_number}` : null,
                     load.pickup_address ? `From: ${load.pickup_address}` : null,
                     load.delivery_address ? `To: ${load.delivery_address}` : null,
-                    `${load.miles} mi ? $${load.revenue}`,
+                    `${load.miles} mi | ${load.revenue}`,
                     message.trim() || null,
                 ]
                     .filter(Boolean)
@@ -217,16 +218,18 @@ export default function BlastLoadDialog({
                 read: false,
             }));
 
-            await supabase.from("driver_notifications").insert(notifRows);
+            const { error: notifErr } = await supabase.from("driver_notifications").insert(notifRows);
+            if (notifErr) console.warn("driver_notifications insert failed:", notifErr.message);
 
             // 5. Update load status to 'blasted'
-            await supabase
+            const { error: blastUpdateErr } = await supabase
                 .from("daily_loads")
                 .update({ status: "blasted", updated_at: now })
                 .eq("id", load.id);
+            if (blastUpdateErr) console.warn("load blast status update failed:", blastUpdateErr.message);
 
             toast({
-                title: "?? Blast Sent!",
+                title: "Blast Sent!",
                 description: `Blast sent to ${driverIdsArray.length} driver${driverIdsArray.length !== 1 ? "s" : ""}`,
             });
 

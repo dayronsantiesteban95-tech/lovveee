@@ -116,10 +116,10 @@ export default function InspectionForm({
             const lastReading = data[0].odometer_reading;
             if (num < lastReading) {
                 setOdometerWarning(
-                    `?? ??? Odometer is lower than last reading (${lastReading.toLocaleString()} mi on ${data[0].inspection_date})`
+                    `Warning: Odometer is lower than last reading (${lastReading.toLocaleString()} mi on ${data[0].inspection_date})`
                 );
             } else if (num === lastReading) {
-                setOdometerWarning(`?????? Same as last reading (${lastReading.toLocaleString()} mi). Is this correct?`);
+                setOdometerWarning(`Note: Same as last reading (${lastReading.toLocaleString()} mi). Is this correct?`);
             } else {
                 setOdometerWarning(null);
             }
@@ -185,7 +185,7 @@ export default function InspectionForm({
             return;
         }
         if (checklist.exterior_damage && !notes.trim()) {
-            toast({ title: "Notes required", description: "Exterior damage was marked ??" please describe it in the notes.", variant: "destructive" });
+            toast({ title: "Notes required", description: "Exterior damage was marked -- please describe it in please describe it in the notes.", variant: "destructive" });
             return;
         }
 
@@ -219,18 +219,19 @@ export default function InspectionForm({
                 return;
             }
 
-            // If car wash done ?-- log it
+            // If car wash done -- log it
             if (carWashDone) {
-                await supabase.from("vehicle_car_washes").insert({
+                const { error: washErr } = await supabase.from("vehicle_car_washes").insert({
                     vehicle_id: vehicleId,
                     driver_id: driverId || null,
                     wash_date: today,
                     notes: "Logged via inspection form",
                     recorded_by: user?.id ?? null,
                 });
+                if (washErr) console.warn("car wash log failed:", washErr.message);
             }
 
-            toast({ title: "??... Inspection submitted!", description: "Walk-around inspection recorded successfully." });
+            toast({ title: "Inspection submitted!", description: "Walk-around inspection recorded successfully." });
             onSuccess?.();
         } catch (err) {
             console.error("[InspectionForm] Unexpected error:", err);
@@ -265,7 +266,7 @@ export default function InspectionForm({
                         <SelectContent>
                             {vehicles.map((v) => (
                                 <SelectItem key={v.id} value={v.id}>
-                                    {v.vehicle_name}{v.license_plate ? ` ??" ${v.license_plate}` : ""}
+                                    {v.vehicle_name}{v.license_plate ? ` -- ${v.license_plate}` : ""}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -278,7 +279,7 @@ export default function InspectionForm({
                             <SelectValue placeholder="Select driver" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">??" None ??"</SelectItem>
+                            <SelectItem value="">-- None --</SelectItem>
                             {drivers.map((d) => (
                                 <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
                             ))}
@@ -406,7 +407,7 @@ export default function InspectionForm({
                             variant="secondary"
                             className={`text-[10px] ${i < photos.length ? "bg-green-500/15 text-green-700" : ""}`}
                         >
-                            {i < photos.length ? "??"" : `${i + 1}`} {lbl}
+                            {i < photos.length ? "+" : `${i + 1}`} {lbl}
                         </Badge>
                     ))}
                 </div>

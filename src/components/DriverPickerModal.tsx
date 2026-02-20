@@ -40,9 +40,9 @@ type HubMode = "locked" | "override";
 
 function statusDot(status: string): string {
   const s = status.toLowerCase();
-  if (s === "idle" || s === "active") return "??";
-  if (s === "finishing_soon" || s === "on_load" || s === "in_progress") return "??";
-  return "??";
+  if (s === "idle" || s === "active") return "Active";
+  if (s === "finishing_soon" || s === "on_load" || s === "in_progress") return "On Load";
+  return "Inactive";
 }
 
 function statusLabel(status: string): string {

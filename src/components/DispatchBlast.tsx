@@ -67,10 +67,10 @@ interface DispatchBlastPanelProps {
 // --- Priority config -----------------------------------
 
 const PRIORITY_CONFIG: Record<BlastPriority, { label: string; color: string; icon: string; defaultMinutes: number }> = {
-    low: { label: "Low", color: "bg-slate-500/15 text-slate-600 border-slate-500/20", icon: "??", defaultMinutes: 60 },
-    normal: { label: "Normal", color: "bg-blue-500/15 text-blue-600 border-blue-500/20", icon: "??", defaultMinutes: 30 },
-    high: { label: "High", color: "bg-orange-500/15 text-orange-600 border-orange-500/20", icon: "??", defaultMinutes: 15 },
-    urgent: { label: "URGENT", color: "bg-red-500/15 text-red-600 border-red-500/20", icon: "??", defaultMinutes: 5 },
+    low: { label: "Low", color: "bg-slate-500/15 text-slate-600 border-slate-500/20", icon: "--", defaultMinutes: 60 },
+    normal: { label: "Normal", color: "bg-blue-500/15 text-blue-600 border-blue-500/20", icon: "--", defaultMinutes: 30 },
+    high: { label: "High", color: "bg-orange-500/15 text-orange-600 border-orange-500/20", icon: "--", defaultMinutes: 15 },
+    urgent: { label: "URGENT", color: "bg-red-500/15 text-red-600 border-red-500/20", icon: "--", defaultMinutes: 5 },
 };
 
 // --- Component -----------------------------------------

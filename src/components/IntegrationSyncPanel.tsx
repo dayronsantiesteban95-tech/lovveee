@@ -62,7 +62,7 @@ export default function IntegrationSyncPanel({
 
                 if (result.errors.length > 0) {
                     toast({
-                        title: `?? Synced with warnings`,
+                        title: "Synced with warnings",
                         description: `${result.synced} loads synced, ${result.errors.length} errors from ${source}.`,
                         variant: "destructive",
                     });

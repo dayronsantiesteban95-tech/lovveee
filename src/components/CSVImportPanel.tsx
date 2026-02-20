@@ -240,7 +240,7 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
         setImporting(false);
         setStep("done");
         toast({
-            title: `?? Import complete`,
+            title: "Import complete",
             description: `${success} loads imported${errors > 0 ? `, ${errors} errors` : ""}`,
         });
         onImportComplete?.(success);

@@ -65,9 +65,9 @@ const STATUS_OPTIONS = [
 
 const SERVICE_TYPES = [
     { value: "", label: "All Services" },
-    { value: "AOG", label: "?? AOG" },
+    { value: "AOG", label: "AOG" },
     { value: "Courier", label: "? Courier" },
-    { value: "Standard", label: "?? Standard" },
+    { value: "Standard", label: "Standard" },
 ];
 
 const DATE_RANGES = [

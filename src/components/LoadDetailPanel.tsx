@@ -391,7 +391,7 @@ export default function LoadDetailPanel({
             },
             driverName,
         );
-        toast({ title: "?? Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+        toast({ title: "Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
     };
 
     const copyRef = () => {
@@ -558,7 +558,7 @@ export default function LoadDetailPanel({
                             onClick={() => {
                                 const trackingUrl = `${window.location.origin}/track/${load.tracking_token || load.reference_number}`;
                                 navigator.clipboard.writeText(trackingUrl);
-                                toast({ title: "?? Link copied!", description: "Share with your client" });
+                                toast({ title: "Link copied!", description: "Share with your client" });
                             }}
                         >
                             <Link className="h-3 w-3" /> Share Tracking Link
@@ -749,7 +749,7 @@ export default function LoadDetailPanel({
                         <Field label="Vehicle" value={vehicleName} />
                         <Field label="Dispatcher" value={dispatcherName} />
                         <Field label="Hub" value={load.hub?.replace(/_/g, " ")} />
-                        <Field label="Shift" value={load.shift === "day" ? "?? Day" : "?? Night"} />
+                        <Field label="Shift" value={load.shift === "day" ? "Day" : "Night"} />
                     </Section>
 
                     {/* Financials */}

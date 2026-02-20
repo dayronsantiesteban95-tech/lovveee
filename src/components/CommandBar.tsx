@@ -67,9 +67,9 @@ const PAGE_ROUTES: Record<string, string> = {
 function statusBadge(status: string): { badge: string; badgeColor: string } {
     switch (status) {
         case "delivered": return { badge: "? Delivered", badgeColor: "bg-green-500/15 text-green-600" };
-        case "in_progress": return { badge: "?? In Transit", badgeColor: "bg-yellow-500/15 text-yellow-600" };
-        case "picked_up": return { badge: "?? Picked Up", badgeColor: "bg-blue-500/15 text-blue-600" };
-        case "assigned": return { badge: "?? Assigned", badgeColor: "bg-indigo-500/15 text-indigo-600" };
+        case "in_progress": return { badge: "In Transit", badgeColor: "bg-yellow-500/15 text-yellow-600" };
+        case "picked_up": return { badge: "Picked Up", badgeColor: "bg-blue-500/15 text-blue-600" };
+        case "assigned": return { badge: "Assigned", badgeColor: "bg-indigo-500/15 text-indigo-600" };
         case "pending": return { badge: "? Pending", badgeColor: "bg-slate-500/15 text-slate-600" };
         case "cancelled": return { badge: "? Cancelled", badgeColor: "bg-red-500/15 text-red-600" };
         default: return { badge: status, badgeColor: "bg-slate-500/15 text-slate-600" };
@@ -204,7 +204,7 @@ export default function CommandBar() {
                         icon: Truck,
                         iconColor: "text-emerald-500",
                         action: () => { navigate("/dispatch"); setOpen(false); },
-                        badge: d.status === "active" ? "?? Active" : "? Inactive",
+                        badge: d.status === "active" ? "Active" : "Inactive",
                         badgeColor: d.status === "active" ? "bg-green-500/15 text-green-600" : "bg-slate-500/15 text-slate-500",
                     });
                 }
@@ -225,7 +225,7 @@ export default function CommandBar() {
                         id: `contact-${c.id}`,
                         category: "customers",
                         title: c.name,
-                        subtitle: `${c.company ?? ""} ? ${c.email ?? ""}`.trim().replace(/^?\s*/, ""),
+                        subtitle: `${c.company ?? ""} ${c.email ? "| " + c.email : ""}`.trim(),
                         icon: Users,
                         iconColor: "text-pink-500",
                         action: () => { navigate("/contacts"); setOpen(false); },

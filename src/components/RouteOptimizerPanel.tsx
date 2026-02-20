@@ -103,7 +103,7 @@ export default function RouteOptimizerPanel({
         setLoading(false);
 
         toast({
-            title: `??? Route optimized!`,
+            title: "Route optimized!",
             description: `${result.savingsVsOriginalMiles > 0
                 ? `Saves ${result.savingsVsOriginalMiles} miles vs current order`
                 : "Route is already near-optimal"
@@ -132,7 +132,7 @@ export default function RouteOptimizerPanel({
         if (!token) return;
         const url = `${window.location.origin}/track/${token}`;
         navigator.clipboard.writeText(url);
-        toast({ title: "?? Copied", description: `Tracking link copied: ${url}` });
+        toast({ title: "Copied", description: `Tracking link copied: ${url}` });
     };
 
     return (

@@ -105,7 +105,7 @@ export default function ActivityLog({
                         entity_type: "load",
                         entity_id: evt.load_id,
                         details: evt.note
-                            ? `${evt.old_status ?? "--"} -> ${evt.new_status} ? "${evt.note}"`
+                            ? `${evt.old_status ?? "--"} -> ${evt.new_status}: "${evt.note}"`
                             : `${evt.old_status ?? "--"} -> ${evt.new_status}`,
                         timestamp: evt.recorded_at,
                     });
@@ -132,7 +132,7 @@ export default function ActivityLog({
                         action: "Load created",
                         entity_type: "load",
                         entity_id: load.id,
-                        details: `${load.reference_number ?? "No ref"} ? ${load.client_name ?? "Unknown client"} ? ${load.status}`,
+                        details: `${load.reference_number ?? "No ref"} | ${load.client_name ?? "Unknown client"} | ${load.status}`,
                         timestamp: load.created_at,
                     });
 
