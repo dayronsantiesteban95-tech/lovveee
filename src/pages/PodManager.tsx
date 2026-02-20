@@ -482,7 +482,7 @@ function PodManager() {
                                     </div>
                                     <div className="text-xs flex items-center gap-1">
                                         <span className="truncate max-w-[200px]">{selectedLoad.pickup_address || "--"}</span>
-                                        <span className="text-muted-foreground">-></span>
+                                        <span className="text-muted-foreground">&rarr;</span>
                                         <span className="truncate max-w-[200px]">{selectedLoad.delivery_address || "--"}</span>
                                     </div>
                                 </div>

@@ -455,7 +455,7 @@ function Dashboard() {
                       <td className="px-3 py-3 text-xs text-muted-foreground hidden md:table-cell max-w-[200px]">
                         <span className="truncate block">
                           {load.pickup_address ? load.pickup_address.split(",")[0] : "--"}
-                          <span className="text-muted-foreground/50 mx-1">-></span>
+                          <span className="text-muted-foreground/50 mx-1">&rarr;</span>
                           {load.delivery_address ? load.delivery_address.split(",")[0] : "--"}
                         </span>
                       </td>
@@ -574,9 +574,9 @@ function Dashboard() {
                     </span>
                     <div className="flex-1 min-w-0 text-xs">
                       <span className="font-medium">{ev.driverName}</span>
-                      <span className="text-muted-foreground mx-1">-></span>
+                      <span className="text-muted-foreground mx-1">&rarr;</span>
                       <span className="font-mono text-blue-400">{ev.loadRef}</span>
-                      <span className="text-muted-foreground mx-1">-></span>
+                      <span className="text-muted-foreground mx-1">&rarr;</span>
                       <span className={
                         ev.new_status === "delivered" ? "text-green-400"
                           : ev.new_status === "in_progress" ? "text-yellow-400"

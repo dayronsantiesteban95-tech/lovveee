@@ -282,7 +282,7 @@ export default function BlastLoadDialog({
                     <div className="flex items-center gap-1 text-muted-foreground text-xs">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />
                         <span>{load.pickup_address ?? "--"}</span>
-                        <span className="mx-1">-></span>
+                        <span className="mx-1">&rarr;</span>
                         <span>{load.delivery_address ?? "--"}</span>
                     </div>
 

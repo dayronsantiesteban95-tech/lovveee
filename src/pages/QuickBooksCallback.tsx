@@ -112,7 +112,7 @@ function QuickBooksCallback() {
               onClick={() => navigate('/billing')}
               className="text-primary underline text-sm mt-2 block mx-auto"
             >
-              <- Go back to Billing
+              &larr; Go back to Billing
             </button>
           </>
         )}
