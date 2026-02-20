@@ -1,7 +1,7 @@
-// ═══════════════════════════════════════════════════════════
-// INSPECTION FORM — Vehicle Walk-Around Inspection
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// INSPECTION FORM â€” Vehicle Walk-Around Inspection
 // Used by Dispatcher App (manual entry) + Driver App (future)
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +20,7 @@ import {
     AlertTriangle, Camera, CheckCircle, Loader2, Upload, X,
 } from "lucide-react";
 
-// ─── Types ──────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type VehicleOption = { id: string; vehicle_name: string; license_plate: string | null };
 type DriverOption = { id: string; full_name: string };
 
@@ -71,7 +71,7 @@ const FUEL_LEVELS = [
     { value: "low", label: "Low" },
 ];
 
-// ═══════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 export default function InspectionForm({
     vehicles,
     drivers,
@@ -96,7 +96,7 @@ export default function InspectionForm({
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ── Odometer validation ──────────────────────────
+    // â”€â”€ Odometer validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const checkOdometer = useCallback(async (value: string) => {
         if (!vehicleId || !value) return;
         const num = parseInt(value, 10);
@@ -116,10 +116,10 @@ export default function InspectionForm({
             const lastReading = data[0].odometer_reading;
             if (num < lastReading) {
                 setOdometerWarning(
-                    `⚠️ Odometer is lower than last reading (${lastReading.toLocaleString()} mi on ${data[0].inspection_date})`
+                    `âš ï¸ Odometer is lower than last reading (${lastReading.toLocaleString()} mi on ${data[0].inspection_date})`
                 );
             } else if (num === lastReading) {
-                setOdometerWarning(`ℹ️ Same as last reading (${lastReading.toLocaleString()} mi). Is this correct?`);
+                setOdometerWarning(`â„¹ï¸ Same as last reading (${lastReading.toLocaleString()} mi). Is this correct?`);
             } else {
                 setOdometerWarning(null);
             }
@@ -128,7 +128,7 @@ export default function InspectionForm({
         }
     }, [vehicleId]);
 
-    // ── Photo upload ─────────────────────────────────
+    // â”€â”€ Photo upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files ?? []);
         if (!files.length) return;
@@ -168,9 +168,9 @@ export default function InspectionForm({
         setPhotos((prev) => prev.filter((_, i) => i !== idx));
     };
 
-    // ── Submit ───────────────────────────────────────
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
 
         if (!vehicleId) {
             toast({ title: "Vehicle required", description: "Please select a vehicle.", variant: "destructive" });
@@ -180,16 +180,12 @@ export default function InspectionForm({
             toast({ title: "Odometer required", description: "Please enter a valid odometer reading.", variant: "destructive" });
             return;
         }
-        if (photos.length < 2) {
-            toast({ title: "Photos required", description: "Please upload at least 2 photos.", variant: "destructive" });
-            return;
-        }
         if (!checklist.fuel_level) {
             toast({ title: "Fuel level required", description: "Please select the fuel level.", variant: "destructive" });
             return;
         }
         if (checklist.exterior_damage && !notes.trim()) {
-            toast({ title: "Notes required", description: "Exterior damage was marked — please describe it in the notes.", variant: "destructive" });
+            toast({ title: "Notes required", description: "Exterior damage was marked â€” please describe it in the notes.", variant: "destructive" });
             return;
         }
 
@@ -214,6 +210,7 @@ export default function InspectionForm({
                 });
 
             if (insertError) {
+                console.error("[InspectionForm] Insert error:", insertError);
                 if (insertError.code === "23505") {
                     toast({ title: "Already submitted", description: "An inspection for this vehicle was already submitted today.", variant: "destructive" });
                 } else {
@@ -222,7 +219,7 @@ export default function InspectionForm({
                 return;
             }
 
-            // If car wash done → log it
+            // If car wash done â†’ log it
             if (carWashDone) {
                 await supabase.from("vehicle_car_washes").insert({
                     vehicle_id: vehicleId,
@@ -233,8 +230,15 @@ export default function InspectionForm({
                 });
             }
 
-            toast({ title: "✅ Inspection submitted!", description: "Walk-around inspection recorded successfully." });
+            toast({ title: "âœ… Inspection submitted!", description: "Walk-around inspection recorded successfully." });
             onSuccess?.();
+        } catch (err) {
+            console.error("[InspectionForm] Unexpected error:", err);
+            toast({
+                title: "Unexpected error",
+                description: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+                variant: "destructive",
+            });
         } finally {
             setSubmitting(false);
         }
@@ -244,7 +248,7 @@ export default function InspectionForm({
         setChecklist((prev) => ({ ...prev, [key]: value }));
     };
 
-    // ══════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Vehicle + Driver */}
@@ -261,7 +265,7 @@ export default function InspectionForm({
                         <SelectContent>
                             {vehicles.map((v) => (
                                 <SelectItem key={v.id} value={v.id}>
-                                    {v.vehicle_name}{v.license_plate ? ` — ${v.license_plate}` : ""}
+                                    {v.vehicle_name}{v.license_plate ? ` â€” ${v.license_plate}` : ""}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -274,7 +278,7 @@ export default function InspectionForm({
                             <SelectValue placeholder="Select driver" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">— None —</SelectItem>
+                            <SelectItem value="">â€” None â€”</SelectItem>
                             {drivers.map((d) => (
                                 <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
                             ))}
@@ -359,7 +363,7 @@ export default function InspectionForm({
                 {checklist.exterior_damage && (
                     <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-500/10 rounded-lg px-3 py-2">
                         <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-                        Exterior damage noted — please describe it in the Notes section below.
+                        Exterior damage noted â€” please describe it in the Notes section below.
                     </div>
                 )}
             </div>
@@ -367,9 +371,9 @@ export default function InspectionForm({
             {/* Photos */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <Label className="text-sm font-semibold">Photos *</Label>
+                    <Label className="text-sm font-semibold">Photos <span className="text-muted-foreground font-normal">(optional)</span></Label>
                     <span className="text-xs text-muted-foreground">
-                        {photos.length}/10 — minimum 2 required
+                        {photos.length}/10
                     </span>
                 </div>
                 {photos.length > 0 && (
@@ -402,7 +406,7 @@ export default function InspectionForm({
                             variant="secondary"
                             className={`text-[10px] ${i < photos.length ? "bg-green-500/15 text-green-700" : ""}`}
                         >
-                            {i < photos.length ? "✓" : `${i + 1}`} {lbl}
+                            {i < photos.length ? "âœ“" : `${i + 1}`} {lbl}
                         </Badge>
                     ))}
                 </div>
@@ -427,9 +431,6 @@ export default function InspectionForm({
                         <><Camera className="h-4 w-4" /> Add Photos</>
                     )}
                 </Button>
-                {photos.length < 2 && (
-                    <p className="text-xs text-red-500">At least 2 photos are required</p>
-                )}
             </div>
 
             {/* Car Wash */}
@@ -440,7 +441,7 @@ export default function InspectionForm({
                     onCheckedChange={(v) => setCarWashDone(v === true)}
                 />
                 <div>
-                    <Label htmlFor="car_wash_done" className="cursor-pointer">🚿 Car wash done today?</Label>
+                    <Label htmlFor="car_wash_done" className="cursor-pointer">ðŸš¿ Car wash done today?</Label>
                     <p className="text-xs text-muted-foreground">This will log a car wash and reset the 10-day timer</p>
                 </div>
             </div>
@@ -469,7 +470,8 @@ export default function InspectionForm({
                     </Button>
                 )}
                 <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="btn-gradient flex-1 gap-2"
                     disabled={submitting || uploading}
                 >

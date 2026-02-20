@@ -348,6 +348,30 @@ export default function FleetTracker() {
     const getVehicleFleetStatus = (vehicleId: string) =>
         fleetStatus.find((f) => f.vehicle_id === vehicleId);
 
+    // ── Vehicle & Driver quick status toggles ────────
+    const toggleVehicleStatus = useCallback(async (v: Vehicle) => {
+        const newStatus = v.status === "active" ? "inactive" : "active";
+        const { error } = await db.from("vehicles").update({ status: newStatus }).eq("id", v.id);
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: `Vehicle marked ${newStatus}` });
+            queryClient.invalidateQueries({ queryKey: ["fleet-vehicles"] });
+            refetchFleetStatus();
+        }
+    }, [db, toast, queryClient, refetchFleetStatus]);
+
+    const toggleDriverStatus = useCallback(async (d: Driver) => {
+        const newStatus = d.status === "active" ? "inactive" : "active";
+        const { error } = await db.from("drivers").update({ status: newStatus }).eq("id", d.id);
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } else {
+            toast({ title: `Driver marked ${newStatus}` });
+            queryClient.invalidateQueries({ queryKey: ["fleet-drivers"] });
+        }
+    }, [db, toast, queryClient]);
+
     // ── Vehicle CRUD ─────────────────────────
     const handleVehSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -657,6 +681,25 @@ export default function FleetTracker() {
                                             >
                                                 <ClipboardCheck className="h-3 w-3" /> Inspect
                                             </Button>
+                                            {v.status === "active" ? (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-xs gap-1 text-destructive"
+                                                    onClick={() => toggleVehicleStatus(v)}
+                                                >
+                                                    Mark Inactive
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 text-xs gap-1 text-green-600"
+                                                    onClick={() => toggleVehicleStatus(v)}
+                                                >
+                                                    Mark Active
+                                                </Button>
+                                            )}
                                             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-destructive" onClick={() => setDeleteTarget({ type: "vehicle", id: v.id })}>
                                                 <Trash2 className="h-3 w-3" />
                                             </Button>
@@ -783,8 +826,27 @@ export default function FleetTracker() {
                                             <TableCell className="text-right font-mono">${d.hourly_rate}</TableCell>
                                             <TableCell className="text-sm text-muted-foreground">{d.hired_date || "—"}</TableCell>
                                             <TableCell>
-                                                <div className="flex gap-1">
+                                                <div className="flex gap-1 items-center">
                                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditDrv(d); setDrvDialog(true); }}><Pencil className="h-3 w-3" /></Button>
+                                                    {d.status === "active" ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 text-xs text-destructive px-2"
+                                                            onClick={() => toggleDriverStatus(d)}
+                                                        >
+                                                            Deactivate
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-7 text-xs text-green-600 px-2"
+                                                            onClick={() => toggleDriverStatus(d)}
+                                                        >
+                                                            Activate
+                                                        </Button>
+                                                    )}
                                                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget({ type: "driver", id: d.id })}><Trash2 className="h-3 w-3" /></Button>
                                                 </div>
                                             </TableCell>
@@ -899,7 +961,7 @@ export default function FleetTracker() {
                             Walk-Around Inspection
                         </DialogTitle>
                         <DialogDescription>
-                            Record daily vehicle inspection. Minimum 2 photos required.
+                            Record daily vehicle inspection. Photos are optional.
                         </DialogDescription>
                     </DialogHeader>
                     <InspectionForm
