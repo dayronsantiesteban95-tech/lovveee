@@ -65,7 +65,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
       senderRole: 'dispatcher' | 'driver'
     ) => {
       if (!loadId || !userId || !message.trim()) return;
-      await supabase.from('load_messages').insert({
+      const { error: msgErr } = await supabase.from('load_messages').insert({
         load_id: loadId,
         sender_id: userId,
         sender_name: senderName,
@@ -73,6 +73,7 @@ export function useMessages(loadId: string | null, userId: string | null) {
         message: message.trim(),
         read_by: [userId],
       });
+      if (msgErr) throw new Error(msgErr.message);
     },
     [loadId, userId]
   );

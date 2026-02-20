@@ -94,9 +94,10 @@ export function useDispatchData(dateRangeStart: string, dateRangeEnd: string) {
                 .order("created_at", { ascending: false })
                 .limit(60);
             if (error) throw error;
+            type AddressRow = { pickup_address: string | null; delivery_address: string | null };
             return [...new Set([
-                ...(data ?? []).map((d: any) => d.pickup_address),
-                ...(data ?? []).map((d: any) => d.delivery_address),
+                ...(data ?? []).map((d: AddressRow) => d.pickup_address),
+                ...(data ?? []).map((d: AddressRow) => d.delivery_address),
             ].filter(Boolean))].slice(0, 20) as string[];
         },
         staleTime: 30_000,
