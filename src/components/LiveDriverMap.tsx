@@ -9,7 +9,7 @@ import type { DriverLocation } from "@/hooks/useRealtimeDriverLocations";
 const PHOENIX_CENTER = { lat: 33.4484, lng: -112.074 };
 
 // Google Maps Aubergine / Dark night theme
-const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
+const DARK_MAP_STYLES = [
     { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
     { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
     { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
@@ -38,7 +38,7 @@ const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
     { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4e6d70" }] },
 ];
 
-const MAP_OPTIONS: google.maps.MapOptions = {
+const MAP_OPTIONS = {
     styles: DARK_MAP_STYLES,
     disableDefaultUI: false,
     zoomControl: true,
