@@ -122,7 +122,7 @@ function DispatchTracker() {
                     const eventLabel = evt.new_status === "arrived_pickup" ? "pickup" : "delivery";
 
                     toast({
-                        title: "?? Driver Arrived",
+                        title: "Driver Arrived",
                         description: `${driverName} arrived at ${eventLabel} -- Ref #${refNumber}`,
                     });
 
@@ -511,7 +511,7 @@ function DispatchTracker() {
                     service_type: blastDialogLoad.service_type ?? "",
                 } : null}
                 onBlastSent={(_blastId, driverCount) => {
-                    toast({ title: `?? Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
+                    toast({ title: `Blast sent to ${driverCount} driver${driverCount !== 1 ? "s" : ""}` });
                     refetchLoads();
                     setBlastDialogLoad(null);
                 }}

@@ -104,7 +104,7 @@ export default function DriverSuggestionBadge({
     }
 
     toast({
-      title: "?? Driver assigned!",
+      title: "Driver assigned!",
       description: `${suggestion.driver_name} assigned to this load`,
     });
     onAssigned(suggestion.driver_id);

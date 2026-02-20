@@ -180,7 +180,7 @@ function DriverPortal() {
             setShiftId(data.id);
             setOnDuty(true);
             gps.startTracking();
-            toast({ title: "?? On Duty", description: "GPS tracking started. Drive safe!" });
+            toast({ title: "On Duty", description: "GPS tracking started. Drive safe!" });
         } else {
             // Go off duty
             if (shiftId) {
@@ -195,7 +195,7 @@ function DriverPortal() {
             gps.stopTracking();
             setOnDuty(false);
             setShiftId(null);
-            toast({ title: "?? Off Duty", description: "GPS tracking stopped. Good job today!" });
+            toast({ title: "Off Duty", description: "GPS tracking stopped. Good job today!" });
         }
     };
 
@@ -286,7 +286,7 @@ function DriverPortal() {
                     </div>
                     <div className="text-right">
                         <Badge className={`${onDuty ? "bg-white/20 text-white" : "bg-white/10 text-white/60"} text-xs`}>
-                            {onDuty ? "?? On Duty" : "?? Off Duty"}
+                            {onDuty ? "On Duty" : "Off Duty"}
                         </Badge>
                         {gps.tracking && (
                             <p className="text-[10px] opacity-60 mt-1 flex items-center gap-1 justify-end">
@@ -426,7 +426,7 @@ function DriverPortal() {
                                                     variant="outline" size="sm"
                                                     className="h-9 w-9 p-0 rounded-lg shrink-0"
                                                     onClick={() => {
-                                                        toast({ title: "?? Call client", description: "Client phone not yet configured for this load." });
+                                                        toast({ title: "Call client", description: "Client phone not yet configured for this load." });
                                                     }}
                                                 >
                                                     <Phone className="h-3.5 w-3.5 text-green-500" />
@@ -453,7 +453,7 @@ function DriverPortal() {
                                                             } else {
                                                                 const { error: podErr } = await supabase.from("daily_loads").update({ pod_confirmed: true }).eq("id", load.id);
       if (podErr) console.warn("POD confirm update failed:", podErr.message);
-                                                                toast({ title: "?? POD captured!", description: "Photo uploaded successfully." });
+                                                                toast({ title: "POD captured!", description: "Photo uploaded successfully." });
                                                                 fetchLoads();
                                                             }
                                                         };

@@ -156,7 +156,7 @@ export default function DailyReport({ loads, drivers, selectedDate, onSelectedDa
                     <Card key={s.label} className="glass-card rounded-2xl">
                         <CardContent className="pt-5 pb-4 px-5">
                             <div className="flex items-center gap-2 mb-3">
-                                <span className="text-lg">{s.label === "Day" ? "??" : "??"}</span>
+                                <span className="text-lg">{s.label === "Day" ? "Day" : "Night"}</span>
                                 <p className="font-semibold">{s.label} Shift</p>
                             </div>
                             <div className="grid grid-cols-3 gap-4 text-center">

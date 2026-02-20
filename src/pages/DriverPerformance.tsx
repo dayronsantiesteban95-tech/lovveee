@@ -422,7 +422,7 @@ function DriverPerformance() {
                 {/* Footer row */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40">
                   <span className="flex items-center gap-1">
-                    <span className="text-muted-foreground">???</span>
+                    <span className="text-muted-foreground">--</span>
                     {d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi driven
                   </span>
                   {d.failed_loads > 0 ? (
@@ -478,11 +478,11 @@ function DriverPerformance() {
                       >
                         <TableCell className="pl-4 font-medium text-muted-foreground">
                           {revenueRank === 0
-                            ? "??"
+                            ? ""
                             : revenueRank === 1
-                            ? "??"
+                            ? ""
                             : revenueRank === 2
-                            ? "??"
+                            ? ""
                             : i + 1}
                         </TableCell>
                         <TableCell>

@@ -114,9 +114,9 @@ const EMPTY_ANIKA_MODIFIERS: AnikaModifiers = {
 };
 
 const AOG_SERVICE_TYPES = [
-    { value: "AOG",      label: "?? AOG",      hub_key: "hotshot" },
+    { value: "AOG",      label: "AOG",      hub_key: "hotshot" },
     { value: "Courier",  label: "? Courier",   hub_key: "courier" },
-    { value: "Standard", label: "?? Standard",  hub_key: "last_mile" },
+    { value: "Standard", label: "Standard",  hub_key: "last_mile" },
 ];
 const PKG_TYPES = ["PLT", "CTN", "BOX", "OTHER"];
 const VEHICLE_TYPES_DISPATCH = [

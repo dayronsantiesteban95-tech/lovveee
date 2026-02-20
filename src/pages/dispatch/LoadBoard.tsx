@@ -236,7 +236,7 @@ export default function LoadBoard({
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "?? D?a" : "?? Noche"}</Badge></TableCell>
+                                            <TableCell><Badge variant="outline" className="text-[10px]">{load.shift === "day" ? "Day" : "Night"}</Badge></TableCell>
                                             <TableCell className="font-medium text-sm">{driverName(load.driver_id)}</TableCell>
                                             <TableCell className="text-sm">{load.client_name || "--"}</TableCell>
                                             <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{load.description || "--"}</TableCell>
@@ -340,7 +340,7 @@ export default function LoadBoard({
                                                         <Pencil className="h-3 w-3" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" className="h-7 w-7" title="Clone load"
-                                                        onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "?? Load cloned", description: "Edit and save the cloned load" }); }}>
+                                                        onClick={(e) => { e.stopPropagation(); setClonePrefill(cloneLoadData(load)); setActiveTool("quick"); setToolsOpen(true); toast({ title: "Load cloned", description: "Edit and save the cloned load" }); }}>
                                                         <Copy className="h-3 w-3" />
                                                     </Button>
                                                     {!load.driver_id && (
@@ -392,7 +392,7 @@ export default function LoadBoard({
                                                                                 },
                                                                                 driverName(load.driver_id),
                                                                             );
-                                                                            toast({ title: "?? Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                            toast({ title: "Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
                                                                         }}
                                                                     >
                                                                         <ReceiptText className="h-3.5 w-3.5" />

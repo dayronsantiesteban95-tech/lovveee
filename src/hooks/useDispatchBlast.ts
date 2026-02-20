@@ -227,7 +227,7 @@ export function useDispatchBlast() {
             }
 
             toast({
-                title: "?? Blast Sent!",
+                title: "Blast Sent!",
                 description: `Notified ${params.driverIds.length} driver${params.driverIds.length > 1 ? "s" : ""}. Waiting for responses...`,
             });
 
@@ -284,7 +284,7 @@ export function useDispatchBlast() {
             }
 
             toast({
-                title: "?? Interest sent!",
+                title: "Interest sent!",
                 description: "Dispatcher will confirm your assignment.",
             });
             return true;

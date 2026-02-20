@@ -297,7 +297,7 @@ function FleetTracker() {
         if (error) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } else {
-            toast({ title: `?? Car wash logged for ${vehicle.vehicle_name}` });
+            toast({ title: `Car wash logged for ${vehicle.vehicle_name}` });
             refetchFleetStatus();
         }
     }, [user, refetchFleetStatus, toast]);

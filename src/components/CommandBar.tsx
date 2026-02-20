@@ -394,7 +394,7 @@ export default function CommandBar() {
 
                     {/* Footer */}
                     <div className="px-4 py-2 border-t bg-muted/20 flex items-center gap-4 text-[10px] text-muted-foreground/50">
-                        <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">??</kbd> Navigate</span>
+                        <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">Cmd+K</kbd> Navigate</span>
                         <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">?</kbd> Select</span>
                         <span className="flex items-center gap-1"><kbd className="px-1 rounded bg-muted border font-mono">ESC</kbd> Close</span>
                         <span className="ml-auto">Ctrl+K to toggle</span>
