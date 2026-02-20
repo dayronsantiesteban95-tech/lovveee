@@ -7,6 +7,7 @@
  * -----------------------------------------------------------
  */
 import { useNavigate } from "react-router-dom";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ArrowLeft, Truck, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -14,7 +15,7 @@ const EFFECTIVE_DATE = "February 19, 2026";
 const COMPANY = "Anika Logistics LLC";
 const CONTACT_EMAIL = "info@anikalogistics.com";
 
-export default function PrivacyPolicy() {
+function PrivacyPolicy() {
   const navigate = useNavigate();
 
   return (
@@ -391,5 +392,13 @@ export default function PrivacyPolicy() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function PrivacyPolicyPage() {
+  return (
+    <ErrorBoundary>
+      <PrivacyPolicy />
+    </ErrorBoundary>
   );
 }

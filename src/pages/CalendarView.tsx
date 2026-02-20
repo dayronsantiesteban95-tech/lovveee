@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -20,7 +21,7 @@ type Task = {
   status: string;
 };
 
-export default function CalendarView() {
+function CalendarView() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("month");
@@ -115,5 +116,13 @@ export default function CalendarView() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CalendarViewPage() {
+  return (
+    <ErrorBoundary>
+      <CalendarView />
+    </ErrorBoundary>
   );
 }

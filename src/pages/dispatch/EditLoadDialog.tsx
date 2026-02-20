@@ -1,4 +1,5 @@
 import {
+import { ErrorBoundary } from "@/components/ErrorBoundary";
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -141,4 +142,12 @@ export default function EditLoadDialog({
             </DialogContent>
         </Dialog>
     );
+}
+
+export default function EditLoadDialogPage() {
+  return (
+    <ErrorBoundary>
+      <EditLoadDialog />
+    </ErrorBoundary>
+  );
 }

@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3 } from "lucide-react";
 import LiveDriverMap from "@/components/LiveDriverMap";
@@ -113,4 +114,12 @@ export default function LiveOpsTab({
             </div>
         </div>
     );
+}
+
+export default function LiveOpsTabPage() {
+  return (
+    <ErrorBoundary>
+      <LiveOpsTab />
+    </ErrorBoundary>
+  );
 }

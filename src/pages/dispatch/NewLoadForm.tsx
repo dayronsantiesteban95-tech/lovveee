@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1149,3 +1150,10 @@ export default function NewLoadForm({
     );
 }
 
+export default function NewLoadFormPage() {
+  return (
+    <ErrorBoundary>
+      <NewLoadForm />
+    </ErrorBoundary>
+  );
+}

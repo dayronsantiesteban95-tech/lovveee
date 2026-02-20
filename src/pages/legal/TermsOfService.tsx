@@ -7,6 +7,7 @@
  * -----------------------------------------------------------
  */
 import { useNavigate } from "react-router-dom";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ArrowLeft, Truck, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +16,7 @@ const COMPANY = "Anika Logistics LLC";
 const CONTACT_EMAIL = "info@anikalogistics.com";
 const GOVERNING_STATE = "State of Arizona";
 
-export default function TermsOfService() {
+function TermsOfService() {
   const navigate = useNavigate();
 
   return (
@@ -480,5 +481,13 @@ export default function TermsOfService() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function TermsOfServicePage() {
+  return (
+    <ErrorBoundary>
+      <TermsOfService />
+    </ErrorBoundary>
   );
 }

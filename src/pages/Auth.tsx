@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Truck, ArrowRight, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export default function Auth() {
+function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -100,5 +101,13 @@ export default function Auth() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <ErrorBoundary>
+      <Auth />
+    </ErrorBoundary>
   );
 }

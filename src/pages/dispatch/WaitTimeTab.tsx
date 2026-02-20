@@ -1,4 +1,5 @@
 import { fmtMoney, fmtWait } from "@/lib/formatters";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -142,4 +143,12 @@ export default function WaitTimeTab({ analytics, driverName }: WaitTimeTabProps)
             </Card>
         </div>
     );
+}
+
+export default function WaitTimeTabPage() {
+  return (
+    <ErrorBoundary>
+      <WaitTimeTab />
+    </ErrorBoundary>
+  );
 }
