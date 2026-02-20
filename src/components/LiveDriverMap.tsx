@@ -1,40 +1,209 @@
 /**
- * LiveDriverMap — Renders driver locations on a Google Maps Embed iframe.
- * Uses Maps Embed API (no @react-google-maps/api dependency — zero crash risk).
- * Driver markers are overlaid as absolute-positioned HTML elements on top of the iframe.
+ * LiveDriverMap — Google Maps JavaScript API with real driver markers.
+ * Replaces the Embed API iframe (which doesn't support custom markers).
+ * Uses window.google.maps loaded via script tag — no extra npm dependency.
  */
 
-import { useState, useEffect, useRef } from "react";
-import { Truck, MapPin, Signal } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Truck, Signal } from "lucide-react";
 import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
 
 const PHOENIX_CENTER = { lat: 33.4484, lng: -112.074 };
 const DEFAULT_ZOOM = 11;
+const API_KEY = (import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined) ?? "";
 
+// ── Status color map ──────────────────────────────────────────────────────────
+const STATUS_COLORS: Record<string, string> = {
+  in_progress:       "#22c55e", // green
+  in_transit:        "#22c55e",
+  arrived_pickup:    "#f97316", // orange
+  arrived_delivery:  "#a855f7", // purple
+  assigned:          "#3b82f6", // blue
+  delivered:         "#6b7280", // gray
+  idle:              "#94a3b8", // slate
+};
+
+function statusColor(status?: string | null) {
+  return STATUS_COLORS[status ?? "idle"] ?? STATUS_COLORS.idle;
+}
+
+// ── Load Maps JS API once ─────────────────────────────────────────────────────
+let mapsLoaded = false;
+let mapsLoading = false;
+const mapsCallbacks: Array<() => void> = [];
+
+function loadMapsScript(key: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (mapsLoaded) { resolve(); return; }
+    mapsCallbacks.push(resolve);
+    if (mapsLoading) return;
+    mapsLoading = true;
+
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=marker`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      mapsLoaded = true;
+      mapsCallbacks.forEach(cb => cb());
+      mapsCallbacks.length = 0;
+    };
+    document.head.appendChild(script);
+  });
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function LiveDriverMap() {
   const { drivers, realtimeStatus } = useRealtimeDriverLocations();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
-  const apiKey = (import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined) ?? "";
+  const [mapReady, setMapReady] = useState(false);
 
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+
+  // ── Init map ──
+  useEffect(() => {
+    if (!API_KEY) return;
+    loadMapsScript(API_KEY).then(() => {
+      if (!mapRef.current || mapInstanceRef.current) return;
+      const map = new google.maps.Map(mapRef.current, {
+        center: PHOENIX_CENTER,
+        zoom: DEFAULT_ZOOM,
+        disableDefaultUI: false,
+        zoomControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+          { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#0f172a" }] },
+          { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#334155" }] },
+          { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
+          { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0c1222" }] },
+          { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#1e3a5f" }] },
+          { featureType: "poi", stylers: [{ visibility: "off" }] },
+          { featureType: "transit", stylers: [{ visibility: "off" }] },
+          { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+          { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#475569" }] },
+          { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+          { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+        ],
+      });
+      mapInstanceRef.current = map;
+      infoWindowRef.current = new google.maps.InfoWindow();
+      setMapReady(true);
+    });
+  }, []);
+
+  // ── Build SVG marker icon ──
+  const makeIcon = useCallback((initials: string, color: string, isSelected: boolean) => {
+    const size = isSelected ? 40 : 34;
+    const fontSize = isSelected ? 13 : 11;
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size + 10}" viewBox="0 0 ${size} ${size + 10}">
+        <filter id="shadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.5)"/>
+        </filter>
+        <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 2}" fill="${color}" filter="url(#shadow)" opacity="${isSelected ? 1 : 0.9}"/>
+        ${isSelected ? `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1}" fill="none" stroke="white" stroke-width="2.5" opacity="0.8"/>` : ""}
+        <text x="${size / 2}" y="${size / 2 + fontSize / 3}" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="${fontSize}" font-weight="700">${initials}</text>
+        <polygon points="${size / 2 - 5},${size - 2} ${size / 2 + 5},${size - 2} ${size / 2},${size + 8}" fill="${color}"/>
+      </svg>`;
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+      scaledSize: new google.maps.Size(size, size + 10),
+      anchor: new google.maps.Point(size / 2, size + 10),
+    };
+  }, []);
+
+  // ── Sync markers with driver data ──
+  useEffect(() => {
+    if (!mapReady || !mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    const currentIds = new Set(drivers.map(d => d.driver_id));
+
+    // Remove stale markers
+    markersRef.current.forEach((marker, id) => {
+      if (!currentIds.has(id)) {
+        marker.setMap(null);
+        markersRef.current.delete(id);
+      }
+    });
+
+    // Add/update markers
+    drivers.forEach(driver => {
+      if (!driver.latitude || !driver.longitude) return;
+      const name = driver.driver_name ?? "Driver";
+      const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+      const color = statusColor(driver.load_status);
+      const isSelected = selectedDriverId === driver.driver_id;
+      const position = { lat: driver.latitude, lng: driver.longitude };
+
+      let marker = markersRef.current.get(driver.driver_id);
+      if (!marker) {
+        marker = new google.maps.Marker({
+          map,
+          position,
+          title: name,
+          icon: makeIcon(initials, color, isSelected),
+          zIndex: isSelected ? 999 : 1,
+          optimized: false,
+        });
+
+        marker.addListener("click", () => {
+          setSelectedDriverId(prev => prev === driver.driver_id ? null : driver.driver_id);
+          if (infoWindowRef.current) {
+            const lastSeen = driver.recorded_at
+              ? new Date(driver.recorded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "Unknown";
+            infoWindowRef.current.setContent(`
+              <div style="background:#1e293b;color:#f1f5f9;padding:10px 14px;border-radius:10px;min-width:160px;font-family:system-ui,sans-serif;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${name}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">Last ping: ${lastSeen}</div>
+                ${driver.active_load_id
+                  ? `<div style="font-size:11px;background:#1e3a5f;border-radius:6px;padding:4px 8px;color:#60a5fa;">🚚 On active load</div>`
+                  : `<div style="font-size:11px;color:#64748b;">No active load</div>`
+                }
+              </div>
+            `);
+            infoWindowRef.current.open(map, marker);
+          }
+        });
+        markersRef.current.set(driver.driver_id, marker);
+      } else {
+        marker.setPosition(position);
+        marker.setIcon(makeIcon(initials, color, isSelected));
+        marker.setZIndex(isSelected ? 999 : 1);
+      }
+    });
+
+    // Auto-fit bounds if drivers exist
+    if (drivers.length > 0 && drivers.length <= 20) {
+      const bounds = new google.maps.LatLngBounds();
+      drivers.forEach(d => {
+        if (d.latitude && d.longitude) bounds.extend({ lat: d.latitude, lng: d.longitude });
+      });
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
+        if (drivers.length === 1) map.setZoom(14);
+      }
+    }
+  }, [drivers, mapReady, selectedDriverId, makeIcon]);
+
+  // ── Status dot ──
   const statusDot = {
-    connected: { color: "bg-emerald-400", label: "Live" },
-    reconnecting: { color: "bg-amber-400", label: "Reconnecting" },
-    disconnected: { color: "bg-red-400", label: "Disconnected" },
+    connected:    { color: "bg-emerald-400", label: "Live" },
+    reconnecting: { color: "bg-amber-400",   label: "Reconnecting" },
+    disconnected: { color: "bg-red-400",      label: "Disconnected" },
   }[realtimeStatus];
 
-  // Build the embed URL — centers on active drivers or Phoenix by default
-  const centerLat = drivers.length > 0
-    ? drivers.reduce((sum, d) => sum + d.latitude, 0) / drivers.length
-    : PHOENIX_CENTER.lat;
-  const centerLng = drivers.length > 0
-    ? drivers.reduce((sum, d) => sum + d.longitude, 0) / drivers.length
-    : PHOENIX_CENTER.lng;
-
-  const embedUrl = apiKey
-    ? `https://www.google.com/maps/embed/v1/view?key=${apiKey}&center=${centerLat},${centerLng}&zoom=${DEFAULT_ZOOM}&maptype=roadmap`
-    : null;
-
-  if (!apiKey) {
+  if (!API_KEY) {
     return (
       <div className="absolute inset-0 bg-[hsl(224,40%,4%)] flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -54,79 +223,67 @@ export default function LiveDriverMap() {
 
   return (
     <div className="absolute inset-0">
-      {/* Google Maps Embed iframe — no native library, no crash risk */}
-      <iframe
-        title="Live Driver Map"
-        src={embedUrl ?? ""}
-        className="absolute inset-0 w-full h-full border-0"
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      />
+      {/* Google Maps container */}
+      <div ref={mapRef} className="absolute inset-0 w-full h-full" />
 
-      {/* Driver marker overlays */}
-      {drivers.map((driver) => {
-        const name = driver.driver_name ?? "Driver";
-        const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-        const isSelected = selectedDriverId === driver.driver_id;
-
-        return (
-          <div
-            key={driver.driver_id}
-            className="absolute z-10 cursor-pointer"
-            style={{
-              // Simple fixed position markers — will improve with Maps JS API later
-              bottom: "30%",
-              left: "50%",
-              transform: "translateX(-50%)",
-              display: "none", // Hidden until we have proper geo-to-pixel conversion
-            }}
-            onClick={() => setSelectedDriverId(isSelected ? null : driver.driver_id)}
-          >
-            <div className={`h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg border-2 bg-emerald-500 ${isSelected ? "border-white ring-2 ring-white/40 scale-110" : "border-emerald-300"}`}>
-              {initials}
+      {/* Loading overlay */}
+      {!mapReady && (
+        <div className="absolute inset-0 bg-[hsl(224,40%,4%)] flex items-center justify-center z-10">
+          <div className="text-center space-y-3">
+            <div className="relative mx-auto w-16 h-16">
+              <div className="absolute inset-0 rounded-full border border-primary/30 animate-ping" />
+              <div className="absolute inset-2 rounded-full border border-primary/20 animate-ping" style={{ animationDelay: "0.3s" }} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Truck className="h-7 w-7 text-primary" />
+              </div>
             </div>
+            <p className="text-xs text-muted-foreground">Loading map...</p>
           </div>
-        );
-      })}
-
-      {/* Driver list overlay — bottom left */}
-      {drivers.length > 0 && (
-        <div className="absolute bottom-16 left-4 z-20 space-y-1 max-h-48 overflow-y-auto">
-          {drivers.map((driver) => (
-            <div
-              key={driver.driver_id}
-              className="flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/10 cursor-pointer hover:bg-black/80"
-              onClick={() => setSelectedDriverId(
-                selectedDriverId === driver.driver_id ? null : driver.driver_id
-              )}
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-              </span>
-              <span className="text-[11px] font-medium text-white">{driver.driver_name ?? "Driver"}</span>
-              {driver.active_load_id && (
-                <span className="text-[9px] text-blue-300">On load</span>
-              )}
-            </div>
-          ))}
         </div>
       )}
 
-      {/* No drivers overlay */}
-      {drivers.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center space-y-2 bg-black/50 backdrop-blur-sm rounded-xl px-6 py-4 border border-white/10">
-            <Truck className="h-6 w-6 text-muted-foreground mx-auto" />
-            <p className="text-sm font-medium text-muted-foreground">No active drivers</p>
-            <p className="text-xs text-muted-foreground/60">Driver locations update in real-time</p>
+      {/* Driver list overlay — bottom left */}
+      {mapReady && drivers.length > 0 && (
+        <div className="absolute bottom-16 left-4 z-20 space-y-1 max-h-52 overflow-y-auto">
+          {drivers.map((driver) => {
+            const isSelected = selectedDriverId === driver.driver_id;
+            const color = statusColor(driver.load_status);
+            return (
+              <div
+                key={driver.driver_id}
+                className={`flex items-center gap-2 backdrop-blur-sm rounded-lg px-3 py-1.5 border cursor-pointer transition-all ${
+                  isSelected
+                    ? "bg-white/10 border-white/30"
+                    : "bg-black/60 border-white/10 hover:bg-black/75"
+                }`}
+                onClick={() => setSelectedDriverId(isSelected ? null : driver.driver_id)}
+              >
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: color }} />
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: color }} />
+                </span>
+                <span className="text-[11px] font-medium text-white">{driver.driver_name ?? "Driver"}</span>
+                {driver.active_load_id && (
+                  <span className="text-[9px] text-blue-300 font-semibold">ON LOAD</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* No drivers state */}
+      {mapReady && drivers.length === 0 && (
+        <div className="absolute bottom-16 left-4 z-20 pointer-events-none">
+          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
+            <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+            <p className="text-[11px] text-muted-foreground">No active drivers</p>
           </div>
         </div>
       )}
 
       {/* Live indicator */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10 pointer-events-none z-20">
+      <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10 pointer-events-none">
         <span className="relative flex h-2 w-2">
           {realtimeStatus === "connected" && (
             <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusDot.color} opacity-75`} />
