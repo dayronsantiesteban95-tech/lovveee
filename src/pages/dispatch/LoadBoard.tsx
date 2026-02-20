@@ -1,5 +1,4 @@
 import { fmtMoney, fmtWait } from "@/lib/formatters";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -529,12 +528,4 @@ export default function LoadBoard({
             </div>
         </>
     );
-}
-
-export default function LoadBoardPage() {
-  return (
-    <ErrorBoundary>
-      <LoadBoard />
-    </ErrorBoundary>
-  );
 }

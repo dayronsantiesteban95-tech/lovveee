@@ -131,6 +131,8 @@ for (const f of pageFiles) {
   if (lines < 30) continue;                  // tiny static pages exempt
   if (f.includes('NotFound')) continue;      // static 404 page exempt
   if (!c.includes('export default')) continue; // not a page component
+  // Skip components that accept props -- they are sub-components, not route pages
+  if (/export default function \w+\(\s*\{/.test(c)) continue;
   if (!c.includes('<ErrorBoundary>')) {
     missingEB.push(path.relative(ROOT, f) + ' (' + lines + 'L)');
   }

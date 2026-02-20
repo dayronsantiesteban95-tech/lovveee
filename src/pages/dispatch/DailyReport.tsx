@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { fmtMoney, fmtWait } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -170,12 +169,4 @@ export default function DailyReport({ loads, drivers, selectedDate, onSelectedDa
             </div>
         </div>
     );
-}
-
-export default function DailyReportPage() {
-  return (
-    <ErrorBoundary>
-      <DailyReport />
-    </ErrorBoundary>
-  );
 }
