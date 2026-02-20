@@ -215,7 +215,7 @@ export default function LoadBoard({
                                                         <Package className="h-6 w-6 opacity-50" />
                                                     </div>
                                                     <p className="text-sm font-semibold text-foreground">No loads for {selectedDate}</p>
-                                                    <p className="text-xs opacity-60">Open the Tools panel -> New to add the first load for this date.</p>
+                                                    <p className="text-xs opacity-60">Open the Tools panel &rarr; New to add the first load for this date.</p>
                                                 </div>
                                             )}
                                         </TableCell>
