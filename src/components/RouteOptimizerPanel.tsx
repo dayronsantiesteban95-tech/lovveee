@@ -14,12 +14,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
     Route, Zap, MapPin, ArrowDown, Clock, TrendingDown,
     ChevronRight, Truck, RefreshCw, Copy, ExternalLink,
 } from "lucide-react";
 import { optimizeRoute, geocodeAddress, type RoutePoint, type OptimizedRoute } from "@/hooks/useRouteOptimizer";
+import { captureLoadError } from "@/lib/sentry";
 
 // --- Types ---------------------------------------------
 
@@ -73,10 +75,17 @@ export default function RouteOptimizerPanel({
                     lat = coords.lat;
                     lng = coords.lng;
                     // Save geocoded coordinates back to DB
-                    await supabase.from("daily_loads").update({
-                        delivery_lat: lat,
-                        delivery_lng: lng,
-                    }).eq("id", load.id);
+                    try {
+                        const { error } = await supabase.from("daily_loads").update({
+                            delivery_lat: lat,
+                            delivery_lng: lng,
+                        }).eq("id", load.id);
+                        if (error) throw error;
+                    } catch (err) {
+                        console.error("Failed to save geocoded coordinates:", err);
+                        captureLoadError(load.id, err, { operation: "geocode_save" });
+                        // Continue optimization even if geocode save fails
+                    }
                 }
                 // Rate limit (Nominatim: 1 req/sec)
                 await new Promise((r) => setTimeout(r, 1100));
@@ -115,17 +124,24 @@ export default function RouteOptimizerPanel({
         if (!optimized) return;
         setApplying(true);
 
-        // Update route_order and estimated_arrival for each load
-        for (const stop of optimized.stops) {
-            await supabase.from("daily_loads").update({
-                route_order: stop.order,
-                estimated_arrival: stop.estimatedArrival,
-            }).eq("id", stop.id);
-        }
+        try {
+            // Update route_order and estimated_arrival for each load
+            for (const stop of optimized.stops) {
+                const { error } = await supabase.from("daily_loads").update({
+                    route_order: stop.order,
+                    estimated_arrival: stop.estimatedArrival,
+                }).eq("id", stop.id);
+                if (error) throw error;
+            }
 
-        toast({ title: "? Route applied", description: "Load order and ETAs updated in the load board." });
-        setApplying(false);
-        onRouteApplied?.(optimized.stops.map((s) => s.id));
+            toast.success("Route applied successfully");
+            onRouteApplied?.(optimized.stops.map((s) => s.id));
+        } catch (err) {
+            toast.error("Failed to apply route order");
+            captureLoadError(optimized.stops[0]?.id || "unknown", err, { operation: "apply_route_order" });
+        } finally {
+            setApplying(false);
+        }
     };
 
     const copyTrackingLink = (token: string | null) => {

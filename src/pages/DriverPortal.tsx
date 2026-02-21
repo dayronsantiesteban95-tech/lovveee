@@ -20,7 +20,9 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useDriverGPS } from "@/hooks/useDriverGPS";
+import { captureLoadError, captureFleetError } from "@/lib/sentry";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -184,13 +186,19 @@ function DriverPortal() {
         } else {
             // Go off duty
             if (shiftId) {
-                const { error: shiftErr } = await supabase.from("driver_shifts").update({
-                    shift_end: new Date().toISOString(),
-                    status: "off_duty",
-                    end_lat: gps.position?.latitude,
-                    end_lng: gps.position?.longitude,
-                }).eq("id", shiftId);
-      if (shiftErr) { toast({ title: "Error updating shift", description: shiftErr.message, variant: "destructive" }); return; }
+                try {
+                    const { error: shiftErr } = await supabase.from("driver_shifts").update({
+                        shift_end: new Date().toISOString(),
+                        status: "off_duty",
+                        end_lat: gps.position?.latitude,
+                        end_lng: gps.position?.longitude,
+                    }).eq("id", shiftId);
+                    if (shiftErr) throw shiftErr;
+                } catch (err: any) {
+                    toast.error("Failed to end shift");
+                    captureFleetError(driver.id, err, { operation: "end_shift", shiftId });
+                    return;
+                }
             }
             gps.stopTracking();
             setOnDuty(false);
@@ -217,29 +225,37 @@ function DriverPortal() {
             updatePayload.pod_confirmed = false; // will be set true when POD is captured
         }
 
-        const { error } = await supabase.from("daily_loads").update(updatePayload).eq("id", load.id);
-        if (error) {
-            toast({ title: "Update failed", description: error.message, variant: "destructive" });
+        try {
+            const { error } = await supabase.from("daily_loads").update(updatePayload).eq("id", load.id);
+            if (error) throw error;
+
+            // Log the status event with GPS
+            try {
+                const { error: evtErr } = await supabase.from("load_status_events").insert({
+                    load_id: load.id,
+                    driver_id: driver.id,
+                    old_status: load.status,
+                    new_status: nextStatus,
+                    latitude: gps.position?.latitude,
+                    longitude: gps.position?.longitude,
+                    note: statusNote || null,
+                });
+                if (evtErr) throw evtErr;
+            } catch (evtErr) {
+                console.error("Failed to log status event:", evtErr);
+                captureLoadError(load.id, evtErr, { operation: "log_status_event" });
+                // Continue - status was updated successfully
+            }
+
+            setStatusNote("");
+            toast.success(`${getStatusInfo(nextStatus).label} - ${load.client_name ?? "Load updated"}`);
+            fetchLoads();
+        } catch (err) {
+            toast.error("Failed to update load status");
+            captureLoadError(load.id, err, { operation: "update_status", newStatus: nextStatus });
+        } finally {
             setUpdatingLoadId(null);
-            return;
         }
-
-        // Log the status event with GPS
-        const { error: evtErr } = await supabase.from("load_status_events").insert({
-            load_id: load.id,
-            driver_id: driver.id,
-            old_status: load.status,
-            new_status: nextStatus,
-            latitude: gps.position?.latitude,
-            longitude: gps.position?.longitude,
-            note: statusNote || null,
-        });
-      if (evtErr) console.warn("load_status_events insert failed:", evtErr.message);
-
-        setStatusNote("");
-        setUpdatingLoadId(null);
-        toast({ title: `? ${getStatusInfo(nextStatus).label}`, description: load.client_name ?? "Load updated" });
-        fetchLoads();
     };
 
     // -- Render -------------------------------
@@ -451,10 +467,15 @@ function DriverPortal() {
                                                             if (uploadErr) {
                                                                 toast({ title: "Upload failed", description: uploadErr.message, variant: "destructive" });
                                                             } else {
-                                                                const { error: podErr } = await supabase.from("daily_loads").update({ pod_confirmed: true }).eq("id", load.id);
-      if (podErr) console.warn("POD confirm update failed:", podErr.message);
-                                                                toast({ title: "POD captured!", description: "Photo uploaded successfully." });
-                                                                fetchLoads();
+                                                                try {
+                                                                    const { error: podErr } = await supabase.from("daily_loads").update({ pod_confirmed: true }).eq("id", load.id);
+                                                                    if (podErr) throw podErr;
+                                                                    toast.success("POD captured and confirmed");
+                                                                    fetchLoads();
+                                                                } catch (podErr) {
+                                                                    toast.error("POD uploaded but failed to confirm");
+                                                                    captureLoadError(load.id, podErr, { operation: "confirm_pod" });
+                                                                }
                                                             }
                                                         };
                                                         input.click();

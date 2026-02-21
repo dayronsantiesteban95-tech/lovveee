@@ -856,7 +856,7 @@ function Billing() {
     try {
       const { qbInvoiceId, qbInvoiceNumber } = await syncQBInvoice(inv.id);
       toast({
-        title: "? Synced to QuickBooks",
+        title: "Synced to QuickBooks",
         description: `QB Invoice #${qbInvoiceNumber} (ID: ${qbInvoiceId})`,
       });
       fetchInvoices();

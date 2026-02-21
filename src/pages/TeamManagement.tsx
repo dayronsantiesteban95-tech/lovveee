@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { captureScopedError } from "@/lib/sentry";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -376,7 +378,7 @@ function TeamManagement() {
         // If driver role, also save to drivers table
         if (form.role === "driver") {
           try {
-            await supabase.from("drivers").insert({
+            const { error: driverErr } = await supabase.from("drivers").insert({
               full_name: form.full_name,
               email: form.email,
               phone: form.phone || "N/A",
@@ -388,8 +390,11 @@ function TeamManagement() {
                 : null,
               created_by: user?.id,
             });
+            if (driverErr) throw driverErr;
           } catch (driverErr) {
-            }
+            toast.error("Driver created but failed to save to drivers table");
+            captureScopedError("team_management", { email: form.email, role: form.role }, driverErr);
+          }
         }
 
         toast({

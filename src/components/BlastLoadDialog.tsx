@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { captureLoadError } from "@/lib/sentry";
 
 // --- Types ---------------------------------------------
 
@@ -188,8 +190,14 @@ export default function BlastLoadDialog({
                 notified_at: now,
             }));
 
-            const { error: respErr } = await supabase.from("blast_responses").insert(responseRows);
-            if (respErr) console.warn("blast_responses insert failed:", respErr.message);
+            try {
+                const { error: respErr } = await supabase.from("blast_responses").insert(responseRows);
+                if (respErr) throw respErr;
+            } catch (respErr) {
+                console.error("Failed to create blast responses:", respErr);
+                captureLoadError(load.id, respErr, { operation: "create_blast_responses", blastId: blast.id });
+                // Continue - blast was created successfully
+            }
 
             // 4. Insert driver_notifications for each driver
             const notifRows = driverIdsArray.map((driverId) => ({
@@ -218,8 +226,14 @@ export default function BlastLoadDialog({
                 read: false,
             }));
 
-            const { error: notifErr } = await supabase.from("driver_notifications").insert(notifRows);
-            if (notifErr) console.warn("driver_notifications insert failed:", notifErr.message);
+            try {
+                const { error: notifErr } = await supabase.from("driver_notifications").insert(notifRows);
+                if (notifErr) throw notifErr;
+            } catch (notifErr) {
+                console.error("Failed to create driver notifications:", notifErr);
+                captureLoadError(load.id, notifErr, { operation: "create_driver_notifications", blastId: blast.id });
+                // Continue - drivers can still see blast via blast_responses
+            }
 
             // 5. Update load status to 'blasted'
             const { error: blastUpdateErr } = await supabase

@@ -384,7 +384,7 @@ function MapPlaceholder({ driverCount, loadCount }: { driverCount: number; loadC
                 <span>LIVE FEED READY</span>
             </div>
             <div className="absolute bottom-8 right-8 text-[10px] text-muted-foreground font-mono">
-                33.4484? N, 112.0740? W -- PHX
+                33.4484\u00B0 N, 112.0740\u00B0 W -- PHX
             </div>
         </div>
     );

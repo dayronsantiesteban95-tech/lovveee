@@ -32,7 +32,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import LeadDetailPanel from "@/components/LeadDetailPanel";
+import { captureScopedError } from "@/lib/sentry";
 
 type Lead = {
   id: string;
@@ -150,9 +152,16 @@ function Pipeline() {
 
   const handleDrop = async (stage: string) => {
     if (!draggedId) return;
-    await supabase.from("leads").update({ stage: stage as Database["public"]["Enums"]["lead_stage"] }).eq("id", draggedId);
-    setDraggedId(null);
-    fetchLeads();
+    try {
+      const { error } = await supabase.from("leads").update({ stage: stage as Database["public"]["Enums"]["lead_stage"] }).eq("id", draggedId);
+      if (error) throw error;
+      fetchLeads();
+    } catch (err) {
+      toast.error("Failed to update lead stage");
+      captureScopedError("pipeline", { leadId: draggedId, stage }, err);
+    } finally {
+      setDraggedId(null);
+    }
   };
 
   // Reset date picker when opening form

@@ -25,6 +25,8 @@ import { Plus, Calendar, User, Pencil, Trash2, Search, Building2, ClipboardList 
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { captureScopedError } from "@/lib/sentry";
 
 type Task = {
   id: string;
@@ -92,9 +94,16 @@ function TaskBoard() {
 
   const handleDrop = async (status: "todo" | "in_progress" | "done") => {
     if (!draggedId) return;
-    const { error: dragErr } = await supabase.from("tasks").update({ status }).eq("id", draggedId);
-    if (dragErr) toast({ title: "Error updating task", description: dragErr.message, variant: "destructive" });
-    setDraggedId(null);
+    try {
+      const { error: dragErr } = await supabase.from("tasks").update({ status }).eq("id", draggedId);
+      if (dragErr) throw dragErr;
+      fetchTasks();
+    } catch (err) {
+      toast.error("Failed to update task status");
+      captureScopedError("tasks", { taskId: draggedId, status }, err);
+    } finally {
+      setDraggedId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -145,8 +154,13 @@ function TaskBoard() {
       else {
         const leadId = fd.get("linked_lead") as string;
         if (leadId && newTask) {
-          const { error: linkErr } = await supabase.from("task_lead_links").insert({ task_id: newTask.id, lead_id: leadId });
-        if (linkErr) console.warn("task_lead_links insert failed:", linkErr.message);
+          try {
+            const { error: linkErr } = await supabase.from("task_lead_links").insert({ task_id: newTask.id, lead_id: leadId });
+            if (linkErr) throw linkErr;
+          } catch (linkErr) {
+            console.error("Failed to link task to lead:", linkErr);
+            captureScopedError("tasks", { taskId: newTask.id, leadId }, linkErr);
+          }
         }
         const assigneeName = payload.assigned_to ? profiles.find(p => p.user_id === payload.assigned_to)?.full_name : null;
         if (assigneeName && payload.assigned_to !== user.id) {

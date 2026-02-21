@@ -6,6 +6,7 @@ import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { captureScopedError } from "@/lib/sentry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -221,14 +222,20 @@ export default function InspectionForm({
 
             // If car wash done -- log it
             if (carWashDone) {
-                const { error: washErr } = await supabase.from("vehicle_car_washes").insert({
-                    vehicle_id: vehicleId,
-                    driver_id: driverId || null,
-                    wash_date: today,
-                    notes: "Logged via inspection form",
-                    recorded_by: user?.id ?? null,
-                });
-                if (washErr) console.warn("car wash log failed:", washErr.message);
+                try {
+                    const { error: washErr } = await supabase.from("vehicle_car_washes").insert({
+                        vehicle_id: vehicleId,
+                        driver_id: driverId || null,
+                        wash_date: today,
+                        notes: "Logged via inspection form",
+                        recorded_by: user?.id ?? null,
+                    });
+                    if (washErr) throw washErr;
+                } catch (washErr) {
+                    console.error("Failed to log car wash:", washErr);
+                    captureScopedError("fleet", { vehicleId, driverId, operation: "log_car_wash" }, washErr);
+                    // Continue - inspection was saved successfully
+                }
             }
 
             toast({ title: "Inspection submitted!", description: "Walk-around inspection recorded successfully." });

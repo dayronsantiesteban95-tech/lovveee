@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { captureScopedError } from "@/lib/sentry";
 import {
     Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle,
     X, ArrowRight, RefreshCw, FileText, Table2,
@@ -228,11 +229,14 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
         const BATCH_SIZE = 50;
         for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
             const batch = payloads.slice(i, i + BATCH_SIZE);
-            const { error, data } = await supabase.from("daily_loads").insert(batch).select("id");
-            if (error) {
-                errors += batch.length;
-            } else {
+            try {
+                const { error, data } = await supabase.from("daily_loads").insert(batch).select("id");
+                if (error) throw error;
                 success += data?.length ?? batch.length;
+            } catch (err) {
+                errors += batch.length;
+                console.error(`CSV import batch ${i / BATCH_SIZE + 1} failed:`, err);
+                captureScopedError("csv_import", { batchNumber: i / BATCH_SIZE + 1, batchSize: batch.length }, err);
             }
         }
 
