@@ -606,9 +606,9 @@ function CommandCenter() {
                         {realtimeStatus === "reconnecting" && (
                             <>
                                 <span className="relative flex h-2 w-2">
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400 animate-pulse" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400 animate-pulse" />
                                 </span>
-                                <span className="text-amber-400">Reconnecting</span>
+                                <span className="text-slate-400">Waiting for drivers...</span>
                             </>
                         )}
                         {realtimeStatus === "disconnected" && (
