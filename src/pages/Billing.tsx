@@ -45,7 +45,7 @@ import {
   ReceiptText, Plus, CheckCircle, Clock, AlertTriangle, Ban,
   DollarSign, Send, Download, Eye, RefreshCw, FileText,
   User, Mail, Calendar, CreditCard, Pencil, X, Check,
-  Link2, Loader2,
+  Link2, Loader2, TrendingUp, BarChart3,
 } from "lucide-react";
 
 // --- Types ------------------------------------------------
@@ -147,6 +147,313 @@ function addDaysISO(dateStr: string, days: number): string {
 }
 
 // -----------------------------------------------------------
+// AR AGING REPORT COMPONENT
+// -----------------------------------------------------------
+
+interface AgingBucket {
+  label: string;
+  minDays: number;
+  maxDays: number;
+  colorClass: string;
+  badgeClass: string;
+  rowClass: string;
+}
+
+const AGING_BUCKETS: AgingBucket[] = [
+  { label: "Current (0-30 days)",  minDays: 0,  maxDays: 30,  colorClass: "text-green-700",  badgeClass: "bg-green-100 text-green-700 border-green-300",  rowClass: "bg-green-50/30" },
+  { label: "31-60 days",           minDays: 31, maxDays: 60,  colorClass: "text-yellow-700", badgeClass: "bg-yellow-100 text-yellow-700 border-yellow-300", rowClass: "bg-yellow-50/30" },
+  { label: "61-90 days",           minDays: 61, maxDays: 90,  colorClass: "text-orange-700", badgeClass: "bg-orange-100 text-orange-700 border-orange-300", rowClass: "bg-orange-50/30" },
+  { label: "90+ days",             minDays: 91, maxDays: Infinity, colorClass: "text-red-700", badgeClass: "bg-red-100 text-red-700 border-red-300", rowClass: "bg-red-50/30" },
+];
+
+function daysDiff(dateStr: string): number {
+  const due = new Date(dateStr);
+  const now = new Date();
+  due.setHours(0, 0, 0, 0);
+  now.setHours(0, 0, 0, 0);
+  return Math.floor((now.getTime() - due.getTime()) / 86400000);
+}
+
+function ARAgingTab({ invoices, loading }: { invoices: Invoice[]; loading: boolean }) {
+  const overdueInvoices = invoices.filter(inv =>
+    inv.status !== "paid" && inv.status !== "void" && inv.total_amount > inv.amount_paid
+  );
+
+  const bucketTotals = AGING_BUCKETS.map(bucket => {
+    const items = overdueInvoices.filter(inv => {
+      const days = daysDiff(inv.due_date);
+      return days >= bucket.minDays && days <= bucket.maxDays;
+    });
+    const total = items.reduce((s, inv) => s + (inv.total_amount - inv.amount_paid), 0);
+    return { bucket, items, total };
+  });
+
+  const grandTotal = bucketTotals.reduce((s, b) => s + b.total, 0);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="pt-6 space-y-2">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (overdueInvoices.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-12 pb-12 text-center">
+          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+          <h3 className="text-lg font-semibold">No outstanding invoices</h3>
+          <p className="text-muted-foreground text-sm mt-1">All invoices are paid or voided.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Summary buckets */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {bucketTotals.map(({ bucket, total }) => (
+          <Card key={bucket.label}>
+            <CardContent className="pt-4 pb-4">
+              <p className="text-xs text-muted-foreground mb-1">{bucket.label}</p>
+              <p className={`text-xl font-bold ${bucket.colorClass}`}>{fmtMoney(total)}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Grand total */}
+      <Card className="border-slate-300">
+        <CardContent className="pt-3 pb-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-sm">Total Outstanding AR</span>
+            <span className="text-xl font-bold text-slate-800">{fmtMoney(grandTotal)}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Per-bucket tables */}
+      {bucketTotals.map(({ bucket, items, total }) => {
+        if (items.length === 0) return null;
+        return (
+          <Card key={bucket.label}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${bucket.badgeClass}`}>
+                    {bucket.label}
+                  </span>
+                  <span className="text-muted-foreground font-normal text-xs">{items.length} invoice{items.length > 1 ? "s" : ""}</span>
+                </CardTitle>
+                <span className={`font-bold text-sm ${bucket.colorClass}`}>{fmtMoney(total)}</span>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Client</TableHead>
+                    <TableHead className="text-xs">Invoice #</TableHead>
+                    <TableHead className="text-xs">Issue Date</TableHead>
+                    <TableHead className="text-xs">Due Date</TableHead>
+                    <TableHead className="text-xs text-right">Days Overdue</TableHead>
+                    <TableHead className="text-xs text-right">Total</TableHead>
+                    <TableHead className="text-xs text-right">Paid</TableHead>
+                    <TableHead className="text-xs text-right">Balance Due</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map(inv => {
+                    const days = daysDiff(inv.due_date);
+                    const balance = inv.total_amount - inv.amount_paid;
+                    return (
+                      <TableRow key={inv.id} className={bucket.rowClass}>
+                        <TableCell className="text-xs font-medium">{inv.client_name}</TableCell>
+                        <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{fmtDate(inv.issue_date)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{fmtDate(inv.due_date)}</TableCell>
+                        <TableCell className={`text-xs text-right font-semibold ${bucket.colorClass}`}>
+                          {days <= 0 ? "Current" : `${days}d`}
+                        </TableCell>
+                        <TableCell className="text-xs text-right">{fmtMoney(inv.total_amount)}</TableCell>
+                        <TableCell className="text-xs text-right text-green-700">
+                          {inv.amount_paid > 0 ? fmtMoney(inv.amount_paid) : "--"}
+                        </TableCell>
+                        <TableCell className={`text-xs text-right font-bold ${bucket.colorClass}`}>
+                          {fmtMoney(balance)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+// -----------------------------------------------------------
+// REVENUE ANALYTICS COMPONENT
+// -----------------------------------------------------------
+
+function RevenueAnalyticsTab({ invoices, loading }: { invoices: Invoice[]; loading: boolean }) {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const thisMonth = now.getMonth();
+  const lastMonthDate = new Date(thisYear, thisMonth - 1, 1);
+  const lastMonthYear = lastMonthDate.getFullYear();
+  const lastMonth = lastMonthDate.getMonth();
+
+  const thisMonthInvoices = invoices.filter(inv => {
+    if (inv.status === "void") return false;
+    const d = new Date(inv.issue_date);
+    return d.getFullYear() === thisYear && d.getMonth() === thisMonth;
+  });
+
+  const lastMonthInvoices = invoices.filter(inv => {
+    if (inv.status === "void") return false;
+    const d = new Date(inv.issue_date);
+    return d.getFullYear() === lastMonthYear && d.getMonth() === lastMonth;
+  });
+
+  const totalThisMonth = thisMonthInvoices.reduce((s, inv) => s + inv.total_amount, 0);
+  const totalLastMonth = lastMonthInvoices.reduce((s, inv) => s + inv.total_amount, 0);
+  const collectedThisMonth = thisMonthInvoices.reduce((s, inv) => s + inv.amount_paid, 0);
+
+  const pctChange = totalLastMonth === 0
+    ? null
+    : ((totalThisMonth - totalLastMonth) / totalLastMonth) * 100;
+
+  const collectionRate = totalThisMonth === 0 ? 0 : (collectedThisMonth / totalThisMonth) * 100;
+
+  const outstandingAR = invoices
+    .filter(inv => inv.status !== "paid" && inv.status !== "void")
+    .reduce((s, inv) => s + (inv.total_amount - inv.amount_paid), 0);
+
+  // Top 5 clients by total invoiced (all time, non-void)
+  const clientRevMap: Record<string, number> = {};
+  invoices.forEach(inv => {
+    if (inv.status === "void") return;
+    clientRevMap[inv.client_name] = (clientRevMap[inv.client_name] ?? 0) + inv.total_amount;
+  });
+  const top5 = Object.entries(clientRevMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const maxClientRev = top5.length > 0 ? top5[0][1] : 1;
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="pt-6 space-y-2">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (invoices.filter(inv => inv.status !== "void").length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-12 pb-12 text-center">
+          <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-30" />
+          <h3 className="text-lg font-semibold">No data yet</h3>
+          <p className="text-muted-foreground text-sm mt-1">Analytics will appear once invoices are created.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const thisMonthLabel = `${monthNames[thisMonth]} ${thisYear}`;
+  const lastMonthLabel = `${monthNames[lastMonth]} ${lastMonthYear}`;
+
+  return (
+    <div className="space-y-4">
+      {/* KPI row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-muted-foreground mb-1">Invoiced This Month</p>
+            <p className="text-xl font-bold text-slate-800">{fmtMoney(totalThisMonth)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{thisMonthLabel}</p>
+            {pctChange !== null && (
+              <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${pctChange >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <TrendingUp className="h-3 w-3" />
+                {pctChange >= 0 ? "+" : ""}{pctChange.toFixed(1)}% vs {lastMonthLabel}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-muted-foreground mb-1">Invoiced Last Month</p>
+            <p className="text-xl font-bold text-slate-800">{fmtMoney(totalLastMonth)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{lastMonthLabel}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-muted-foreground mb-1">Collected This Month</p>
+            <p className="text-xl font-bold text-green-700">{fmtMoney(collectedThisMonth)}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Collection rate: <span className="font-semibold">{collectionRate.toFixed(1)}%</span>
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs text-muted-foreground mb-1">Outstanding AR</p>
+            <p className="text-xl font-bold text-red-700">{fmtMoney(outstandingAR)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Unpaid invoices</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top 5 clients */}
+      {top5.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-blue-600" />
+              Top Clients by Revenue (All Time)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            {top5.map(([clientName, rev], idx) => {
+              const barPct = maxClientRev > 0 ? (rev / maxClientRev) * 100 : 0;
+              return (
+                <div key={clientName} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground font-mono w-4">{idx + 1}.</span>
+                      <span className="font-medium truncate max-w-48">{clientName}</span>
+                    </div>
+                    <span className="font-semibold text-slate-700 shrink-0">{fmtMoney(rev)}</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `${barPct.toFixed(1)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// -----------------------------------------------------------
 // MAIN COMPONENT
 // -----------------------------------------------------------
 function Billing() {
@@ -236,6 +543,10 @@ function Billing() {
   // -- Invoice filter ------------------------------------
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // -- Batch invoice selection ---------------------------
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
+  const [batchActing, setBatchActing] = useState(false);
+
   // -- Profile Modal -------------------------------------
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ClientBillingProfile | null>(null);
@@ -253,6 +564,51 @@ function Billing() {
   const fetchUninvoiced = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-uninvoiced"] }), [queryClient]);
   const fetchInvoices = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-invoices"] }), [queryClient]);
   const fetchProfiles = useCallback(() => queryClient.invalidateQueries({ queryKey: ["billing-profiles"] }), [queryClient]);
+
+  // --- Batch: mark selected invoices as sent ------------
+  const batchMarkSent = async () => {
+    if (selectedInvoiceIds.size === 0) return;
+    setBatchActing(true);
+    try {
+      const ids = Array.from(selectedInvoiceIds);
+      const { error } = await supabase
+        .from("invoices")
+        .update({ status: "sent" })
+        .in("id", ids);
+      if (error) throw error;
+      toast({ title: "Marked as Sent", description: `${ids.length} invoice${ids.length > 1 ? "s" : ""} marked as sent.` });
+      setSelectedInvoiceIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["billing-invoices"] });
+    } catch (err) {
+      toast({ title: "Error", description: "Could not update invoices.", variant: "destructive" });
+    } finally {
+      setBatchActing(false);
+    }
+  };
+
+  // --- Batch: mark selected invoices as paid ------------
+  const batchMarkPaid = async () => {
+    if (selectedInvoiceIds.size === 0) return;
+    setBatchActing(true);
+    try {
+      const ids = Array.from(selectedInvoiceIds);
+      const targets = invoices.filter(inv => ids.includes(inv.id));
+      const results = await Promise.all(
+        targets.map(inv =>
+          supabase.from("invoices").update({ status: "paid", amount_paid: inv.total_amount }).eq("id", inv.id)
+        )
+      );
+      const anyError = results.find(r => r.error);
+      if (anyError?.error) throw anyError.error;
+      toast({ title: "Marked as Paid", description: `${ids.length} invoice${ids.length > 1 ? "s" : ""} marked as paid.` });
+      setSelectedInvoiceIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["billing-invoices"] });
+    } catch (err) {
+      toast({ title: "Error", description: "Could not update invoices.", variant: "destructive" });
+    } finally {
+      setBatchActing(false);
+    }
+  };
 
   // --- Load detail on invoice open ---------------------
   const openInvoiceDetail = useCallback(async (inv: Invoice) => {
@@ -632,23 +988,34 @@ function Billing() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="uninvoiced" className="gap-2">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="uninvoiced" className="gap-1 text-xs sm:text-sm">
             <Clock className="h-4 w-4" />
-            Uninvoiced
+            <span className="hidden sm:inline">Uninvoiced</span>
+            <span className="sm:hidden">Queue</span>
             {uninvoicedLoads.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded-full font-semibold">
                 {uninvoicedLoads.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="invoices" className="gap-2">
+          <TabsTrigger value="invoices" className="gap-1 text-xs sm:text-sm">
             <ReceiptText className="h-4 w-4" />
             Invoices
           </TabsTrigger>
-          <TabsTrigger value="clients" className="gap-2">
+          <TabsTrigger value="clients" className="gap-1 text-xs sm:text-sm">
             <User className="h-4 w-4" />
             Clients
+          </TabsTrigger>
+          <TabsTrigger value="aging" className="gap-1 text-xs sm:text-sm">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="hidden sm:inline">AR Aging</span>
+            <span className="sm:hidden">Aging</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1 text-xs sm:text-sm">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Analytics</span>
+            <span className="sm:hidden">Stats</span>
           </TabsTrigger>
         </TabsList>
 
@@ -781,21 +1148,60 @@ function Billing() {
         <TabsContent value="invoices" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">All Invoices</CardTitle>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Filter status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="sent">Sent</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                    <SelectItem value="void">Void</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-base">All Invoices</CardTitle>
+                  {selectedInvoiceIds.size > 0 && (
+                    <span className="text-xs text-muted-foreground">{selectedInvoiceIds.size} selected</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selectedInvoiceIds.size > 0 && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs gap-1 text-blue-700 border-blue-300 hover:bg-blue-50"
+                        disabled={batchActing}
+                        onClick={batchMarkSent}
+                      >
+                        <Send className="h-3 w-3" />
+                        Mark Sent ({selectedInvoiceIds.size})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs gap-1 text-green-700 border-green-300 hover:bg-green-50"
+                        disabled={batchActing}
+                        onClick={batchMarkPaid}
+                      >
+                        <Check className="h-3 w-3" />
+                        Mark Paid ({selectedInvoiceIds.size})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 text-xs"
+                        onClick={() => setSelectedInvoiceIds(new Set())}
+                      >
+                        <X className="h-3 w-3 mr-1" /> Clear
+                      </Button>
+                    </>
+                  )}
+                  <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setSelectedInvoiceIds(new Set()); }}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                      <SelectItem value="void">Void</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
@@ -812,6 +1218,18 @@ function Billing() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={filteredInvoices.length > 0 && filteredInvoices.every(inv => selectedInvoiceIds.has(inv.id))}
+                          onCheckedChange={checked => {
+                            if (checked) {
+                              setSelectedInvoiceIds(new Set(filteredInvoices.map(inv => inv.id)));
+                            } else {
+                              setSelectedInvoiceIds(new Set());
+                            }
+                          }}
+                        />
+                      </TableHead>
                       <TableHead>Invoice #</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Issue Date</TableHead>
@@ -826,12 +1244,25 @@ function Billing() {
                     {filteredInvoices.map(inv => {
                       const isSyncedToQB = !!(inv as Invoice & { quickbooks_invoice_id?: string }).quickbooks_invoice_id;
                       const isSyncing = syncingInvoiceId === inv.id;
+                      const isChecked = selectedInvoiceIds.has(inv.id);
                       return (
                         <TableRow
                           key={inv.id}
-                          className="cursor-pointer hover:bg-muted/40"
+                          className={`cursor-pointer hover:bg-muted/40 ${isChecked ? "bg-blue-50/50" : ""}`}
                           onClick={() => openInvoiceDetail(inv)}
                         >
+                          <TableCell onClick={e => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={() => {
+                                setSelectedInvoiceIds(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(inv.id)) next.delete(inv.id); else next.add(inv.id);
+                                  return next;
+                                });
+                              }}
+                            />
+                          </TableCell>
                           <TableCell className="font-mono text-sm font-semibold">{inv.invoice_number}</TableCell>
                           <TableCell>{inv.client_name}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{fmtDate(inv.issue_date)}</TableCell>
@@ -890,7 +1321,7 @@ function Billing() {
         </TabsContent>
 
         {/* -------------------------------------------------- */}
-        {/* TAB 3: CLIENT PROFILES                            */}
+        {/* TAB 3: CLIENT BILLING PROFILES                   */}
         {/* -------------------------------------------------- */}
         <TabsContent value="clients" className="mt-4">
           <div className="flex items-center justify-between mb-4">
@@ -950,6 +1381,20 @@ function Billing() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* -------------------------------------------------- */}
+        {/* TAB 4: AR AGING REPORT                            */}
+        {/* -------------------------------------------------- */}
+        <TabsContent value="aging" className="mt-4">
+          <ARAgingTab invoices={invoices} loading={loadingInvoices} />
+        </TabsContent>
+
+        {/* -------------------------------------------------- */}
+        {/* TAB 5: REVENUE ANALYTICS                          */}
+        {/* -------------------------------------------------- */}
+        <TabsContent value="analytics" className="mt-4">
+          <RevenueAnalyticsTab invoices={invoices} loading={loadingInvoices} />
         </TabsContent>
       </Tabs>
 
