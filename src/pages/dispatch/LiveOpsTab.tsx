@@ -4,6 +4,7 @@ import { BarChart3 } from "lucide-react";
 import LiveDriverMap from "@/components/LiveDriverMap";
 import IntegrationSyncPanel from "@/components/IntegrationSyncPanel";
 import RouteOptimizerPanel from "@/components/RouteOptimizerPanel";
+import AutoDispatchPanel from "@/components/AutoDispatchPanel";
 import type { Driver } from "./types";
 
 interface LiveDriver {
@@ -82,6 +83,16 @@ export default function LiveOpsTab({
                         tracking_token: null,
                     }))}
                     onRouteApplied={onRefetchLoads}
+                />
+                <AutoDispatchPanel
+                    liveDrivers={liveDrivers.map(d => ({
+                        driverId: d.driverId,
+                        name: d.name,
+                        lat: d.lat,
+                        lng: d.lng,
+                        shiftStatus: d.shiftStatus,
+                        activeLoadId: d.activeLoadId,
+                    }))}
                 />
                 {/* Quick Stats */}
                 <Card className="border-0 shadow-sm">
