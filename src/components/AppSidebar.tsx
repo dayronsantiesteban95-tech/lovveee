@@ -41,6 +41,7 @@ const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Dispatch", url: "/dispatch", icon: ClipboardList },
   { title: "Billing", url: "/billing", icon: ReceiptText },
+  { title: "Revenue", url: "/revenue", icon: TrendingUp },
   { title: "Task Board", url: "/tasks", icon: CheckSquare },
   { title: "Calendar", url: "/calendar", icon: CalendarDays },
   { title: "Rate Calculator", url: "/rate-calculator", icon: Calculator },

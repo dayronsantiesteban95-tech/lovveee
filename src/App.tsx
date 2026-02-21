@@ -46,6 +46,7 @@ const TrackDelivery = lazyWithRetry(() => import("@/pages/TrackDelivery"));
 const TimeClock = lazyWithRetry(() => import("@/pages/TimeClock"));
 const DriverPerformance = lazyWithRetry(() => import("@/pages/DriverPerformance"));
 const Billing = lazyWithRetry(() => import("@/pages/Billing"));
+const RevenueAnalytics = lazyWithRetry(() => import("@/pages/RevenueAnalytics"));
 import CommandBar from "@/components/CommandBar";
 
 const queryClient = new QueryClient({
@@ -191,6 +192,14 @@ const App = () => (
                   element={
                     <Sentry.ErrorBoundary fallback={<RouteFallback />}>
                       <Billing />
+                    </Sentry.ErrorBoundary>
+                  }
+                />
+                <Route
+                  path="/revenue"
+                  element={
+                    <Sentry.ErrorBoundary fallback={<RouteFallback />}>
+                      <RevenueAnalytics />
                     </Sentry.ErrorBoundary>
                   }
                 />
