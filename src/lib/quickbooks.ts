@@ -26,15 +26,47 @@ const QB_AUTH_URL = 'https://appcenter.intuit.com/connect/oauth2';
 // Only uses CLIENT_ID and REDIRECT_URI -- both are safe to be public.
 // State is stored in sessionStorage so the callback can validate it (CSRF protection).
 
-export function getQBAuthUrl(): string {
-  const state = crypto.randomUUID();
-  sessionStorage.setItem('qb_oauth_state', state);
+// Generate a secure random UUID for CSRF protection
+// Fallback to manual UUID generation for older browsers or when crypto is undefined
+function generateSecureUUID() {
+  // Modern browsers support crypto.randomUUID()
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch (err) {
+      console.warn('[QB Auth] crypto.randomUUID() failed, using fallback:', err);
+    }
+  }
+
+  // Fallback: Generate UUID v4 manually (RFC 4122 compliant)
+  // Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  // The '4' indicates UUID version 4 (random)
+  // The 'y' is one of [8, 9, a, b] to set the variant bits correctly
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = (Math.random() * 16) | 0;
+    var v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export function getQBAuthUrl() {
+  const state = generateSecureUUID();
+
+  // Store state in sessionStorage for CSRF validation in callback
+  try {
+    sessionStorage.setItem('qb_oauth_state', state);
+  } catch (err) {
+    console.error('[QB Auth] Failed to save state to sessionStorage:', err);
+    throw new Error('Unable to initialize QuickBooks connection. Please enable cookies and try again.');
+  }
+
   const params = new URLSearchParams({
     client_id: QB_CLIENT_ID,
     scope: QB_SCOPE,
     redirect_uri: QB_REDIRECT_URI,
     response_type: 'code',
-    state,
+    state: state,
   });
-  return `${QB_AUTH_URL}?${params.toString()}`;
+
+  return QB_AUTH_URL + '?' + params.toString();
 }
