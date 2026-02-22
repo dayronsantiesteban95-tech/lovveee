@@ -320,14 +320,36 @@ function TrackDelivery() {
                             {/* POD Confirmation */}
                             {isDelivered && tracking.pod_confirmed && (
                                 <Card className="border-0 bg-green-500/10 col-span-2">
-                                    <CardContent className="py-3 flex items-center gap-3">
-                                        <ShieldCheck className="h-6 w-6 text-green-400" />
-                                        <div>
-                                            <p className="text-sm font-semibold text-green-400">Proof of Delivery Confirmed</p>
-                                            <p className="text-xs text-green-400/60">
-                                                Delivered at {formatTime(tracking.end_time)}
-                                            </p>
+                                    <CardContent className="py-3 space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <ShieldCheck className="h-6 w-6 text-green-400" />
+                                            <div>
+                                                <p className="text-sm font-semibold text-green-400">Proof of Delivery Confirmed</p>
+                                                <p className="text-xs text-green-400/60">
+                                                    Delivered at {formatTime(tracking.end_time)}
+                                                    {tracking.pod_signer_name && ` -- Signed by ${tracking.pod_signer_name}`}
+                                                </p>
+                                            </div>
                                         </div>
+                                        {/* POD Photo + Signature */}
+                                        {(tracking.pod_photo_url || tracking.pod_signature_url) && (
+                                            <div className="flex gap-3 mt-2">
+                                                {tracking.pod_photo_url && (
+                                                    <img
+                                                        src={tracking.pod_photo_url}
+                                                        alt="Delivery photo"
+                                                        className="h-32 w-auto rounded-lg border border-white/10 object-cover"
+                                                    />
+                                                )}
+                                                {tracking.pod_signature_url && (
+                                                    <img
+                                                        src={tracking.pod_signature_url}
+                                                        alt="Recipient signature"
+                                                        className="h-20 w-auto rounded-lg border border-white/10 bg-white p-1"
+                                                    />
+                                                )}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             )}
