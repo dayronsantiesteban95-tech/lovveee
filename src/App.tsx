@@ -47,6 +47,7 @@ const TimeClock = lazyWithRetry(() => import("@/pages/TimeClock"));
 const DriverPerformance = lazyWithRetry(() => import("@/pages/DriverPerformance"));
 const Billing = lazyWithRetry(() => import("@/pages/Billing"));
 const RevenueAnalytics = lazyWithRetry(() => import("@/pages/RevenueAnalytics"));
+const PdfCombiner = lazyWithRetry(() => import("@/pages/PdfCombiner"));
 import CommandBar from "@/components/CommandBar";
 
 const queryClient = new QueryClient({
@@ -206,6 +207,7 @@ const App = () => (
                 <Route path="/pod-manager" element={<PodManager />} />
                 <Route path="/time-clock" element={<TimeClock />} />
                 <Route path="/performance" element={<DriverPerformance />} />
+                <Route path="/pdf-combiner" element={<PdfCombiner />} />
                 <Route path="/" element={<Navigate to="/command-center" replace />} />
               </Route>
               <Route path="*" element={<NotFound />} />

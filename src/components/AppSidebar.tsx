@@ -16,6 +16,7 @@ import {
   Clock,
   TrendingUp,
   ReceiptText,
+  FilePlus2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -49,6 +50,7 @@ const mainNav = [
 
 const resourcesNav = [
   { title: "SOP Wiki", url: "/sop-wiki", icon: BookOpen },
+  { title: "PDF Combiner", url: "/pdf-combiner", icon: FilePlus2 },
 ];
 
 const fleetNav = [
