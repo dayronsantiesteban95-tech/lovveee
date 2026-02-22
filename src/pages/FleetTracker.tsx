@@ -406,6 +406,16 @@ function FleetTracker() {
         const rawNextSvcMi = fd.get("next_service_mileage") as string;
         const rawYear = fd.get("year") as string;
         const rawAvgMpg = fd.get("avg_mpg") as string;
+        // BUG-F2: Validate VIN format (exactly 17 alphanumeric chars, no I, O, or Q)
+        const vinValue = fd.get("vin") as string || "";
+        if (vinValue) {
+            const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/i;
+            if (!vinRegex.test(vinValue)) {
+                toast({ title: "Invalid VIN", description: "VIN must be exactly 17 alphanumeric characters (no I, O, or Q).", variant: "destructive" });
+                return;
+            }
+        }
+
         const payload = {
             vehicle_name: vName,
             vehicle_type: vType,
@@ -477,6 +487,12 @@ function FleetTracker() {
     const handleDrvSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
+        // BUG-F4: Validate hourly rate is not negative
+        const hourlyRateValue = Number(fd.get("hourly_rate")) || 0;
+        if (hourlyRateValue < 0) {
+            toast({ title: "Invalid hourly rate", description: "Hourly rate cannot be negative.", variant: "destructive" });
+            return;
+        }
         const payload = {
             full_name: fd.get("full_name") as string,
             phone: fd.get("phone") as string || "",

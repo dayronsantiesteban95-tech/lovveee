@@ -19,11 +19,23 @@ export function useQuickBooks() {
       // Use maybeSingle to avoid throwing on no rows
       const { data } = await supabase
         .from('quickbooks_tokens')
-        .select('realm_id, access_token_expires_at')
+        .select('realm_id, access_token_expires_at, refresh_token_expires_at')
         .limit(1)
         .maybeSingle();
-      setConnected(!!data);
-      setRealmId((data as { realm_id: string } | null)?.realm_id ?? null);
+      // A token row exists but both tokens could be expired.
+      // The access token is refreshable as long as the refresh token is valid.
+      // Only mark as disconnected if the refresh token has expired.
+      const tokenData = data as {
+        realm_id: string;
+        access_token_expires_at?: string;
+        refresh_token_expires_at?: string;
+      } | null;
+      const isConnected = !!tokenData && (
+        !tokenData.refresh_token_expires_at ||
+        new Date(tokenData.refresh_token_expires_at).getTime() > Date.now()
+      );
+      setConnected(isConnected);
+      setRealmId(tokenData?.realm_id ?? null);
     } catch {
       setConnected(false);
       setRealmId(null);
@@ -41,10 +53,12 @@ export function useQuickBooks() {
   };
 
   const disconnect = async () => {
-    await supabase
-      .from('quickbooks_tokens')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
+    // Delete all token rows for this realm (or all if no realm known)
+    if (realmId) {
+      await supabase.from('quickbooks_tokens').delete().eq('realm_id', realmId);
+    } else {
+      await supabase.from('quickbooks_tokens').delete().gt('created_at', '1970-01-01');
+    }
     setConnected(false);
     setRealmId(null);
   };

@@ -723,6 +723,18 @@ function Billing() {
     }
     setSavingInvoice(true);
     try {
+      // BUG-B6: Check invoice number uniqueness client-side
+      const { data: existingInv } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("invoice_number", invoiceNumber)
+        .maybeSingle();
+      if (existingInv) {
+        toast({ title: "Invoice number already exists", variant: "destructive" });
+        setSavingInvoice(false);
+        return;
+      }
+
       // Determine client name from selected loads (validated to be single client above)
       const clientName = selectedLoads[0].client_name ?? "Unknown Client";
       const subtotal = selectedTotal;
@@ -941,6 +953,14 @@ function Billing() {
     if (!profileForm.client_name.trim()) {
       toast({ title: "Client name required", variant: "destructive" });
       return;
+    }
+    // BUG-B7: Validate billing email format
+    if (profileForm.billing_email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(profileForm.billing_email)) {
+        toast({ title: "Invalid email format", description: "Please enter a valid billing email address.", variant: "destructive" });
+        return;
+      }
     }
     setSavingProfile(true);
     try {
