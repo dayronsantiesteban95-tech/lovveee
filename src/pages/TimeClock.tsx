@@ -55,6 +55,7 @@ interface ActiveClock {
   elapsed_minutes: number;
   on_break: boolean;
   active_break_id: string | null;
+  break_minutes: number;
 }
 
 interface TimeEntry {
@@ -142,7 +143,8 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
     return () => clearInterval(interval);
   }, [clock.elapsed_minutes, refreshCount]);
 
-  const earnedSoFar = (elapsed / 60) * clock.hourly_rate;
+  const workMinutes = Math.max(elapsed - (clock.break_minutes ?? 0), 0);
+  const earnedSoFar = (workMinutes / 60) * clock.hourly_rate;
 
   return (
     <Card className="glass-panel border-0 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
@@ -224,6 +226,7 @@ function TimeClock() {
   const [recentEntries, setRecentEntries] = useState<TimeEntry[]>([]);
   const [payrollRows, setPayrollRows] = useState<PayrollRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
 
   // Clock-in dialog
@@ -250,6 +253,7 @@ function TimeClock() {
   // --- Data fetching ----------------------------------------------
 
   const fetchAll = useCallback(async () => {
+    setFetchError(null);
     try {
       const [driversRes, activeRes, entriesRes] = await Promise.all([
         supabase.from("drivers").select("id,full_name,hub,status,hourly_rate,phone").order("full_name"),
@@ -261,11 +265,44 @@ function TimeClock() {
           .limit(50),
       ]);
 
+      // Check for errors and report them
+      const errors: string[] = [];
+      if (driversRes.error) errors.push(`Drivers: ${driversRes.error.message}`);
+      if (activeRes.error) errors.push(`Active clocks: ${activeRes.error.message}`);
+      if (entriesRes.error) errors.push(`Time entries: ${entriesRes.error.message}`);
+      if (errors.length > 0) {
+        setFetchError(errors.join("; "));
+      }
+
       if (driversRes.data) setDrivers(driversRes.data);
-      if (activeRes.data) setActiveClocks(activeRes.data as ActiveClock[]);
+      if (activeRes.data) {
+        const clocks = activeRes.data as ActiveClock[];
+        // Fetch cumulative break minutes for each active entry
+        if (clocks.length > 0) {
+          const entryIds = clocks.map(c => c.entry_id);
+          const { data: breakData } = await supabase
+            .from("time_breaks")
+            .select("time_entry_id, break_minutes")
+            .in("time_entry_id", entryIds)
+            .not("break_end", "is", null);
+          // Sum break_minutes per entry
+          const breakMap: Record<string, number> = {};
+          if (breakData) {
+            for (const b of breakData) {
+              const eid = b.time_entry_id as string;
+              breakMap[eid] = (breakMap[eid] ?? 0) + (b.break_minutes ?? 0);
+            }
+          }
+          for (const c of clocks) {
+            c.break_minutes = breakMap[c.entry_id] ?? 0;
+          }
+        }
+        setActiveClocks(clocks);
+      }
       if (entriesRes.data) setRecentEntries(entriesRes.data as TimeEntry[]);
-    } catch {
-      // Silent failure -- will show empty state
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load time clock data";
+      setFetchError(msg);
     } finally {
       setLoading(false);
     }
@@ -378,6 +415,27 @@ function TimeClock() {
 
   const handleEndBreak = async (breakId: string, name: string) => {
     try {
+      // Validate the break belongs to an active time entry for this driver
+      const { data: breakRecord, error: lookupErr } = await supabase
+        .from("time_breaks")
+        .select("id, time_entry_id, break_end")
+        .eq("id", breakId)
+        .single();
+      if (lookupErr || !breakRecord) {
+        toast({ title: "Break not found", description: "Could not find the break record.", variant: "destructive" });
+        return;
+      }
+      if (breakRecord.break_end !== null) {
+        toast({ title: "Break already ended", description: "This break has already been ended.", variant: "destructive" });
+        return;
+      }
+      // Verify the break's time entry is still active (not clocked out)
+      const activeClock = activeClocks.find(c => c.entry_id === breakRecord.time_entry_id);
+      if (!activeClock) {
+        toast({ title: "Invalid break", description: "This break does not belong to an active time entry.", variant: "destructive" });
+        return;
+      }
+
       const { error } = await supabase.rpc("end_break", { p_break_id: breakId });
       if (error) throw error;
       toast({ title: "Break ended", description: `${name} is back on shift.` });
@@ -393,7 +451,8 @@ function TimeClock() {
   const totalOnShift = activeClocks.length;
   const onBreakCount = activeClocks.filter(c => c.on_break).length;
   const totalEstPay = activeClocks.reduce((acc, c) => {
-    return acc + (c.elapsed_minutes / 60) * c.hourly_rate;
+    const workMin = Math.max(c.elapsed_minutes - (c.break_minutes ?? 0), 0);
+    return acc + (workMin / 60) * c.hourly_rate;
   }, 0);
   const todayEntries = recentEntries.filter(e =>
     e.work_date === new Date().toISOString().slice(0, 10)
@@ -402,7 +461,7 @@ function TimeClock() {
 
   // Available to clock in = drivers not currently on shift
   const activeDriverIds = new Set(activeClocks.map(c => c.driver_id));
-  const availableDrivers = drivers.filter(d => !activeDriverIds.has(d.id) && d.status !== "inactive");
+  const availableDrivers = drivers.filter(d => !activeDriverIds.has(d.id) && d.status !== "inactive" && d.status !== "on_leave");
 
   // --- Render ----------------------------------------------------
 
@@ -475,6 +534,22 @@ function TimeClock() {
           </Card>
         ))}
       </div>
+
+      {/* -- Error State -- */}
+      {fetchError && (
+        <Card className="border-red-500/30 bg-red-500/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-500">Failed to load data</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{fetchError}</p>
+            </div>
+            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={refresh}>
+              <RefreshCw className="h-3 w-3" /> Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* -- Main Content -- */}
       <Tabs defaultValue="live" className="space-y-4">
@@ -772,7 +847,7 @@ function TimeClock() {
                 <p className="text-sm font-semibold text-center text-foreground">Shift Summary</p>
                 <div className="grid grid-cols-2 gap-y-3 text-sm">
                   {[
-                    ["Total Time", fmtElapsed(clockOutResult.total_minutes)],
+                    ["Work Time", fmtElapsed(clockOutResult.total_minutes)],
                     ["Break Time", `${clockOutResult.break_minutes}m`],
                     ["Regular Hours", fmtHours(clockOutResult.regular_hours)],
                     ["Overtime", clockOutResult.overtime_hours > 0 ? fmtHours(clockOutResult.overtime_hours) : "None"],

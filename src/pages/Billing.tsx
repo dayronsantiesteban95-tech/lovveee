@@ -593,10 +593,27 @@ function Billing() {
     try {
       const ids = Array.from(selectedInvoiceIds);
       const targets = invoices.filter(inv => ids.includes(inv.id));
+
+      // Update invoice status and insert payment records for audit trail
       const results = await Promise.all(
-        targets.map(inv =>
-          supabase.from("invoices").update({ status: "paid", amount_paid: inv.total_amount }).eq("id", inv.id)
-        )
+        targets.map(async (inv) => {
+          const remainingBalance = inv.total_amount - inv.amount_paid;
+          // Insert payment record for audit trail
+          if (remainingBalance > 0) {
+            const { error: payErr } = await supabase.from("invoice_payments").insert({
+              invoice_id: inv.id,
+              amount: remainingBalance,
+              payment_date: todayISO(),
+              payment_method: "batch",
+              reference_number: null,
+              notes: "Batch marked as paid",
+              recorded_by: user?.id ?? null,
+            });
+            if (payErr) return { error: payErr };
+          }
+          // Update invoice status
+          return supabase.from("invoices").update({ status: "paid", amount_paid: inv.total_amount }).eq("id", inv.id);
+        })
       );
       const anyError = results.find(r => r.error);
       if (anyError?.error) throw anyError.error;
@@ -640,10 +657,14 @@ function Billing() {
       setInvoiceNumber(`INV-${new Date().getFullYear().toString().slice(2)}-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`);
     }
     setIssueDate(todayISO());
-    setDueDate(addDaysISO(todayISO(), 30));
+    // Use client payment terms if a billing profile exists for the selected loads
+    const clientName = selectedLoads[0]?.client_name ?? "";
+    const clientProfile = profiles.find(p => p.client_name === clientName);
+    const termsDays = clientProfile?.payment_terms ?? 30;
+    setDueDate(addDaysISO(todayISO(), termsDays));
     setInvoiceNotes("");
     setCreateModalOpen(true);
-  }, []);
+  }, [selectedLoads, profiles]);
 
   // --- Selected loads data ------------------------------
   const selectedLoads = uninvoicedLoads.filter(l => selectedLoadIds.has(l.id));
@@ -705,7 +726,16 @@ function Billing() {
       // Determine client name from selected loads (validated to be single client above)
       const clientName = selectedLoads[0].client_name ?? "Unknown Client";
       const subtotal = selectedTotal;
-      const totalAmount = subtotal;
+
+      // Look up client billing profile for fuel surcharge and payment terms
+      const clientProfile = profiles.find(p => p.client_name === clientName);
+      const fuelSurchargePct = clientProfile?.fuel_surcharge_pct ?? 0;
+      const fuelSurchargeAmount = fuelSurchargePct > 0 ? subtotal * (fuelSurchargePct / 100) : 0;
+      const totalAmount = subtotal + fuelSurchargeAmount;
+
+      // Adjust due date based on client payment terms
+      const paymentTermsDays = clientProfile?.payment_terms ?? 30;
+      const adjustedDueDate = addDaysISO(issueDate, paymentTermsDays);
 
       // Insert invoice
       const { data: invData, error: invErr } = await supabase
@@ -713,11 +743,12 @@ function Billing() {
         .insert({
           invoice_number: invoiceNumber,
           client_name: clientName,
+          client_billing_profile_id: clientProfile?.id ?? null,
           status: "draft",
           issue_date: issueDate,
-          due_date: dueDate,
+          due_date: adjustedDueDate,
           subtotal,
-          tax_amount: 0,
+          tax_amount: fuelSurchargeAmount,
           total_amount: totalAmount,
           amount_paid: 0,
           notes: invoiceNotes || null,
@@ -1448,11 +1479,21 @@ function Billing() {
                 <Input
                   type="date"
                   value={issueDate}
-                  onChange={e => { setIssueDate(e.target.value); setDueDate(addDaysISO(e.target.value, 30)); }}
+                  onChange={e => {
+                    setIssueDate(e.target.value);
+                    const cName = selectedLoads[0]?.client_name ?? "";
+                    const cProfile = profiles.find(p => p.client_name === cName);
+                    const tDays = cProfile?.payment_terms ?? 30;
+                    setDueDate(addDaysISO(e.target.value, tDays));
+                  }}
                 />
               </div>
               <div className="space-y-1">
-                <Label>Due Date (Net-30)</Label>
+                <Label>Due Date (Net-{(() => {
+                  const cName = selectedLoads[0]?.client_name ?? "";
+                  const cProfile = profiles.find(p => p.client_name === cName);
+                  return cProfile?.payment_terms ?? 30;
+                })()})</Label>
                 <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
               </div>
             </div>
@@ -1486,17 +1527,32 @@ function Billing() {
 
             {/* Total */}
             <div className="flex justify-end">
-              <div className="space-y-1 text-right min-w-48">
-                <div className="flex justify-between gap-8 text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-semibold">{fmtMoney(selectedTotal)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between gap-8">
-                  <span className="font-bold text-base">Total</span>
-                  <span className="font-bold text-base text-green-700">{fmtMoney(selectedTotal)}</span>
-                </div>
-              </div>
+              {(() => {
+                const cName = selectedLoads[0]?.client_name ?? "";
+                const cProfile = profiles.find(p => p.client_name === cName);
+                const fsPct = cProfile?.fuel_surcharge_pct ?? 0;
+                const fsAmt = fsPct > 0 ? selectedTotal * (fsPct / 100) : 0;
+                const grandTotal = selectedTotal + fsAmt;
+                return (
+                  <div className="space-y-1 text-right min-w-48">
+                    <div className="flex justify-between gap-8 text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-semibold">{fmtMoney(selectedTotal)}</span>
+                    </div>
+                    {fsPct > 0 && (
+                      <div className="flex justify-between gap-8 text-sm">
+                        <span className="text-muted-foreground">Fuel Surcharge ({fsPct}%)</span>
+                        <span className="font-semibold text-orange-600">{fmtMoney(fsAmt)}</span>
+                      </div>
+                    )}
+                    <Separator />
+                    <div className="flex justify-between gap-8">
+                      <span className="font-bold text-base">Total</span>
+                      <span className="font-bold text-base text-green-700">{fmtMoney(grandTotal)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Notes */}

@@ -271,19 +271,34 @@ function FleetTracker() {
         setOdometerHistory([]);
         setInspectionHistory([]);
 
-        const [odo, insp] = await Promise.all([
-            db.rpc("get_vehicle_odometer_history", { p_vehicle_id: vehicle.id }),
-            db.from("vehicle_inspections")
-                .select("*")
-                .eq("vehicle_id", vehicle.id)
-                .order("inspection_date", { ascending: false })
-                .limit(30),
-        ]);
+        try {
+            const [odo, insp] = await Promise.all([
+                db.rpc("get_vehicle_odometer_history", { p_vehicle_id: vehicle.id }),
+                db.from("vehicle_inspections")
+                    .select("*")
+                    .eq("vehicle_id", vehicle.id)
+                    .order("inspection_date", { ascending: false })
+                    .limit(30),
+            ]);
 
-        if (odo.data) setOdometerHistory(odo.data as OdometerHistory[]);
-        if (insp.data) setInspectionHistory(insp.data as unknown as InspectionRecord[]);
-        setHistoryLoading(false);
-    }, []);
+            if (odo.error) {
+                toast({ title: "Error loading odometer history", description: odo.error.message, variant: "destructive" });
+            } else if (odo.data) {
+                setOdometerHistory(odo.data as OdometerHistory[]);
+            }
+
+            if (insp.error) {
+                toast({ title: "Error loading inspections", description: insp.error.message, variant: "destructive" });
+            } else if (insp.data) {
+                setInspectionHistory(insp.data as unknown as InspectionRecord[]);
+            }
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Failed to load history";
+            toast({ title: "Error", description: msg, variant: "destructive" });
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, [toast]);
 
     // -- Log car wash -------------------------
     const logCarWash = useCallback(async (vehicle: Vehicle) => {
@@ -1183,17 +1198,37 @@ function FleetTracker() {
             )}
 
             {/* Delete Confirmation */}
-            {deleteTarget && (
-                <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-                    <DialogContent>
-                        <DialogHeader><DialogTitle>Confirm Delete</DialogTitle><DialogDescription>This action cannot be undone.</DialogDescription></DialogHeader>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-                            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            )}
+            {deleteTarget && (() => {
+                const hasMaintenanceRecords = deleteTarget.type === "vehicle" &&
+                    maintenance.some(m => m.vehicle_id === deleteTarget.id);
+                const maintCount = deleteTarget.type === "vehicle"
+                    ? maintenance.filter(m => m.vehicle_id === deleteTarget.id).length
+                    : 0;
+                return (
+                    <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Confirm Delete</DialogTitle>
+                                <DialogDescription>
+                                    {hasMaintenanceRecords
+                                        ? `WARNING: This vehicle has ${maintCount} maintenance record${maintCount > 1 ? "s" : ""} that will also be deleted. This action cannot be undone.`
+                                        : "This action cannot be undone."}
+                                </DialogDescription>
+                            </DialogHeader>
+                            {hasMaintenanceRecords && (
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
+                                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                                    <span>{maintCount} maintenance record{maintCount > 1 ? "s" : ""} will be permanently deleted with this vehicle.</span>
+                                </div>
+                            )}
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                                <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                );
+            })()}
         </div>
     );
 }
