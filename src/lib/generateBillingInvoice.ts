@@ -63,12 +63,38 @@ function fmt$(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
+/** Truncate a string to maxLen characters, appending "..." if truncated. */
+function truncate(str: string | null | undefined, maxLen: number): string {
+  if (!str) return "--";
+  if (str.length <= maxLen) return str;
+  return str.slice(0, maxLen - 3) + "...";
+}
+
 // -----------------------------------------------------------
 // MAIN EXPORT
 // -----------------------------------------------------------
 export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
   const W = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const FOOTER_ZONE = 24; // reserved space at bottom for footer strip + margin
+
+  /** Add a new page and return the reset Y position for content. */
+  const addPage = (): number => {
+    doc.addPage();
+    // White background
+    doc.setFillColor(...C.white);
+    doc.rect(0, 0, W, pageH, "F");
+    return 16; // top margin on continuation pages
+  };
+
+  /** Check if we need a new page; if so, add one and return new Y. */
+  const ensureSpace = (currentY: number, needed: number): number => {
+    if (currentY + needed > pageH - FOOTER_ZONE) {
+      return addPage();
+    }
+    return currentY;
+  };
 
   // -- Full-page white background ------------------------
   doc.setFillColor(...C.white);
@@ -120,17 +146,17 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   y += 5;
 
-  // Client name
+  // Client name -- truncate to prevent overflow past the midpoint
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...C.primary);
-  doc.text(invoice.client_name, leftX, y);
+  doc.text(truncate(invoice.client_name, 40), leftX, y);
 
   if (invoice.billing_email) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...C.gray600);
-    doc.text(invoice.billing_email, leftX, y + 5);
+    doc.text(truncate(invoice.billing_email, 45), leftX, y + 5);
   }
 
   // Detail rows on right
@@ -150,7 +176,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
     doc.text(label, rightX, detailY);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...C.primary);
-    doc.text(val, rightX + 38, detailY);
+    doc.text(truncate(val, 30), rightX + 38, detailY);
     detailY += 5.5;
   });
 
@@ -163,6 +189,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   y += 8;
 
   // -- Line Items Table ----------------------------------
+  y = ensureSpace(y, 30);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...C.accent);
@@ -171,8 +198,8 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   const tableRows = invoice.line_items.map((item) => [
     item.service_date ? new Date(item.service_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "--",
-    item.reference_number || "--",
-    item.description,
+    truncate(item.reference_number, 20),
+    truncate(item.description, 60),
     item.quantity.toString(),
     fmt$(item.unit_price),
     fmt$(item.subtotal),
@@ -189,6 +216,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
       textColor: C.primary,
       lineColor: C.gray200,
       lineWidth: 0.3,
+      overflow: "linebreak",
     },
     headStyles: {
       fillColor: C.accentLight,
@@ -211,6 +239,7 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   });
 
   y = (doc as any).lastAutoTable.finalY + 8;
+  y = ensureSpace(y, 50);
 
   // -- Totals ---------------------------------------------
   const totalsX = W - 16 - 65;
@@ -248,6 +277,9 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   // -- Notes ---------------------------------------------
   if (invoice.notes) {
+    // Limit notes to a reasonable length to prevent multi-page overflow
+    const safeNotes = invoice.notes.length > 500 ? invoice.notes.slice(0, 497) + "..." : invoice.notes;
+    y = ensureSpace(y, 20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...C.accent);
@@ -256,12 +288,13 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...C.gray600);
-    const noteLines = doc.splitTextToSize(invoice.notes, W - 32);
+    const noteLines = doc.splitTextToSize(safeNotes, W - 32);
     doc.text(noteLines, leftX, y);
     y += noteLines.length * 4.5 + 6;
   }
 
   // -- Payment Footer ------------------------------------
+  y = ensureSpace(y, 40);
   doc.setFillColor(...C.gray100);
   doc.roundedRect(leftX, y, W - 32, 22, 3, 3, "F");
 
@@ -286,7 +319,6 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
 
   // -- PAID Watermark ------------------------------------
   if (invoice.status === "paid") {
-    const pageH = doc.internal.pageSize.getHeight();
     doc.saveGraphicsState();
     doc.setGState(doc.GState({ opacity: 0.15 }));
     doc.setFont("helvetica", "bold");
@@ -297,19 +329,23 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   }
 
   // -- Footer Strip --------------------------------------
-  const pageH = doc.internal.pageSize.getHeight();
-  doc.setFillColor(...C.primary);
-  doc.rect(0, pageH - 12, W, 12, "F");
+  // Draw footer on every page
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...C.primary);
+    doc.rect(0, pageH - 12, W, 12, "F");
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(180, 196, 220);
-  doc.text(
-    `${invoice.invoice_number}  |  Anika Logistics Group  |  +1-877-701-1919  |  Page 1 of 1`,
-    W / 2,
-    pageH - 4.5,
-    { align: "center" },
-  );
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(180, 196, 220);
+    doc.text(
+      `${invoice.invoice_number}  |  Anika Logistics Group  |  +1-877-701-1919  |  Page ${p} of ${totalPages}`,
+      W / 2,
+      pageH - 4.5,
+      { align: "center" },
+    );
+  }
 
   // -- Save ----------------------------------------------
   const dateStr = new Date().toISOString().slice(0, 10);

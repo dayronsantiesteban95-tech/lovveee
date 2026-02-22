@@ -368,30 +368,35 @@ export default function LoadBoard({
                                                                         className="text-xs gap-2 text-emerald-600 font-semibold"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            generateInvoice(
-                                                                                {
-                                                                                    id: load.id,
-                                                                                    reference_number: load.reference_number,
-                                                                                    client_name: load.client_name,
-                                                                                    pickup_address: load.pickup_address,
-                                                                                    delivery_address: load.delivery_address,
-                                                                                    pickup_company: load.pickup_company ?? null,
-                                                                                    delivery_company: load.delivery_company ?? null,
-                                                                                    revenue: Number(load.revenue),
-                                                                                    packages: load.packages,
-                                                                                    weight_kg: (load as any).weight_kg ?? null,
-                                                                                    weight_lbs: load.weight_lbs ?? null,
-                                                                                    package_type: (load as any).package_type ?? null,
-                                                                                    service_type: load.service_type,
-                                                                                    actual_pickup: load.actual_pickup ?? null,
-                                                                                    actual_delivery: load.actual_delivery ?? null,
-                                                                                    load_date: load.load_date,
-                                                                                    miles: Number(load.miles),
-                                                                                    hub: load.hub,
-                                                                                },
-                                                                                driverName(load.driver_id),
-                                                                            );
-                                                                            toast({ title: "Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                            try {
+                                                                                generateInvoice(
+                                                                                    {
+                                                                                        id: load.id,
+                                                                                        reference_number: load.reference_number,
+                                                                                        client_name: load.client_name,
+                                                                                        pickup_address: load.pickup_address,
+                                                                                        delivery_address: load.delivery_address,
+                                                                                        pickup_company: load.pickup_company ?? null,
+                                                                                        delivery_company: load.delivery_company ?? null,
+                                                                                        revenue: Number(load.revenue),
+                                                                                        packages: load.packages,
+                                                                                        weight_kg: (load as any).weight_kg ?? null,
+                                                                                        weight_lbs: load.weight_lbs ?? null,
+                                                                                        package_type: (load as any).package_type ?? null,
+                                                                                        service_type: load.service_type,
+                                                                                        actual_pickup: load.actual_pickup ?? null,
+                                                                                        actual_delivery: load.actual_delivery ?? null,
+                                                                                        load_date: load.load_date,
+                                                                                        miles: Number(load.miles),
+                                                                                        hub: load.hub,
+                                                                                    },
+                                                                                    driverName(load.driver_id),
+                                                                                );
+                                                                                toast({ title: "Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
+                                                                            } catch (err: unknown) {
+                                                                                const message = err instanceof Error ? err.message : "An unexpected error occurred while generating the PDF.";
+                                                                                toast({ title: "PDF generation failed", description: message, variant: "destructive" });
+                                                                            }
                                                                         }}
                                                                     >
                                                                         <ReceiptText className="h-3.5 w-3.5" />

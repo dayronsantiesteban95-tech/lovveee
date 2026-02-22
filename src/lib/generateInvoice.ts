@@ -65,6 +65,13 @@ function addDays(days: number): Date {
   return d;
 }
 
+/** Truncate a string to maxLen characters, appending "..." if truncated. */
+function truncate(str: string | null | undefined, maxLen: number): string {
+  if (!str) return "--";
+  if (str.length <= maxLen) return str;
+  return str.slice(0, maxLen - 3) + "...";
+}
+
 function breakdownRevenue(revenue: number, miles: number): {
   base: number;
   additionalMiles: number;
@@ -118,6 +125,25 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
 
   const W = doc.internal.pageSize.getWidth();  // 215.9 mm
+  const pageH = doc.internal.pageSize.getHeight();
+  const FOOTER_ZONE = 24; // reserved space at bottom for footer strip + margin
+
+  /** Add a new page and return the reset Y position for content. */
+  const addPage = (): number => {
+    doc.addPage();
+    doc.setFillColor(...COLORS.white);
+    doc.rect(0, 0, W, pageH, "F");
+    return 16;
+  };
+
+  /** Check if we need a new page; if so, add one and return new Y. */
+  const ensureSpace = (currentY: number, needed: number): number => {
+    if (currentY + needed > pageH - FOOTER_ZONE) {
+      return addPage();
+    }
+    return currentY;
+  };
+
   const today = new Date();
   const dueDate = addDays(30);
   const refNum = load.reference_number || load.id.slice(0, 8).toUpperCase();
@@ -189,11 +215,11 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
 
   y += 5;
 
-  // Client name
+  // Client name -- truncate to prevent overflow past the midpoint
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(...COLORS.primary);
-  doc.text(load.client_name || "Client", leftX, y);
+  doc.text(truncate(load.client_name || "Client", 40), leftX, y);
 
   // Invoice # value
   doc.setFont("helvetica", "normal");
@@ -216,7 +242,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...COLORS.primary);
-    doc.text(val, rightX + 35, detailY);
+    doc.text(truncate(val, 30), rightX + 35, detailY);
     detailY += 5.5;
   });
 
@@ -225,7 +251,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...COLORS.gray600);
-    doc.text(load.delivery_company, leftX, y);
+    doc.text(truncate(load.delivery_company, 50), leftX, y);
     y += 5;
   }
   if (load.delivery_address) {
@@ -262,13 +288,13 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   const svcDisplay = `${load.service_type || "AOG"} -- AOG Cartage`;
 
   const serviceRows = [
-    ["Reference #", refNum],
-    ["Service Type", svcDisplay],
-    ["Pickup Location", load.pickup_address || "--"],
-    ["Pickup Company", load.pickup_company || "--"],
-    ["Delivery Location", load.delivery_address || "--"],
-    ["Delivery Company", load.delivery_company || "--"],
-    ["Driver", driverName || "--"],
+    ["Reference #", truncate(refNum, 40)],
+    ["Service Type", truncate(svcDisplay, 60)],
+    ["Pickup Location", truncate(load.pickup_address, 80)],
+    ["Pickup Company", truncate(load.pickup_company, 60)],
+    ["Delivery Location", truncate(load.delivery_address, 80)],
+    ["Delivery Company", truncate(load.delivery_company, 60)],
+    ["Driver", truncate(driverName, 40)],
     ["Pickup Date/Time", load.actual_pickup ? fmtDate(load.actual_pickup) : fmtDateOnly(load.load_date)],
     ["Delivery Date/Time", load.actual_delivery ? fmtDate(load.actual_delivery) : "--"],
     ["Weight", weightDisplay],
@@ -286,6 +312,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
       textColor: COLORS.primary,
       lineColor: COLORS.gray200,
       lineWidth: 0.3,
+      overflow: "linebreak",
     },
     headStyles: {
       fillColor: COLORS.accentLight,
@@ -304,6 +331,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   });
 
   y = (doc as any).lastAutoTable.finalY + 10;
+  y = ensureSpace(y, 50);
 
   // -- CHARGES Table -------------------------------------
   doc.setFont("helvetica", "bold");
@@ -354,6 +382,7 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   });
 
   y = (doc as any).lastAutoTable.finalY + 10;
+  y = ensureSpace(y, 50);
 
   // -- Payment Terms & Thank You -------------------------
   doc.setFillColor(...COLORS.gray100);
@@ -397,20 +426,23 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     { align: "center" },
   );
 
-  // -- Footer strip --------------------------------------
-  const pageH = doc.internal.pageSize.getHeight();
-  doc.setFillColor(...COLORS.primary);
-  doc.rect(0, pageH - 12, W, 12, "F");
+  // -- Footer strip -- draw on every page ------------------
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...COLORS.primary);
+    doc.rect(0, pageH - 12, W, 12, "F");
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(180, 196, 220);
-  doc.text(
-    `${invoiceNum}  |  Anika Logistics Group  |  +1-877-701-1919  |  Page 1 of 1`,
-    W / 2,
-    pageH - 4.5,
-    { align: "center" },
-  );
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(180, 196, 220);
+    doc.text(
+      `${invoiceNum}  |  Anika Logistics Group  |  +1-877-701-1919  |  Page ${p} of ${totalPages}`,
+      W / 2,
+      pageH - 4.5,
+      { align: "center" },
+    );
+  }
 
   // -- Save / Download ------------------------------------
   const dateStr = today.toISOString().slice(0, 10);

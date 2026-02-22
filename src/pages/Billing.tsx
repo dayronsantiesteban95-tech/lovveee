@@ -886,26 +886,36 @@ function Billing() {
 
   // --- Download PDF -------------------------------------
   const downloadPDF = (inv: Invoice, lineItems: InvoiceLineItem[]) => {
-    generateBillingInvoice({
-      invoice_number: inv.invoice_number,
-      client_name: inv.client_name,
-      issue_date: inv.issue_date,
-      due_date: inv.due_date,
-      status: inv.status,
-      subtotal: inv.subtotal,
-      tax_amount: inv.tax_amount,
-      total_amount: inv.total_amount,
-      amount_paid: inv.amount_paid,
-      notes: inv.notes,
-      line_items: lineItems.map(li => ({
-        description: li.description,
-        reference_number: li.reference_number,
-        service_date: li.service_date,
-        quantity: li.quantity,
-        unit_price: li.unit_price,
-        subtotal: li.subtotal,
-      })),
-    });
+    try {
+      generateBillingInvoice({
+        invoice_number: inv.invoice_number,
+        client_name: inv.client_name,
+        issue_date: inv.issue_date,
+        due_date: inv.due_date,
+        status: inv.status,
+        subtotal: inv.subtotal,
+        tax_amount: inv.tax_amount,
+        total_amount: inv.total_amount,
+        amount_paid: inv.amount_paid,
+        notes: inv.notes,
+        line_items: lineItems.map(li => ({
+          description: li.description,
+          reference_number: li.reference_number,
+          service_date: li.service_date,
+          quantity: li.quantity,
+          unit_price: li.unit_price,
+          subtotal: li.subtotal,
+        })),
+      });
+      toast({ title: "PDF downloaded", description: `Invoice ${inv.invoice_number} saved.` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred while generating the PDF.";
+      toast({
+        title: "PDF generation failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
   };
 
   // --- Sync invoice to QuickBooks -----------------------

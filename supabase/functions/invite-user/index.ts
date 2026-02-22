@@ -219,8 +219,8 @@ serve(async (req) => {
       });
     }
 
-    // 4. Create user via Admin API -- use provided password or default
-    const userPassword = providedPassword || "Anika2026!";
+    // 4. Create user via Admin API -- use provided password or generate random one
+    const userPassword = providedPassword || crypto.randomUUID();
     
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
