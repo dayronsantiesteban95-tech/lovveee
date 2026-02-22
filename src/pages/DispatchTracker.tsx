@@ -4,6 +4,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { fmtMoney, fmtWait, todayISO, daysAgoISO } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
+import { geocodeAddress } from "@/utils/geocodeAddress";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -218,6 +219,18 @@ function DispatchTracker() {
             ...(editLoad ? {} : { created_by: user!.id }),
             updated_at: new Date().toISOString(),
         };
+
+        // Geocode addresses for geofence enforcement (on create or address change)
+        const pickupAddr = fd.get("pickup_address") as string;
+        const deliveryAddr = fd.get("delivery_address") as string;
+        if (pickupAddr || deliveryAddr) {
+            const [pickupCoords, deliveryCoords] = await Promise.all([
+                pickupAddr ? geocodeAddress(pickupAddr) : null,
+                deliveryAddr ? geocodeAddress(deliveryAddr) : null,
+            ]);
+            if (pickupCoords) { (payload as any).pickup_lat = pickupCoords.lat; (payload as any).pickup_lng = pickupCoords.lng; }
+            if (deliveryCoords) { (payload as any).delivery_lat = deliveryCoords.lat; (payload as any).delivery_lng = deliveryCoords.lng; }
+        }
 
         const { error } = editLoad
             ? await db.from("daily_loads").update(payload).eq("id", editLoad.id)

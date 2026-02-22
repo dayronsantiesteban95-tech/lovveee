@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { todayISO } from "@/lib/formatters";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
+import { geocodeAddress } from "@/utils/geocodeAddress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -347,6 +348,12 @@ export default function NewLoadForm({
 
         const trackingToken = generateTrackingToken();
 
+        // Geocode addresses in parallel for geofence enforcement
+        const [pickupCoords, deliveryCoords] = await Promise.all([
+            addForm.pickup_address ? geocodeAddress(addForm.pickup_address) : null,
+            addForm.delivery_address ? geocodeAddress(addForm.delivery_address) : null,
+        ]);
+
         const payload: Record<string, any> = {
             load_date: todayISO(),
             reference_number: addForm.reference_number || null,
@@ -361,12 +368,16 @@ export default function NewLoadForm({
             vehicle_required: addForm.vehicle_type || null,
             pickup_company: addForm.pickup_company || null,
             pickup_address: addForm.pickup_address || null,
+            pickup_lat: pickupCoords?.lat ?? null,
+            pickup_lng: pickupCoords?.lng ?? null,
             pickup_open_hours: addForm.pickup_open_hours || null,
             pickup_contact_name: addForm.pickup_contact_name || null,
             pickup_contact_phone: addForm.pickup_contact_phone || null,
             collection_time: addForm.pickup_time_from || null,
             delivery_company: addForm.delivery_company || null,
             delivery_address: addForm.delivery_address || null,
+            delivery_lat: deliveryCoords?.lat ?? null,
+            delivery_lng: deliveryCoords?.lng ?? null,
             delivery_contact_name: addForm.delivery_contact_name || null,
             delivery_contact_phone: addForm.delivery_contact_phone || null,
             packages: parseInt(addForm.packages) || 1,

@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { captureScopedError } from "@/lib/sentry";
+import { geocodeAddress } from "@/utils/geocodeAddress";
 import {
     Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle,
     X, ArrowRight, RefreshCw, FileText, Table2,
@@ -223,6 +224,20 @@ export default function CSVImportPanel({ onImportComplete, loadDate, hub }: CSVI
                 }
             }
             payloads.push(payload);
+        }
+
+        // Geocode addresses for geofence enforcement
+        for (const p of payloads) {
+            const pickup = (p as any).pickup_address;
+            const delivery = (p as any).delivery_address;
+            if (pickup && !(p as any).pickup_lat) {
+                const coords = await geocodeAddress(pickup);
+                if (coords) { (p as any).pickup_lat = coords.lat; (p as any).pickup_lng = coords.lng; }
+            }
+            if (delivery && !(p as any).delivery_lat) {
+                const coords = await geocodeAddress(delivery);
+                if (coords) { (p as any).delivery_lat = coords.lat; (p as any).delivery_lng = coords.lng; }
+            }
         }
 
         // Batch insert in chunks of 50 for performance
