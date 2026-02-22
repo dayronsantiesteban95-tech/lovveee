@@ -62,6 +62,26 @@ CREATE POLICY "Invoice line items manageable by dispatchers and owners"
     public.has_role(auth.uid(), 'dispatcher')
   );
 
+-- ── client_billing_profiles ─────────────────────────────
+ALTER TABLE IF EXISTS client_billing_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Client billing profiles readable by authenticated"
+  ON client_billing_profiles FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Client billing profiles manageable by dispatchers and owners"
+  ON client_billing_profiles FOR ALL
+  TO authenticated
+  USING (
+    public.has_role(auth.uid(), 'owner') OR
+    public.has_role(auth.uid(), 'dispatcher')
+  )
+  WITH CHECK (
+    public.has_role(auth.uid(), 'owner') OR
+    public.has_role(auth.uid(), 'dispatcher')
+  );
+
 -- ── invoice_payments ──────────────────────────────────────
 ALTER TABLE IF EXISTS invoice_payments ENABLE ROW LEVEL SECURITY;
 

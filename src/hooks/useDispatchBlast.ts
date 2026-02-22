@@ -13,11 +13,19 @@
  *   * Analytics (response rates, avg time)
  * -----------------------------------------------------------
  */
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
+
+// --- Helpers --------------------------------------------
+
+/** Returns true if the blast has passed its expires_at timestamp */
+function isBlastExpired(blast: DispatchBlast): boolean {
+    if (!blast.expires_at) return false;
+    return new Date(blast.expires_at).getTime() < Date.now();
+}
 
 // --- Types ---------------------------------------------
 
@@ -144,6 +152,30 @@ export function useDispatchBlast() {
         };
     }, [fetchBlasts]);
 
+    // -- Client-side expiry cleanup (every 30s) ----
+    const expiryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        expiryIntervalRef.current = setInterval(() => {
+            setBlasts((prev) => {
+                const now = Date.now();
+                const updated = prev.map((b) => {
+                    if (b.status === "active" && b.expires_at && new Date(b.expires_at).getTime() < now) {
+                        return { ...b, status: "expired" as BlastStatus };
+                    }
+                    return b;
+                });
+                // Only trigger a re-render if something actually changed
+                const changed = updated.some((b, i) => b.status !== prev[i].status);
+                return changed ? updated : prev;
+            });
+        }, 30_000);
+
+        return () => {
+            if (expiryIntervalRef.current) clearInterval(expiryIntervalRef.current);
+        };
+    }, []);
+
     // -- Create a new blast ------------------------
     const createBlast = useCallback(
         async (params: CreateBlastParams): Promise<DispatchBlast | null> => {
@@ -263,6 +295,17 @@ export function useDispatchBlast() {
     // -- Express interest (driver-side -- marks as "interested") --
     const expressInterest = useCallback(
         async (blastId: string, driverId: string, lat?: number, lng?: number) => {
+            // Client-side expiry guard
+            const blast = blasts.find((b) => b.id === blastId);
+            if (blast && isBlastExpired(blast)) {
+                toast({
+                    title: "Blast Expired",
+                    description: "This blast has expired and is no longer accepting responses.",
+                    variant: "destructive",
+                });
+                return false;
+            }
+
             const { error } = await supabase
                 .from("blast_responses")
                 .update({
@@ -289,12 +332,23 @@ export function useDispatchBlast() {
             });
             return true;
         },
-        [toast],
+        [toast, blasts],
     );
 
     // -- Confirm assignment (dispatcher-side -- calls PG function) --
     const confirmAssignment = useCallback(
         async (blastId: string, driverId: string) => {
+            // Client-side expiry guard
+            const blast = blasts.find((b) => b.id === blastId);
+            if (blast && isBlastExpired(blast)) {
+                toast({
+                    title: "Blast Expired",
+                    description: "This blast has expired. Create a new blast to assign this load.",
+                    variant: "destructive",
+                });
+                return false;
+            }
+
             const { data, error } = await supabase.rpc("confirm_blast_assignment", {
                 p_blast_id: blastId,
                 p_driver_id: driverId,
@@ -315,7 +369,7 @@ export function useDispatchBlast() {
             });
             return true;
         },
-        [toast],
+        [toast, blasts],
     );
 
     // -- Decline (for driver-side) -----------------
@@ -349,6 +403,12 @@ export function useDispatchBlast() {
         [blasts],
     );
 
+    // -- Active (non-expired) blasts for display ----
+    const activeBlasts = useMemo(
+        () => blasts.filter((b) => b.status === "active" && !isBlastExpired(b)),
+        [blasts],
+    );
+
     // -- Analytics ---------------------------------
     const analytics = useMemo(() => {
         const active = blasts.filter((b) => b.status === "active");
@@ -375,6 +435,7 @@ export function useDispatchBlast() {
 
     return {
         blasts,
+        activeBlasts,
         loading,
         analytics,
         createBlast,

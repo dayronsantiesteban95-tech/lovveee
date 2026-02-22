@@ -71,6 +71,16 @@ function calculateRate(
     return { baseRate, mileageCharge, fuelSurcharge, subtotal, weightSurcharge, modifiersTotal, finalQuote };
 }
 
+// ---------- Tracking Token Generator ----------
+function generateTrackingToken(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let token = 'ANK-';
+    for (let i = 0; i < 6; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+}
+
 const EMPTY_ADD_FORM: AddLoadForm = {
     reference_number: "",
     consol_number: "",
@@ -331,9 +341,12 @@ export default function NewLoadForm({
             ? parseFloat(addForm.revenue)
             : (computedRevenue ?? 0);
 
+        const trackingToken = generateTrackingToken();
+
         const payload: Record<string, any> = {
             load_date: todayISO(),
             reference_number: addForm.reference_number || null,
+            tracking_token: trackingToken,
             consol_number: addForm.consol_number || null,
             client_name: addForm.client_name || null,
             service_type: addForm.service_type || "AOG",
@@ -374,11 +387,31 @@ export default function NewLoadForm({
             updated_at: new Date().toISOString(),
         };
 
-        const { error } = await supabase.from("daily_loads").insert(payload);
+        const { data: insertedLoad, error } = await supabase
+            .from("daily_loads")
+            .insert(payload)
+            .select("id")
+            .single();
 
         if (error) {
             toast({ title: "Failed to create load", description: error.message, variant: "destructive" });
         } else {
+            // Log initial creation event in load_status_events
+            if (insertedLoad?.id) {
+                try {
+                    await supabase.from("load_status_events").insert({
+                        load_id: insertedLoad.id,
+                        previous_status: null,
+                        new_status: "assigned",
+                        changed_by: user.id,
+                        created_at: new Date().toISOString(),
+                    });
+                } catch (evtErr) {
+                    console.warn("[NewLoadForm] Failed to log initial status event:", evtErr);
+                    // Non-fatal: load was created successfully
+                }
+            }
+
             toast({ title: "? Load created!", description: `${addForm.reference_number} added to the board` });
             onClose();
             onSuccess();
