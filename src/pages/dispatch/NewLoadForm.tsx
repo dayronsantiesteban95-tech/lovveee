@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { todayISO } from "@/lib/formatters";
+import { sendPushToDrivers } from "@/lib/sendPushNotification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -331,6 +332,9 @@ export default function NewLoadForm({
         if (!addForm.delivery_address.trim()) {
             toast({ title: "Delivery address required", variant: "destructive" }); return;
         }
+        if (addForm.cutoff_time && addForm.sla_deadline && addForm.cutoff_time > addForm.sla_deadline) {
+            toast({ title: "Cutoff time cannot be after SLA deadline", variant: "destructive" }); return;
+        }
 
         let bolUrl = addForm.bol_url || null;
         if (bolFile) {
@@ -409,6 +413,20 @@ export default function NewLoadForm({
                 } catch (evtErr) {
                     console.warn("[NewLoadForm] Failed to log initial status event:", evtErr);
                     // Non-fatal: load was created successfully
+                }
+            }
+
+            // Notify the assigned driver via push + in-app notification
+            if (insertedLoad?.id && addForm.driver_id) {
+                try {
+                    await sendPushToDrivers(
+                        [addForm.driver_id],
+                        'New Load Assigned',
+                        `${addForm.reference_number ?? 'Load'} - ${addForm.client_name ?? 'Unknown'} | ${addForm.pickup_address ?? ''} -> ${addForm.delivery_address ?? ''}`,
+                        { load_id: insertedLoad.id, type: 'load_assigned' }
+                    );
+                } catch (pushErr) {
+                    console.warn("[NewLoadForm] Push notification to driver failed:", pushErr);
                 }
             }
 

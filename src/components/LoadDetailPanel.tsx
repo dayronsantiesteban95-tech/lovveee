@@ -338,7 +338,7 @@ function ChatPanel({ loadId, dispatcherName, userId, unreadCount }: ChatPanelPro
 // -----------------------------------------------------------
 
 export default function LoadDetailPanel({
-    load,
+    load: loadProp,
     driverName,
     vehicleName,
     dispatcherName,
@@ -352,6 +352,44 @@ export default function LoadDetailPanel({
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'messages'>('details');
     const [bolUploading, setBolUploading] = useState(false);
+
+    // ---- Realtime load state ------------------------------------------------
+    // Keep a local copy of the load so realtime updates reflect immediately
+    // without waiting for the parent to re-render.
+    const [load, setLoad] = useState<LoadDetail>(loadProp);
+
+    // Sync from parent prop when the prop itself changes (e.g. parent refetch)
+    useEffect(() => {
+        setLoad(loadProp);
+    }, [loadProp]);
+
+    // Subscribe to Supabase realtime UPDATE events for this specific load
+    useEffect(() => {
+        const channel = supabase
+            .channel(`load-detail-panel:${load.id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "daily_loads",
+                    filter: `id=eq.${load.id}`,
+                },
+                (payload: { new: Record<string, any> }) => {
+                    // Merge the updated row into local state
+                    setLoad((prev) => ({ ...prev, ...payload.new } as LoadDetail));
+                    // Also notify the parent so its own data stays in sync
+                    onRefresh();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [load.id, onRefresh]);
+    // ---- End realtime -------------------------------------------------------
+
     const [bolUrl, setBolUrl] = useState<string | null>(load.bol_url ?? null);
     const bolInputRef = useRef<HTMLInputElement>(null);
     const { messages: allMessages } = useMessages(load.id, user?.id ?? null);
@@ -360,6 +398,11 @@ export default function LoadDetailPanel({
             m => m.sender_role === 'driver' && !m.read_by.includes(user.id)
           ).length
         : 0;
+
+    // Keep bolUrl in sync when realtime updates change the load's bol_url
+    useEffect(() => {
+        setBolUrl(load.bol_url ?? null);
+    }, [load.bol_url]);
 
     const profit = Number(load.revenue) - Number(load.driver_pay) - Number(load.fuel_cost);
     const margin = Number(load.revenue) > 0 ? (profit / Number(load.revenue) * 100) : 0;

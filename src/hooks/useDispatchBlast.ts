@@ -363,6 +363,18 @@ export function useDispatchBlast() {
                 return false;
             }
 
+            // Push notification to the assigned driver
+            try {
+                await sendPushToDrivers(
+                    [driverId],
+                    'Load Assigned!',
+                    'You have been assigned a new load. Open the app to view details.',
+                    { load_id: data.load_id ?? blastId, blast_id: blastId, type: 'blast_confirmed' }
+                );
+            } catch (pushErr) {
+                console.warn('[useDispatchBlast] Push to assigned driver failed:', pushErr);
+            }
+
             toast({
                 title: "? Driver Assigned!",
                 description: "Load has been assigned to the selected driver.",

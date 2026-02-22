@@ -690,9 +690,19 @@ function Billing() {
       toast({ title: "Zero revenue", description: "Cannot create an invoice with $0 total. Check load revenue values.", variant: "destructive" });
       return;
     }
+    // Validate all selected loads belong to the same client
+    const clientNames = new Set(selectedLoads.map(l => l.client_name ?? "Unknown Client"));
+    if (clientNames.size > 1) {
+      toast({
+        title: "Mixed clients",
+        description: `Selected loads belong to multiple clients (${Array.from(clientNames).join(", ")}). Please select loads from a single client.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setSavingInvoice(true);
     try {
-      // Determine client name from selected loads (use most common)
+      // Determine client name from selected loads (validated to be single client above)
       const clientName = selectedLoads[0].client_name ?? "Unknown Client";
       const subtotal = selectedTotal;
       const totalAmount = subtotal;
@@ -787,6 +797,15 @@ function Billing() {
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0) {
       toast({ title: "Invalid amount", variant: "destructive" });
+      return;
+    }
+    const remainingBalance = selectedInvoice.total_amount - selectedInvoice.amount_paid;
+    if (amount > remainingBalance) {
+      toast({
+        title: "Payment exceeds balance",
+        description: `Remaining balance is ${fmtMoney(remainingBalance)}. Payment cannot exceed this amount.`,
+        variant: "destructive",
+      });
       return;
     }
     setSavingPayment(true);

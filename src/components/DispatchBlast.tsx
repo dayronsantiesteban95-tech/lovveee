@@ -469,6 +469,7 @@ export default function DispatchBlastPanel({
                             setExpandedBlast(expandedBlast === blast.id ? null : blast.id)
                         }
                         onCancel={() => cancelBlast(blast.id)}
+                        onConfirmAssignment={confirmAssignment}
                         onLoadAssigned={onLoadAssigned}
                     />
                 ))}
@@ -522,6 +523,7 @@ function BlastCard({
     expanded,
     onToggle,
     onCancel,
+    onConfirmAssignment,
     onLoadAssigned,
 }: {
     blast: BlastWithResponses;
@@ -529,8 +531,11 @@ function BlastCard({
     expanded: boolean;
     onToggle: () => void;
     onCancel: () => void;
+    onConfirmAssignment: (blastId: string, driverId: string) => Promise<boolean>;
     onLoadAssigned?: (loadId: string, driverId: string) => void;
 }) {
+    const [confirming, setConfirming] = useState<string | null>(null);
+
     const priCfg = PRIORITY_CONFIG[blast.priority as BlastPriority] ?? PRIORITY_CONFIG.normal;
     const isActive = blast.status === "active";
     const isAccepted = blast.status === "accepted";
@@ -539,6 +544,15 @@ function BlastCard({
     const declined = blast.responses.filter((r) => r.status === "declined");
     const pending = blast.responses.filter((r) => r.status === "pending" || r.status === "viewed");
     const viewed = blast.responses.filter((r) => r.status === "viewed");
+
+    const handleConfirm = async (driverId: string) => {
+        setConfirming(driverId);
+        const ok = await onConfirmAssignment(blast.id, driverId);
+        if (ok && onLoadAssigned) {
+            onLoadAssigned(blast.load_id, driverId);
+        }
+        setConfirming(null);
+    };
 
     // Time since blast
     const elapsed = Math.round((Date.now() - new Date(blast.blast_sent_at).getTime()) / 1000);
@@ -715,6 +729,26 @@ function BlastCard({
                                         <span className="text-[9px] text-red-400 truncate max-w-[80px]" title={r.decline_reason}>
                                             {r.decline_reason}
                                         </span>
+                                    )}
+
+                                    {/* Confirm Assignment button for interested drivers */}
+                                    {r.status === "interested" && isActive && (
+                                        <Button
+                                            size="sm"
+                                            className="h-5 text-[10px] px-2 gap-1 bg-green-600 hover:bg-green-700 text-white ml-auto shrink-0"
+                                            disabled={confirming !== null}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleConfirm(r.driver_id);
+                                            }}
+                                        >
+                                            {confirming === r.driver_id ? (
+                                                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                            ) : (
+                                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                            )}
+                                            {confirming === r.driver_id ? "Assigning..." : "Assign"}
+                                        </Button>
                                     )}
                                 </div>
                             );

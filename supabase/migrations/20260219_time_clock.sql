@@ -195,8 +195,21 @@ CREATE OR REPLACE FUNCTION start_break(
 )
 RETURNS UUID
 LANGUAGE plpgsql AS $$
-DECLARE v_break_id UUID;
+DECLARE
+  v_break_id UUID;
+  v_existing UUID;
 BEGIN
+  -- Guard: check driver does not already have an active break on this entry
+  SELECT id INTO v_existing
+  FROM time_breaks
+  WHERE time_entry_id = p_entry_id
+    AND break_end IS NULL
+  LIMIT 1;
+
+  IF v_existing IS NOT NULL THEN
+    RAISE EXCEPTION 'Driver already has an active break (break: %)', v_existing;
+  END IF;
+
   INSERT INTO time_breaks (time_entry_id, driver_id, break_start, break_type)
   VALUES (p_entry_id, p_driver_id, NOW(), p_type)
   RETURNING id INTO v_break_id;

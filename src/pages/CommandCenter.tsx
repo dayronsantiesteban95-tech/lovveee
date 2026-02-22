@@ -1,5 +1,5 @@
 // Deploy cache bust: 2026-02-20 rebuild -- ErrorBoundary + bulletproof map init
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -439,16 +439,25 @@ function CommandCenter() {
         return () => clearInterval(timer);
     }, []);
 
-    // -- Realtime subscriptions --
+    // -- Realtime subscriptions (debounced to prevent query spam) --
+    const realtimeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const debouncedFetch = useCallback(() => {
+        if (realtimeTimerRef.current) clearTimeout(realtimeTimerRef.current);
+        realtimeTimerRef.current = setTimeout(() => fetchData(), 500);
+    }, [fetchData]);
+
     useEffect(() => {
         const channel = supabase
             .channel("cc-realtime")
-            .on("postgres_changes" as any, { event: "*", schema: "public", table: "daily_loads" }, () => fetchData())
-            .on("postgres_changes" as any, { event: "*", schema: "public", table: "drivers" }, () => fetchData())
+            .on("postgres_changes" as any, { event: "*", schema: "public", table: "daily_loads" }, () => debouncedFetch())
+            .on("postgres_changes" as any, { event: "*", schema: "public", table: "drivers" }, () => debouncedFetch())
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
-    }, [fetchData]);
+        return () => {
+            if (realtimeTimerRef.current) clearTimeout(realtimeTimerRef.current);
+            supabase.removeChannel(channel);
+        };
+    }, [debouncedFetch]);
 
     // -- Computed --
     const driverMap = useMemo(() => {

@@ -118,7 +118,9 @@ export default function CommandBar() {
             return;
         }
         setSearching(true);
-        const term = q.trim().toLowerCase();
+        const term = q.trim().toLowerCase()
+            .replace(/%/g, "\\%")   // Escape SQL wildcard
+            .replace(/_/g, "\\_");  // Escape SQL single-char wildcard
         const allResults: SearchResult[] = [];
 
         // -- Quick actions --

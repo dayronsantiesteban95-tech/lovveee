@@ -359,7 +359,7 @@ function FleetTracker() {
 
     // -- Vehicle & Driver quick status toggles --------
     const toggleVehicleStatus = useCallback(async (v: Vehicle) => {
-        const newStatus = v.status === "active" ? "inactive" : "active";
+        const newStatus = v.status === "active" ? "maintenance" : "active";
         const { error } = await db.from("vehicles").update({ status: newStatus }).eq("id", v.id);
         if (error) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -431,10 +431,15 @@ function FleetTracker() {
     const handleMaintSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
+        const vehicleId = fd.get("vehicle_id") as string;
+        if (!vehicleId) {
+            toast({ title: "Vehicle required", description: "Please select a vehicle for this maintenance record.", variant: "destructive" });
+            return;
+        }
         const rawMileageAtService = fd.get("mileage_at_service") as string;
         const rawNextServiceMileage = fd.get("next_service_mileage") as string;
         const payload = {
-            vehicle_id: (fd.get("vehicle_id") as string) || null,
+            vehicle_id: vehicleId,
             maintenance_type: fd.get("maintenance_type") as string,
             description: fd.get("description") as string || null,
             cost: Number(fd.get("cost")) || 0,
@@ -697,7 +702,7 @@ function FleetTracker() {
                                                     className="h-7 text-xs gap-1 text-destructive"
                                                     onClick={() => toggleVehicleStatus(v)}
                                                 >
-                                                    Mark Inactive
+                                                    Mark Maintenance
                                                 </Button>
                                             ) : (
                                                 <Button

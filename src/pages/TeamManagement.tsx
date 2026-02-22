@@ -354,7 +354,7 @@ function TeamManagement() {
               email: form.email,
               full_name: form.full_name,
               role: dbRole,
-              password: (form as any).password || "Anika2026!",
+              password: (form as any).password || crypto.randomUUID(),
             }),
           }
         );
