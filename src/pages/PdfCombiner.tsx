@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PDFDocument } from "pdf-lib";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,7 @@ export default function PdfCombiner() {
   const totalSize = files.reduce((s, f) => s + f.size, 0);
 
   return (
+    <ErrorBoundary>
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div>
@@ -297,5 +299,6 @@ export default function PdfCombiner() {
         </Button>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
