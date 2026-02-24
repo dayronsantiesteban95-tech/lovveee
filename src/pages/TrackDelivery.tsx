@@ -173,7 +173,7 @@ function TrackDelivery() {
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                             <Input
-                                placeholder="ANK-XXXXXX"
+                                placeholder="ANK-XXXXXXXX"
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
                                 onKeyDown={(e) => e.key === "Enter" && fetchTracking(searchInput)}
@@ -449,7 +449,7 @@ function TrackDelivery() {
                             Enter your tracking number above to get started
                         </p>
                         <p className="text-white/20 text-xs">
-                            Format: ANK-XXXXXX
+                            Format: ANK-XXXXXXXX
                         </p>
                     </div>
                 )}

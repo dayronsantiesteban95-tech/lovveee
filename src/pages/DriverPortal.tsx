@@ -233,13 +233,12 @@ function DriverPortal() {
             try {
                 const { error: evtErr } = await supabase.from("load_status_events").insert({
                     load_id: load.id,
-                    driver_id: driver.id,
-                    old_status: load.status,
+                    changed_by: driver.id,
+                    previous_status: load.status,
                     new_status: nextStatus,
-                    latitude: gps.position?.latitude,
-                    longitude: gps.position?.longitude,
-                    note: statusNote || null,
-                });
+                    reason: statusNote || null,
+                    created_at: new Date().toISOString(),
+                } as any);
                 if (evtErr) throw evtErr;
             } catch (evtErr) {
                 console.error("Failed to log status event:", evtErr);

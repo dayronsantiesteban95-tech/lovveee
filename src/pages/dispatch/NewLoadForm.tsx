@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { todayISO } from "@/lib/formatters";
+import { generateTrackingToken } from "@/lib/rateCalculator";
 import { sendPushToDrivers } from "@/lib/sendPushNotification";
 import { geocodeAddress } from "@/utils/geocodeAddress";
 import { Button } from "@/components/ui/button";
@@ -73,15 +74,6 @@ function calculateRate(
     return { baseRate, mileageCharge, fuelSurcharge, subtotal, weightSurcharge, modifiersTotal, finalQuote };
 }
 
-// ---------- Tracking Token Generator ----------
-function generateTrackingToken(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let token = 'ANK-';
-    for (let i = 0; i < 6; i++) {
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return token;
-}
 
 const EMPTY_ADD_FORM: AddLoadForm = {
     reference_number: "",
@@ -346,18 +338,16 @@ export default function NewLoadForm({
             ? parseFloat(addForm.revenue)
             : (computedRevenue ?? 0);
 
-        const trackingToken = generateTrackingToken();
-
         // Geocode addresses in parallel for geofence enforcement
         const [pickupCoords, deliveryCoords] = await Promise.all([
             addForm.pickup_address ? geocodeAddress(addForm.pickup_address) : null,
             addForm.delivery_address ? geocodeAddress(addForm.delivery_address) : null,
         ]);
 
-        const payload: Record<string, any> = {
+        const buildPayload = (token: string): Record<string, any> => ({
             load_date: todayISO(),
             reference_number: addForm.reference_number || null,
-            tracking_token: trackingToken,
+            tracking_token: token,
             consol_number: addForm.consol_number || null,
             client_name: addForm.client_name || null,
             service_type: addForm.service_type || "AOG",
@@ -400,13 +390,35 @@ export default function NewLoadForm({
             dispatcher_id: user.id,
             created_by: user.id,
             updated_at: new Date().toISOString(),
-        };
+        });
 
-        const { data: insertedLoad, error } = await supabase
-            .from("daily_loads")
-            .insert(payload)
-            .select("id")
-            .single();
+        // Retry up to 3 times on tracking_token collision (unique constraint)
+        let insertedLoad: { id: string } | null = null;
+        let error: any = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const token = generateTrackingToken();
+            const { data, error: insertError } = await supabase
+                .from("daily_loads")
+                .insert(buildPayload(token))
+                .select("id")
+                .single();
+
+            if (!insertError) {
+                insertedLoad = data;
+                error = null;
+                break;
+            }
+
+            // If error is NOT a unique constraint violation, don't retry
+            if (!insertError.message?.includes("unique") && !insertError.message?.includes("duplicate")) {
+                error = insertError;
+                break;
+            }
+
+            // Unique constraint collision -- retry with new token
+            console.warn(`[NewLoadForm] tracking_token collision on attempt ${attempt + 1}, retrying...`);
+            error = insertError;
+        }
 
         if (error) {
             toast({ title: "Failed to create load", description: error.message, variant: "destructive" });

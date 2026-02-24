@@ -51,10 +51,11 @@ export function calculateRate(
 }
 
 // ---------- Tracking Token Generator ----------
+// 8 chars from 36-char alphabet = 36^8 = ~2.8 trillion combinations
 export function generateTrackingToken(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let token = 'ANK-';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
         token += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return token;

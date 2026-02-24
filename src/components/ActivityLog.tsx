@@ -89,8 +89,8 @@ export default function ActivityLog({
         try {
             let query = supabase
                 .from("load_status_events")
-                .select("id, load_id, new_status, old_status, note, recorded_at, changed_by")
-                .order("recorded_at", { ascending: false })
+                .select("id, load_id, new_status, previous_status, reason, created_at, changed_by")
+                .order("created_at", { ascending: false })
                 .limit(limit);
 
             if (loadId) query = query.eq("load_id", loadId);
@@ -104,10 +104,10 @@ export default function ActivityLog({
                         action: `Status changed to ${evt.new_status}`,
                         entity_type: "load",
                         entity_id: evt.load_id,
-                        details: evt.note
-                            ? `${evt.old_status ?? "--"} to ${evt.new_status}: "${evt.note}"`
-                            : `${evt.old_status ?? "--"} to ${evt.new_status}`,
-                        timestamp: evt.recorded_at,
+                        details: evt.reason
+                            ? `${evt.previous_status ?? "--"} to ${evt.new_status}: "${evt.reason}"`
+                            : `${evt.previous_status ?? "--"} to ${evt.new_status}`,
+                        timestamp: evt.created_at,
                     });
                 }
             }
