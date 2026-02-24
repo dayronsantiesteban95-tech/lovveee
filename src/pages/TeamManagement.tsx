@@ -237,15 +237,11 @@ function TeamManagement() {
   const [editRole, setEditRole] = useState<DisplayRole>("dispatcher");
   const [editLoading, setEditLoading] = useState(false);
 
-  const getAuthHeaders = useCallback(async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return {
-      Authorization: `Bearer ${session?.access_token}`,
-      "Content-Type": "application/json",
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    };
+  /** Call the invite-user Edge Function via supabase.functions.invoke */
+  const callInviteFn = useCallback(async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("invite-user", { body });
+    if (error) throw error;
+    return data as Record<string, unknown>;
   }, []);
 
   /** Fallback: load team directly from profiles + user_roles tables */
@@ -282,41 +278,27 @@ function TeamManagement() {
   const fetchTeam = useCallback(async () => {
     setLoading(true);
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ action: "list" }),
-        }
-      );
+      const data = await callInviteFn({ action: "list" });
 
-      if (!res.ok) {
-        throw new Error(`Edge Function returned ${res.status}`);
-      }
-
-      const data = await res.json();
       if (data.error) {
-        throw new Error(data.error);
+        throw new Error(data.error as string);
       }
 
       if (data.team) {
-        const mapped: TeamMember[] = data.team.map((m: {
+        const mapped: TeamMember[] = (data.team as Array<{
           id: string;
           email: string;
           full_name: string;
           role: AppRole | null;
           last_sign_in_at: string | null;
           created_at: string;
-        }) => ({
+        }>).map((m) => ({
           ...m,
-          status: m.last_sign_in_at ? "active" : "invited",
+          status: m.last_sign_in_at ? "active" : ("invited" as UserStatus),
           hub: null,
         }));
         setTeam(mapped);
       } else {
-        // Empty but valid response
         setTeam([]);
       }
     } catch (err) {
@@ -340,7 +322,7 @@ function TeamManagement() {
       }
     }
     setLoading(false);
-  }, [getAuthHeaders, toast, fetchTeamFallback]);
+  }, [callInviteFn, toast, fetchTeamFallback]);
 
   useEffect(() => {
     if (user) fetchTeam();
@@ -352,42 +334,21 @@ function TeamManagement() {
     e.preventDefault();
     setInviteLoading(true);
     try {
-      const headers = await getAuthHeaders();
       const dbRole = toDbRole(form.role);
       const userPassword = form.password || crypto.randomUUID().slice(0, 12);
 
       let inviteSucceeded = false;
 
-      const callEdgeFn = async () => {
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              email: form.email,
-              full_name: form.full_name,
-              role: dbRole,
-              password: userPassword,
-            }),
-          }
-        );
-        if (!res.ok && res.status >= 500) throw new Error(`Server error ${res.status}`);
-        return res.json();
-      };
-
       try {
-        // Retry once on failure (handles Edge Function cold-starts)
-        let data: { error?: string };
-        try {
-          data = await callEdgeFn();
-        } catch {
-          await new Promise((r) => setTimeout(r, 2000));
-          data = await callEdgeFn();
-        }
+        const data = await callInviteFn({
+          email: form.email,
+          full_name: form.full_name,
+          role: dbRole,
+          password: userPassword,
+        });
 
         if (data.error) {
-          toast({ title: "Error creating user", description: data.error, variant: "destructive" });
+          toast({ title: "Error creating user", description: data.error as string, variant: "destructive" });
         } else {
           inviteSucceeded = true;
         }
@@ -456,31 +417,21 @@ function TeamManagement() {
     if (!editTarget) return;
     setEditLoading(true);
     try {
-      const headers = await getAuthHeaders();
       const dbRole = toDbRole(editRole);
 
       let updated = false;
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-          {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              action: "change_role",
-              email: editTarget.id,
-              role: dbRole,
-            }),
-          }
-        );
-        const data = await res.json();
+        const data = await callInviteFn({
+          action: "change_role",
+          email: editTarget.id,
+          role: dbRole,
+        });
         if (data.error) {
-          toast({ title: "Error", description: data.error, variant: "destructive" });
+          toast({ title: "Error", description: data.error as string, variant: "destructive" });
         } else {
           updated = true;
         }
       } catch (_err) {
-        // Edge Function unavailable -- role changes require owner auth via server, cannot fall back to client
         toast({
           title: "Role update unavailable",
           description: "The user management service is offline. Please try again later.",
@@ -521,18 +472,9 @@ function TeamManagement() {
 
   const handleResendInvite = async (member: TeamMember) => {
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ action: "reset_password", email: member.email }),
-        }
-      );
-      const data = await res.json();
+      const data = await callInviteFn({ action: "reset_password", email: member.email });
       if (data.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
+        toast({ title: "Error", description: data.error as string, variant: "destructive" });
       } else {
         toast({
           title: "Invite resent",
@@ -542,7 +484,7 @@ function TeamManagement() {
     } catch (err) {
       toast({
         title: "Invite service offline",
-        description: "Could not resend invite -- the email service is currently unavailable.",
+        description: "Could not resend invite. Please try again later.",
         variant: "destructive",
       });
     }
