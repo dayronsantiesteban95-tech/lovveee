@@ -358,7 +358,7 @@ function TeamManagement() {
 
       let inviteSucceeded = false;
 
-      try {
+      const callEdgeFn = async () => {
         const res = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
           {
@@ -372,7 +372,19 @@ function TeamManagement() {
             }),
           }
         );
-        const data = await res.json();
+        if (!res.ok && res.status >= 500) throw new Error(`Server error ${res.status}`);
+        return res.json();
+      };
+
+      try {
+        // Retry once on failure (handles Edge Function cold-starts)
+        let data: { error?: string };
+        try {
+          data = await callEdgeFn();
+        } catch {
+          await new Promise((r) => setTimeout(r, 2000));
+          data = await callEdgeFn();
+        }
 
         if (data.error) {
           toast({ title: "Error creating user", description: data.error, variant: "destructive" });
@@ -380,9 +392,10 @@ function TeamManagement() {
           inviteSucceeded = true;
         }
       } catch (edgeFnErr) {
+        console.error("invite-user edge fn error:", edgeFnErr);
         toast({
-          title: "Service temporarily unavailable",
-          description: "Could not reach the server. Please try again in a moment.",
+          title: "Could not create user",
+          description: edgeFnErr instanceof Error ? edgeFnErr.message : "Server unreachable. Check your connection and try again.",
           variant: "destructive",
         });
       }
