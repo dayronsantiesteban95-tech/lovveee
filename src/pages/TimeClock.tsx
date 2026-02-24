@@ -186,7 +186,7 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
               size="sm"
               variant="outline"
               className="flex-1 gap-2 border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
-              onClick={() => onEndBreak(clock.active_break_id!, clock.driver_name)}
+              onClick={() => clock.active_break_id && onEndBreak(clock.active_break_id, clock.driver_name)}
             >
               <Play className="h-3 w-3" /> End Break
             </Button>

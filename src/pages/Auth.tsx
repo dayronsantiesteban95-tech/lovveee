@@ -97,7 +97,7 @@ function Auth() {
 
         {/* Branded footer */}
         <p className="text-center text-xs text-muted-foreground/60 mt-6">
-          Last-Mile Delivery ? I-10 Corridor ? Atlanta ? Phoenix ? LA
+          Last-Mile Delivery | I-10 Corridor | Atlanta | Phoenix | LA
         </p>
       </div>
     </div>

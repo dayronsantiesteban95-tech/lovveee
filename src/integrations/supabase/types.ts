@@ -575,10 +575,14 @@ export type Database = {
       driver_locations: {
         Row: {
           accuracy: number | null
+          active_load_id: string | null
+          altitude: number | null
+          battery_pct: number | null
           created_at: string | null
           driver_id: string
           heading: number | null
           id: string
+          is_moving: boolean | null
           latitude: number
           longitude: number
           recorded_at: string
@@ -586,10 +590,14 @@ export type Database = {
         }
         Insert: {
           accuracy?: number | null
+          active_load_id?: string | null
+          altitude?: number | null
+          battery_pct?: number | null
           created_at?: string | null
           driver_id: string
           heading?: number | null
           id?: string
+          is_moving?: boolean | null
           latitude: number
           longitude: number
           recorded_at: string
@@ -597,10 +605,14 @@ export type Database = {
         }
         Update: {
           accuracy?: number | null
+          active_load_id?: string | null
+          altitude?: number | null
+          battery_pct?: number | null
           created_at?: string | null
           driver_id?: string
           heading?: number | null
           id?: string
+          is_moving?: boolean | null
           latitude?: number
           longitude?: number
           recorded_at?: string
@@ -2144,6 +2156,116 @@ export type Database = {
           },
         ]
       }
+      time_entries: {
+        Row: {
+          id: string
+          driver_id: string
+          clock_in: string
+          clock_out: string | null
+          break_minutes: number | null
+          total_minutes: number | null
+          regular_hours: number | null
+          overtime_hours: number | null
+          total_pay: number | null
+          hub: string
+          shift: string
+          work_date: string
+          notes: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          driver_id: string
+          clock_in?: string
+          clock_out?: string | null
+          break_minutes?: number | null
+          total_minutes?: number | null
+          regular_hours?: number | null
+          overtime_hours?: number | null
+          total_pay?: number | null
+          hub?: string
+          shift?: string
+          work_date?: string
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          driver_id?: string
+          clock_in?: string
+          clock_out?: string | null
+          break_minutes?: number | null
+          total_minutes?: number | null
+          regular_hours?: number | null
+          overtime_hours?: number | null
+          total_pay?: number | null
+          hub?: string
+          shift?: string
+          work_date?: string
+          notes?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_breaks: {
+        Row: {
+          id: string
+          time_entry_id: string
+          driver_id: string
+          break_type: string
+          break_start: string
+          break_end: string | null
+          break_minutes: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          time_entry_id: string
+          driver_id: string
+          break_type?: string
+          break_start?: string
+          break_end?: string | null
+          break_minutes?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          time_entry_id?: string
+          driver_id?: string
+          break_type?: string
+          break_start?: string
+          break_end?: string | null
+          break_minutes?: number | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_breaks_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_breaks_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       geography_columns: {
@@ -2185,6 +2307,38 @@ export type Database = {
           f_table_schema?: unknown
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      v_active_clocks: {
+        Row: {
+          entry_id: string | null
+          driver_id: string | null
+          driver_name: string | null
+          hourly_rate: number | null
+          hub: string | null
+          shift: string | null
+          clock_in: string | null
+          work_date: string | null
+          elapsed_minutes: number | null
+          on_break: boolean | null
+          active_break_id: string | null
+          break_minutes: number | null
+        }
+        Relationships: []
+      }
+      v_payroll_summary: {
+        Row: {
+          driver_id: string | null
+          full_name: string | null
+          hourly_rate: number | null
+          hub: string | null
+          week_start: string | null
+          shifts: number | null
+          total_work_minutes: number | null
+          total_regular_hours: number | null
+          total_overtime_hours: number | null
+          total_pay: number | null
         }
         Relationships: []
       }
@@ -2318,6 +2472,14 @@ export type Database = {
             Returns: string
           }
       check_car_wash_due: { Args: never; Returns: undefined }
+      clock_in_driver: {
+        Args: { p_driver_id: string; p_hub: string; p_shift: string; p_notes?: string | null }
+        Returns: Json
+      }
+      clock_out_driver: {
+        Args: { p_entry_id: string; p_notes?: string | null }
+        Returns: Json
+      }
       confirm_blast_assignment: {
         Args: { p_blast_id: string; p_driver_id: string }
         Returns: Json
@@ -2354,6 +2516,10 @@ export type Database = {
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
+      end_break: {
+        Args: { p_break_id: string }
+        Returns: Json
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       generate_invoice_number: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
@@ -2603,12 +2769,34 @@ export type Database = {
       get_driver_positions: {
         Args: never
         Returns: {
-          active_load_id: string
           driver_id: string
           driver_name: string
+          hub: string
           latitude: number
           longitude: number
+          speed: number
+          heading: number
+          battery_pct: number | null
+          is_moving: boolean
+          active_load_id: string | null
           recorded_at: string
+          shift_status: string
+        }[]
+      }
+      get_driver_suggestion: {
+        Args: { p_load_id: string; p_pickup_lat: number; p_pickup_lng: number; p_cutoff_time?: string | null }
+        Returns: {
+          driver_id: string
+          driver_name: string
+          distance_km: number
+          active_loads_count: number
+          eta_to_pickup_min: number
+          eta_to_delivery_min: number
+          estimated_arrival_at_delivery: string
+          cutoff_margin_min: number | null
+          can_meet_cutoff: boolean
+          driver_status: string
+          score: number
         }[]
       }
       get_driver_shift_summary: {
@@ -2627,6 +2815,13 @@ export type Database = {
           plate: string
           vehicle_id: string
           vehicle_name: string
+        }[]
+      }
+      get_last_contacts: {
+        Args: never
+        Returns: {
+          lead_id: string
+          last_contact: string
         }[]
       }
       get_load_by_tracking_token: { Args: { p_token: string }; Returns: Json }
@@ -2666,6 +2861,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_blast_stat: {
+        Args: { p_blast_id: string; p_field: string }
+        Returns: undefined
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mark_messages_read: {
@@ -3305,6 +3504,10 @@ export type Database = {
         Returns: Json
       }
       unlockrows: { Args: { "": string }; Returns: number }
+      start_break: {
+        Args: { p_entry_id: string; p_driver_id: string; p_type?: string }
+        Returns: Json
+      }
       update_load_status: {
         Args: {
           p_driver_id: string

@@ -865,7 +865,7 @@ function FleetTracker() {
                                             <TableCell><Badge className={`${dBadge.badge} text-[10px]`}>{dBadge.label}</Badge></TableCell>
                                             <TableCell className="text-sm">
                                                 {d.license_expiry ? (
-                                                    <span className={licenseWarn ? "text-orange-500 font-medium" : ""}>{d.license_expiry}{licenseWarn && " ??"}</span>
+                                                    <span className={licenseWarn ? "text-orange-500 font-medium" : ""}>{d.license_expiry}{licenseWarn && " (expiring soon)"}</span>
                                                 ) : "--"}
                                             </TableCell>
                                             <TableCell className="text-right font-mono">${d.hourly_rate}</TableCell>
@@ -1117,7 +1117,7 @@ function FleetTracker() {
                                                 </div>
                                                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                     <span className="flex items-center gap-1"><Gauge className="h-3 w-3" /> {insp.odometer_reading.toLocaleString()} mi</span>
-                                                    {insp.checklist.fuel_level && <span>? {insp.checklist.fuel_level}</span>}
+                                                    {insp.checklist.fuel_level && <span>Fuel: {insp.checklist.fuel_level}</span>}
                                                 </div>
                                                 <div className="flex flex-wrap gap-1">
                                                     {(() => {
@@ -1136,10 +1136,10 @@ function FleetTracker() {
                                                             const isGood = invertBad ? norm.result === 'issue' : norm.result === 'pass';
                                                             const isBad = invertBad ? norm.result === 'pass' : norm.result === 'issue';
                                                             if (isGood) return (
-                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-green-500/10 text-green-700 dark:text-green-400">{label} v{norm.note ? ` (${norm.note})` : ''}</Badge>
+                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-green-500/10 text-green-700 dark:text-green-400">{label} OK{norm.note ? ` (${norm.note})` : ''}</Badge>
                                                             );
                                                             if (isBad) return (
-                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700 dark:text-orange-400">{label} ??{norm.note ? ` (${norm.note})` : ''}</Badge>
+                                                                <Badge key={key} variant="secondary" className="text-[9px] bg-orange-500/10 text-orange-700 dark:text-orange-400">{label} - Issue{norm.note ? ` (${norm.note})` : ''}</Badge>
                                                             );
                                                             return null;
                                                         });

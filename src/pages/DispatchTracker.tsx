@@ -130,7 +130,7 @@ function DispatchTracker() {
                     if (loadData?.driver_id) {
                         sendPushToDrivers(
                             [loadData.driver_id],
-                            '?? Arrival Confirmed',
+                            'Arrival Confirmed',
                             `Dispatch has been notified of your arrival at ${eventLabel} -- Ref #${refNumber}`,
                             { load_id: evt.load_id, type: 'arrival_confirmation', event: evt.new_status }
                         ).catch((err: unknown) => {
