@@ -39,9 +39,9 @@ BEGIN
         'status_history', (
             SELECT json_agg(json_build_object(
                 'status', lse.new_status,
-                'timestamp', lse.recorded_at,
-                'note', lse.note
-            ) ORDER BY lse.recorded_at ASC)
+                'timestamp', lse.created_at,
+                'note', lse.reason
+            ) ORDER BY lse.created_at ASC)
             FROM load_status_events lse
             WHERE lse.load_id = dl.id
         )
