@@ -120,6 +120,9 @@ function ProtectedRoutes() {
 
   if (!user) return <Navigate to="/auth" replace />;
 
+  // Force new users to set their password before accessing the app
+  if (user.user_metadata?.force_password_change) return <Navigate to="/auth" replace />;
+
   // Drivers belong in the mobile app -- show the wrong-app screen immediately,
   // before any dispatcher page or Supabase query fires.
   if (role === "driver") return <WrongApp />;
@@ -130,6 +133,8 @@ function ProtectedRoutes() {
 function AuthRoute() {
   const { user, loading } = useAuth();
   if (loading) return null;
+  // Keep user on auth page if they need to set a new password (first login)
+  if (user && user.user_metadata?.force_password_change) return <Auth />;
   if (user) return <Navigate to="/command-center" replace />;
   return <Auth />;
 }

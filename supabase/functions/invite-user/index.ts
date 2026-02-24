@@ -226,7 +226,7 @@ serve(async (req) => {
       email,
       password: userPassword,
       email_confirm: true,
-      user_metadata: { full_name },
+      user_metadata: { full_name, force_password_change: true },
     });
 
     if (createError) {

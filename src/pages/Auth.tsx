@@ -1,19 +1,28 @@
 import { useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, ArrowRight, KeyRound } from "lucide-react";
+import { Truck, ArrowRight, KeyRound, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 function Auth() {
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetMode, setResetMode] = useState(false);
   const { toast } = useToast();
+
+  // Force-password-change state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Check if the current user needs to change their password
+  const needsPasswordChange = user?.user_metadata?.force_password_change === true;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +48,30 @@ function Auth() {
     setLoading(false);
   };
 
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast({ title: "Too short", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Mismatch", description: "Passwords do not match.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+      data: { force_password_change: false },
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Password updated", description: "Your new password has been set. Welcome!" });
+      // The AuthRoute will now see force_password_change is false and redirect to /command-center
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 relative overflow-hidden">
       {/* Animated background accents */}
@@ -53,11 +86,54 @@ function Auth() {
             </div>
             <CardTitle className="text-2xl font-bold gradient-text">Anika Logistics</CardTitle>
             <CardDescription className="text-sm">
-              {resetMode ? "Reset your password" : "Operations & Growth Portal"}
+              {needsPasswordChange
+                ? "Set your new password to continue"
+                : resetMode
+                  ? "Reset your password"
+                  : "Operations & Growth Portal"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {resetMode ? (
+            {needsPasswordChange ? (
+              /* --- Force Password Change Form --- */
+              <form onSubmit={handleSetNewPassword} className="space-y-4">
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-sm text-amber-200">
+                  <ShieldCheck className="h-4 w-4 inline mr-2" />
+                  Welcome! Please set a new password to secure your account.
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-password" className="text-sm font-medium">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    required
+                    minLength={6}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    required
+                    minLength={6}
+                    className="h-11"
+                  />
+                </div>
+                <Button type="submit" className="w-full h-11 btn-gradient text-white font-medium pulse-glow" disabled={loading}>
+                  {loading ? "Updating..." : (
+                    <><ShieldCheck className="h-4 w-4 mr-2" /> Set Password & Continue</>
+                  )}
+                </Button>
+              </form>
+            ) : resetMode ? (
               <form onSubmit={handleReset} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">Email</Label>

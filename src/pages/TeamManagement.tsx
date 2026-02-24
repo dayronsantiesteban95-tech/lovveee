@@ -56,6 +56,8 @@ import {
   XCircle,
   RefreshCw,
   Truck,
+  Copy,
+  KeyRound,
 } from "lucide-react";
 // react-router-dom not needed here (guard removed)
 
@@ -81,6 +83,7 @@ interface TeamMember {
 interface InviteForm {
   full_name: string;
   email: string;
+  password: string;
   role: DisplayRole;
   hub: Hub;
   // Driver-specific
@@ -88,6 +91,13 @@ interface InviteForm {
   vehicle_make_model: string;
   license_plate: string;
   phone: string;
+}
+
+interface CreatedCredentials {
+  email: string;
+  password: string;
+  full_name: string;
+  role: string;
 }
 
 // --- Helpers -----------------------------------------------------------------
@@ -197,6 +207,7 @@ const PERMISSIONS = [
 const DEFAULT_FORM: InviteForm = {
   full_name: "",
   email: "",
+  password: "",
   role: "dispatcher",
   hub: "PHX",
   vehicle_type: "",
@@ -217,6 +228,9 @@ function TeamManagement() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [form, setForm] = useState<InviteForm>(DEFAULT_FORM);
+
+  // Credentials dialog state (shown after user creation)
+  const [createdCreds, setCreatedCreds] = useState<CreatedCredentials | null>(null);
 
   // Edit role state
   const [editTarget, setEditTarget] = useState<TeamMember | null>(null);
@@ -340,9 +354,9 @@ function TeamManagement() {
     try {
       const headers = await getAuthHeaders();
       const dbRole = toDbRole(form.role);
+      const userPassword = form.password || crypto.randomUUID().slice(0, 12);
 
       let inviteSucceeded = false;
-      let invitedUserId: string | null = null;
 
       try {
         const res = await fetch(
@@ -354,22 +368,21 @@ function TeamManagement() {
               email: form.email,
               full_name: form.full_name,
               role: dbRole,
-              password: (form as any).password || crypto.randomUUID(),
+              password: userPassword,
             }),
           }
         );
         const data = await res.json();
 
         if (data.error) {
-          toast({ title: "Invite Error", description: data.error, variant: "destructive" });
+          toast({ title: "Error creating user", description: data.error, variant: "destructive" });
         } else {
           inviteSucceeded = true;
-          invitedUserId = data.user_id ?? null;
         }
       } catch (edgeFnErr) {
-          toast({
-          title: "Invite service offline",
-          description: "The email invite could not be sent. User was not created.",
+        toast({
+          title: "Service temporarily unavailable",
+          description: "Could not reach the server. Please try again in a moment.",
           variant: "destructive",
         });
       }
@@ -397,10 +410,14 @@ function TeamManagement() {
           }
         }
 
-        toast({
-          title: "User created!",
-          description: `${form.full_name} has been added as ${form.role}.`,
+        // Show credentials dialog so admin can copy/share them
+        setCreatedCreds({
+          email: form.email,
+          password: userPassword,
+          full_name: form.full_name,
+          role: form.role,
         });
+
         setShowInvite(false);
         setForm(DEFAULT_FORM);
         fetchTeam();
@@ -875,11 +892,12 @@ function TeamManagement() {
               <Label htmlFor="invite-password">Password *</Label>
               <Input
                 id="invite-password"
-                type="password"
-                value={(form as any).password ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value } as any))}
-                placeholder="Set a password for this user"
+                type="text"
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                placeholder="Temporary password (user must change on first login)"
                 required
+                minLength={6}
               />
             </div>
 
@@ -986,7 +1004,7 @@ function TeamManagement() {
                       onChange={(e) =>
                         setForm((f) => ({ ...f, license_plate: e.target.value }))
                       }
-                      placeholder="AZ ? ABC123"
+                      placeholder="AZ - ABC123"
                     />
                   </div>
                 </div>
@@ -1021,17 +1039,68 @@ function TeamManagement() {
                 {inviteLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending...
+                    Creating...
                   </>
                 ) : (
                   <>
-                    <Mail className="h-4 w-4" />
-                    Add User
+                    <Plus className="h-4 w-4" />
+                    Create User
                   </>
                 )}
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* -- Credentials Dialog (shown after user creation) --------------------- */}
+      <Dialog open={!!createdCreds} onOpenChange={(open) => !open && setCreatedCreds(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              User Created Successfully
+            </DialogTitle>
+            <DialogDescription>
+              Share these credentials with <span className="font-medium text-foreground">{createdCreds?.full_name}</span>. They will be asked to set a new password on first login.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Email</Label>
+              <div className="flex items-center gap-2">
+                <Input readOnly value={createdCreds?.email ?? ""} className="font-mono text-sm" />
+                <Button size="icon" variant="outline" className="shrink-0" onClick={() => { navigator.clipboard.writeText(createdCreds?.email ?? ""); toast({ title: "Copied!" }); }}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Temporary Password</Label>
+              <div className="flex items-center gap-2">
+                <Input readOnly value={createdCreds?.password ?? ""} className="font-mono text-sm" />
+                <Button size="icon" variant="outline" className="shrink-0" onClick={() => { navigator.clipboard.writeText(createdCreds?.password ?? ""); toast({ title: "Copied!" }); }}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <Button variant="outline" className="flex-1 gap-2" onClick={() => {
+                const text = `Login credentials for ${createdCreds?.full_name}:\nEmail: ${createdCreds?.email}\nPassword: ${createdCreds?.password}\nLogin at: dispatch.anikalogistics.com\n\nYou will be asked to set a new password on your first login.`;
+                navigator.clipboard.writeText(text);
+                toast({ title: "All credentials copied!" });
+              }}>
+                <Copy className="h-3.5 w-3.5" /> Copy All
+              </Button>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setCreatedCreds(null)} className="btn-gradient">
+              Done
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
