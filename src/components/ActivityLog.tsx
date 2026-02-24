@@ -154,8 +154,8 @@ export default function ActivityLog({
         try {
             let query = supabase
                 .from("driver_shifts")
-                .select("id, driver_id, started_at, ended_at")
-                .order("started_at", { ascending: false })
+                .select("id, driver_id, start_time, end_time")
+                .order("start_time", { ascending: false })
                 .limit(20);
 
             if (driverId) query = query.eq("driver_id", driverId);
@@ -166,11 +166,11 @@ export default function ActivityLog({
                 for (const shift of shifts) {
                     activities.push({
                         id: `shift-${shift.id}`,
-                        action: shift.ended_at ? "Shift ended" : "Shift started",
+                        action: shift.end_time ? "Shift ended" : "Shift started",
                         entity_type: "driver",
                         entity_id: shift.driver_id,
-                        details: shift.ended_at ? "Driver went off duty" : "Driver went on duty",
-                        timestamp: shift.ended_at ?? shift.started_at,
+                        details: shift.end_time ? "Driver went off duty" : "Driver went on duty",
+                        timestamp: shift.end_time ?? shift.start_time,
                     });
                 }
             }

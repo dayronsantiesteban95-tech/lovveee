@@ -122,7 +122,7 @@ function DriverPortal() {
                     .from("driver_shifts")
                     .select("id")
                     .eq("driver_id", data.id)
-                    .is("shift_end", null)
+                    .is("end_time", null)
                     .single() as { data: { id: string } | null };
                 if (shift) {
                     setShiftId(shift.id);
@@ -170,8 +170,7 @@ function DriverPortal() {
                 .insert({
                     driver_id: driver.id,
                     hub: driver.hub,
-                    start_lat: gps.position?.latitude,
-                    start_lng: gps.position?.longitude,
+                    start_time: new Date().toISOString(),
                 })
                 .select("id")
                 .single();
@@ -188,10 +187,8 @@ function DriverPortal() {
             if (shiftId) {
                 try {
                     const { error: shiftErr } = await supabase.from("driver_shifts").update({
-                        shift_end: new Date().toISOString(),
+                        end_time: new Date().toISOString(),
                         status: "off_duty",
-                        end_lat: gps.position?.latitude,
-                        end_lng: gps.position?.longitude,
                     }).eq("id", shiftId);
                     if (shiftErr) throw shiftErr;
                 } catch (err: any) {

@@ -46,6 +46,10 @@ interface TrackingData {
     driver_speed?: number;
     driver_heading?: number;
     driver_last_seen?: string;
+    pod_photo_url?: string;
+    pod_signature_url?: string;
+    pod_signer_name?: string;
+    pod_captured_at?: string;
     status_history?: { status: string; timestamp: string; note?: string }[];
 }
 
