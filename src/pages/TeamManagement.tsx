@@ -330,6 +330,40 @@ function TeamManagement() {
 
   // -- Invite ----------------------------------------------------------------
 
+  /** Create a user via signUp (bypasses Edge Function entirely) */
+  const createUserDirect = async (
+    email: string,
+    password: string,
+    fullName: string,
+    dbRole: AppRole
+  ) => {
+    // Use supabase.auth.signUp which goes through the standard auth endpoint
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName, force_password_change: true },
+      },
+    });
+
+    if (signUpError) throw new Error(signUpError.message);
+    if (!signUpData.user) throw new Error("User creation failed");
+
+    const newUserId = signUpData.user.id;
+
+    // Assign role in both tables
+    await supabase.from("user_roles").upsert(
+      { user_id: newUserId, role: dbRole },
+      { onConflict: "user_id" }
+    );
+    await supabase.from("profiles").upsert(
+      { user_id: newUserId, full_name: fullName, role: dbRole },
+      { onConflict: "user_id" }
+    );
+
+    return newUserId;
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteLoading(true);
@@ -339,6 +373,7 @@ function TeamManagement() {
 
       let inviteSucceeded = false;
 
+      // Try Edge Function first, fall back to direct signUp
       try {
         const data = await callInviteFn({
           email: form.email,
@@ -348,17 +383,22 @@ function TeamManagement() {
         });
 
         if (data.error) {
-          toast({ title: "Error creating user", description: data.error as string, variant: "destructive" });
-        } else {
-          inviteSucceeded = true;
+          throw new Error(data.error as string);
         }
+        inviteSucceeded = true;
       } catch (edgeFnErr) {
-        console.error("invite-user edge fn error:", edgeFnErr);
-        toast({
-          title: "Could not create user",
-          description: edgeFnErr instanceof Error ? edgeFnErr.message : "Server unreachable. Check your connection and try again.",
-          variant: "destructive",
-        });
+        // Edge Function failed -- fall back to direct auth signUp
+        console.warn("Edge Function unavailable, using direct signUp:", edgeFnErr);
+        try {
+          await createUserDirect(form.email, userPassword, form.full_name, dbRole);
+          inviteSucceeded = true;
+        } catch (directErr) {
+          toast({
+            title: "Error creating user",
+            description: directErr instanceof Error ? directErr.message : "Failed to create user.",
+            variant: "destructive",
+          });
+        }
       }
 
       if (inviteSucceeded) {
