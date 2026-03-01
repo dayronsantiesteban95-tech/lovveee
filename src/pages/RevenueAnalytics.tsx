@@ -13,6 +13,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney } from "@/lib/formatters";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import AccessDenied from "@/components/AccessDenied";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -742,6 +744,7 @@ function LoadingSkeleton() {
 
 function RevenueAnalyticsContent() {
   const { toast } = useToast();
+  const { role, loading: roleLoading } = useUserRole();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [thisMonthLoads, setThisMonthLoads] = useState(0);
@@ -792,6 +795,10 @@ function RevenueAnalyticsContent() {
       cancelled = true;
     };
   }, [toast]);
+
+  // -- Role guard (after all hooks) --
+  if (roleLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (role !== "owner" && role !== "dispatcher") return <AccessDenied message="Admin or dispatcher access required to view Revenue Analytics." />;
 
   if (loading) return <LoadingSkeleton />;
   if (!data) {

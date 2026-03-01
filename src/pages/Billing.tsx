@@ -39,6 +39,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import AccessDenied from "@/components/AccessDenied";
 
 // -- Icons --------------------------------------------------
 import {
@@ -458,7 +459,7 @@ function RevenueAnalyticsTab({ invoices, loading }: { invoices: Invoice[]; loadi
 // -----------------------------------------------------------
 function Billing() {
   const { user } = useAuth();
-  const { isOwner } = useUserRole();
+  const { role, isOwner, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
 
   // -- QuickBooks integration -----------------------------
@@ -1010,6 +1011,10 @@ function Billing() {
   // -------------------------------------------------------
   // RENDER
   // -------------------------------------------------------
+  // -- Role guard: only owners/dispatchers may access Billing --
+  if (roleLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (role !== "owner" && role !== "dispatcher") return <AccessDenied message="Admin or dispatcher access required to view Billing." />;
+
   return (
     <div className="space-y-4">
       {/* Page header */}
