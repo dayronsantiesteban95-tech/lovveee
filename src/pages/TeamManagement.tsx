@@ -351,15 +351,20 @@ function TeamManagement() {
 
     const newUserId = signUpData.user.id;
 
-    // Assign role in both tables
+    // signUp may silently drop options.data -- patch metadata via RPC
+    await supabase.rpc("set_user_metadata" as never, {
+      p_user_id: newUserId,
+      p_metadata: { full_name: fullName, force_password_change: true },
+    } as never);
+
+    // Assign role in both tables (profiles trigger may auto-create, so use upsert/update)
     await supabase.from("user_roles").upsert(
       { user_id: newUserId, role: dbRole },
       { onConflict: "user_id" }
     );
-    await supabase.from("profiles").upsert(
-      { user_id: newUserId, full_name: fullName, role: dbRole },
-      { onConflict: "user_id" }
-    );
+    await supabase.from("profiles")
+      .update({ full_name: fullName, role: dbRole })
+      .eq("user_id", newUserId);
 
     return newUserId;
   };
