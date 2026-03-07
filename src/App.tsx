@@ -43,6 +43,7 @@ const FleetTracker = lazyWithRetry(() => import("@/pages/FleetTracker"));
 const PodManager = lazyWithRetry(() => import("@/pages/PodManager"));
 const CommandCenter = lazyWithRetry(() => import("@/pages/CommandCenter"));
 const TrackDelivery = lazyWithRetry(() => import("@/pages/TrackDelivery"));
+const ClientPortal = lazyWithRetry(() => import("@/pages/ClientPortal"));
 const TimeClock = lazyWithRetry(() => import("@/pages/TimeClock"));
 const DriverPerformance = lazyWithRetry(() => import("@/pages/DriverPerformance"));
 const Billing = lazyWithRetry(() => import("@/pages/Billing"));
@@ -158,6 +159,7 @@ const App = () => (
               <Route path="/auth/quickbooks/callback" element={<QuickBooksCallback />} />
               <Route path="/track" element={<TrackDelivery />} />
               <Route path="/track/:token" element={<TrackDelivery />} />
+              <Route path="/portal/:token" element={<ClientPortal />} />
               <Route path="/legal/privacy" element={<PrivacyPolicy />} />
               <Route path="/legal/terms" element={<TermsOfService />} />
               <Route element={<ProtectedRoutes />}>

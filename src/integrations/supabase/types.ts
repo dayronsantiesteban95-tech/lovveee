@@ -74,6 +74,36 @@ export type Database = {
           },
         ]
       }
+      client_portal_tokens: {
+        Row: {
+          id: string
+          client_name: string
+          portal_token: string
+          created_by: string | null
+          created_at: string
+          last_accessed: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          client_name: string
+          portal_token?: string
+          created_by?: string | null
+          created_at?: string
+          last_accessed?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          client_name?: string
+          portal_token?: string
+          created_by?: string | null
+          created_at?: string
+          last_accessed?: string | null
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       client_billing_profiles: {
         Row: {
           billing_email: string | null
@@ -2824,6 +2854,7 @@ export type Database = {
           last_contact: string
         }[]
       }
+      get_client_portal_loads: { Args: { p_token: string }; Returns: Json }
       get_load_by_tracking_token: { Args: { p_token: string }; Returns: Json }
       get_tracking_info: { Args: { p_token: string }; Returns: Json }
       get_uninvoiced_loads: {

@@ -611,6 +611,45 @@ export default function LoadDetailPanel({
                         >
                             <Link className="h-3 w-3" /> Share Tracking Link
                         </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-[10px] gap-1 flex-1"
+                            onClick={async () => {
+                                if (!load.client_name) {
+                                    toast({ title: "No client name", description: "Add a client name to this load first.", variant: "destructive" });
+                                    return;
+                                }
+                                // Check for existing portal token, create if missing
+                                const { data: existing } = await supabase
+                                    .from("client_portal_tokens")
+                                    .select("portal_token")
+                                    .ilike("client_name", load.client_name)
+                                    .eq("is_active", true)
+                                    .maybeSingle();
+                                let portalToken = existing?.portal_token ?? null;
+                                if (!portalToken) {
+                                    const { data: created } = await supabase
+                                        .from("client_portal_tokens")
+                                        .insert({ client_name: load.client_name })
+                                        .select("portal_token")
+                                        .single();
+                                    portalToken = created?.portal_token ?? null;
+                                }
+                                if (!portalToken) {
+                                    toast({ title: "Error", description: "Could not generate portal link.", variant: "destructive" });
+                                    return;
+                                }
+                                const portalUrl = `${window.location.origin}/portal/${portalToken}`;
+                                navigator.clipboard.writeText(portalUrl);
+                                toast({
+                                    title: "Client portal link copied!",
+                                    description: `All loads for ${load.client_name} at this link.`,
+                                });
+                            }}
+                        >
+                            <Building2 className="h-3 w-3" /> Client Portal
+                        </Button>
                     </div>
 
                     {/* Tab switcher */}
