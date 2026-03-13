@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
+import { useRealtimeDriverLocations } from '@/hooks';
 import { scoreDrivers } from "@/utils/scoreDrivers";
 import { todayISO } from "@/lib/formatters";
 import type { Driver, Load } from "@/pages/dispatch/types";

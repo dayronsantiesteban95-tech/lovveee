@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useUserRole } from '@/hooks';
+import { useToast } from '@/hooks';
 import { toast } from "sonner";
 import { captureScopedError } from "@/lib/sentry";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

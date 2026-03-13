@@ -15,9 +15,9 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useMessages } from "@/hooks/useMessages";
+import { useToast } from '@/hooks';
+import { useAuth } from '@/hooks';
+import { useMessages } from '@/hooks';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

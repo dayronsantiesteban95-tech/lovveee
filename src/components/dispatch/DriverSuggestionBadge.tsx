@@ -19,9 +19,9 @@ import {
   RefreshCw,
   AlertTriangle,
 } from "lucide-react";
-import { useDriverSuggestion } from "@/hooks/useDriverSuggestion";
+import { useDriverSuggestion } from '@/hooks';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks';
 
 // --- Types --------------------------------------------------------------------
 

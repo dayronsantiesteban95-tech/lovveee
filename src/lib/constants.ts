@@ -90,6 +90,34 @@ export const SOP_CATEGORIES = [
   { value: "onboarding", label: "Onboarding" },
 ] as const;
 
+// -----------------------------------------------------------
+// Timing & Refresh Intervals (milliseconds)
+// -----------------------------------------------------------
+
+/** ETA refresh interval - fetch new traffic data every 60 seconds */
+export const ETA_REFRESH_INTERVAL_MS = 60 * 1000;
+
+/** Real-time driver location active threshold - 10 minutes */
+export const DRIVER_ACTIVE_THRESHOLD_MS = 10 * 60 * 1000;
+
+/** Minimum time between driver position updates to prevent thrashing */
+export const MIN_DRIVER_UPDATE_INTERVAL_MS = 15_000; // 15 seconds
+
+/** Google Maps script loading poll interval */
+export const MAPS_POLL_INTERVAL_MS = 200;
+
+/** Google Maps script loading timeout */
+export const MAPS_POLL_TIMEOUT_MS = 15_000;
+
+/** ETA buffer time for "on-time" status (green) */
+export const ETA_ON_TIME_BUFFER_MS = 15 * 60 * 1000; // 15 minutes
+
+/** BLAST auto-assignment timer */
+export const BLAST_TIMER_MINUTES = 15;
+
+/** BLAST timer in milliseconds */
+export const BLAST_TIMER_MS = BLAST_TIMER_MINUTES * 60 * 1000;
+
 // Cities within ~300 miles of each hub for radius validation
 export const ACTION_ZONE_CITIES: Record<string, string[]> = {
   atlanta: [

@@ -19,7 +19,7 @@ import {
   FilePlus2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useUserRole } from '@/hooks';
 import {
   Sidebar,
   SidebarContent,

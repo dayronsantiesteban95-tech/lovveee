@@ -15,14 +15,13 @@ declare const google: any;
 
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Truck } from "lucide-react";
-import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
+import { useRealtimeDriverLocations } from '@/hooks';
+import { MAPS_POLL_INTERVAL_MS, MAPS_POLL_TIMEOUT_MS } from "@/lib/constants";
 
 // -- Constants -----------------------------------------------------------------
 
 const PHOENIX_CENTER = { lat: 33.4484, lng: -112.074 };
 const DEFAULT_ZOOM = 11;
-const POLL_INTERVAL_MS = 200;
-const POLL_TIMEOUT_MS = 15_000;
 
 // -- Status color map ----------------------------------------------------------
 
@@ -121,7 +120,7 @@ function waitForMaps(): Promise<boolean> {
 
     let elapsed = 0;
     const interval = setInterval(() => {
-      elapsed += POLL_INTERVAL_MS;
+      elapsed += MAPS_POLL_INTERVAL_MS;
       try {
         if ((window as any).google?.maps?.Map) {
           clearInterval(interval);
@@ -131,11 +130,11 @@ function waitForMaps(): Promise<boolean> {
       } catch {
         // ignore
       }
-      if (elapsed >= POLL_TIMEOUT_MS) {
+      if (elapsed >= MAPS_POLL_TIMEOUT_MS) {
         clearInterval(interval);
         resolve(false); // timed out -- caller shows error state
       }
-    }, POLL_INTERVAL_MS);
+    }, MAPS_POLL_INTERVAL_MS);
   });
 }
 

@@ -46,9 +46,9 @@ import {
 } from "lucide-react";
 import { X } from "lucide-react";
 import { generateInvoice } from "@/lib/generateInvoice";
-import { useToast } from "@/hooks/use-toast";
-import { useUnreadMessageCounts } from "@/hooks/useMessages";
-import { useAuth } from "@/hooks/useAuth";
+import { useToast } from '@/hooks';
+import { useUnreadMessageCounts } from '@/hooks';
+import { useAuth } from '@/hooks';
 import ETABadge from "@/components/ETABadge";
 import LoadSearchFilters, {
   EMPTY_LOAD_FILTERS,

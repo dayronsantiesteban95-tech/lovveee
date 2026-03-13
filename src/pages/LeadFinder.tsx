@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useToast } from '@/hooks';
 import { createSequenceForLead, assignHub } from "@/lib/sequenceUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

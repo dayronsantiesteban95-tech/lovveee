@@ -1,11 +1,11 @@
 // Deploy cache bust: 2026-02-20 rebuild -- ErrorBoundary + bulletproof map init
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { useAlerts } from "@/hooks/useAlerts";
-import type { RouteAlert } from "@/hooks/useAlerts";
-import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
+import { useAuth } from '@/hooks';
+import { useToast } from '@/hooks';
+import { useAlerts } from '@/hooks';
+import type { RouteAlert } from '@/hooks';
+import { useRealtimeDriverLocations } from '@/hooks';
 import {
   Activity,
   AlertTriangle,

@@ -9,12 +9,12 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { ETA_REFRESH_INTERVAL_MS, ETA_ON_TIME_BUFFER_MS } from "@/lib/constants";
 
 const ROUTES_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY as string;
 const ROUTES_API_URL =
   "https://routes.googleapis.com/directions/v2:computeRoutes";
 const FIELD_MASK = "routes.duration,routes.distanceMeters";
-const REFRESH_INTERVAL_MS = 60 * 1000; // 60 seconds
 
 // -- In-memory cache ----------------------------------------------------------
 
@@ -31,7 +31,7 @@ function cacheKey(origin: string, destination: string): string {
 }
 
 function isCacheFresh(entry: CacheEntry): boolean {
-  return Date.now() - entry.fetchedAt < REFRESH_INTERVAL_MS;
+  return Date.now() - entry.fetchedAt < ETA_REFRESH_INTERVAL_MS;
 }
 
 // -- API call -----------------------------------------------------------------
@@ -169,7 +169,7 @@ export function useETA(
     }
 
     doFetch();
-    intervalRef.current = setInterval(doFetch, REFRESH_INTERVAL_MS);
+    intervalRef.current = setInterval(doFetch, ETA_REFRESH_INTERVAL_MS);
 
     return () => {
       mountedRef.current = false;
@@ -201,7 +201,7 @@ export function etaStatusColor(
   if (!eta) return "gray";
   if (!slaDeadline) return "green"; // no deadline = assume on time
   const slaMsLeft = new Date(slaDeadline).getTime() - eta.getTime();
-  if (slaMsLeft >= 15 * 60 * 1000) return "green"; // >15 min buffer
+  if (slaMsLeft >= ETA_ON_TIME_BUFFER_MS) return "green"; // >15 min buffer
   if (slaMsLeft >= 0) return "yellow"; // tight but on time
   return "red"; // past deadline
 }

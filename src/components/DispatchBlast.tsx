@@ -9,7 +9,7 @@
  * Rule: Dispatcher assigns all loads. Blast = availability check.
  * -----------------------------------------------------------
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ import {
   type DispatchBlast as BlastType,
   type BlastWithResponses,
   type BlastPriority,
-} from "@/hooks/useDispatchBlast";
+} from '@/hooks';
 
 // --- Types ---------------------------------------------
 
@@ -118,7 +118,7 @@ const PRIORITY_CONFIG: Record<
 
 // --- Component -----------------------------------------
 
-export default function DispatchBlastPanel({
+const DispatchBlastPanel = memo(function DispatchBlastPanel({
   loads,
   drivers,
   selectedLoadId,
@@ -582,7 +582,9 @@ export default function DispatchBlastPanel({
       </div>
     </div>
   );
-}
+});
+
+export default DispatchBlastPanel;
 
 // --- Sub-components ------------------------------------
 

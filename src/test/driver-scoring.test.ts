@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { scoreDrivers, distanceMiles } from "@/utils/scoreDrivers";
 import type { Driver, Load } from "@/pages/dispatch/types";
-import type { DriverLocation } from "@/hooks/useRealtimeDriverLocations";
+import type { DriverLocation } from '@/hooks';
 
 // ============================================================
 // Test Factories

@@ -7,8 +7,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from '@/hooks';
+import { useUserRole } from '@/hooks';
 import {
   Clock,
   LogIn,

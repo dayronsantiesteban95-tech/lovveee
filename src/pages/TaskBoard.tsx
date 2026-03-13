@@ -46,9 +46,9 @@ import {
   Building2,
   ClipboardList,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useUserRole } from '@/hooks';
+import { useToast } from '@/hooks';
 import { toast } from "sonner";
 import { captureScopedError } from "@/lib/sentry";
 

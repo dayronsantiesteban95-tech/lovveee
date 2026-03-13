@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Star, Search, MapPin, RefreshCw, X } from "lucide-react";
-import { useDriverAvailability } from "@/hooks/useDriverAvailability";
+import { useDriverAvailability } from '@/hooks';
 import { geocodeAddress } from "@/utils/geocodeAddress";
 import type { DriverScore } from "@/utils/scoreDrivers";
 

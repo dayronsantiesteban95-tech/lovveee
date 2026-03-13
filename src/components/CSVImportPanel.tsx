@@ -14,9 +14,9 @@ import { useState, useCallback, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks';
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from '@/hooks';
 import { captureScopedError } from "@/lib/sentry";
 import { geocodeAddress } from "@/utils/geocodeAddress";
 import {

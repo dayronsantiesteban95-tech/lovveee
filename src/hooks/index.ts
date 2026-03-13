@@ -1,36 +1,39 @@
 /**
  * Barrel export for all custom hooks
  * Enables clean imports: import { useAuth, useAlerts } from '@/hooks'
+ * Organized by category for better maintainability
  */
 
 // Authentication & Authorization
-export { useAuth } from "./useAuth";
-export { useUserRole } from "./useUserRole";
+export { useAuth } from "./auth/useAuth";
+export { useUserRole } from "./auth/useUserRole";
 
-// Real-time Data Subscriptions
-export { useDispatchData } from "./useDispatchData";
-export { useDriverGPS } from "./useDriverGPS";
-export { useRealtimeDriverLocations } from "./useRealtimeDriverLocations";
-export { useRealtimeDriverMap } from "./useRealtimeDriverMap";
-export { useMessages } from "./useMessages";
+// Data Management
+export { useDispatchData } from "./data/useDispatchData";
+export { useMessages, useUnreadMessageCounts } from "./data/useMessages";
+
+// Real-time Subscriptions
+export { useRealtimeDriverLocations } from "./realtime/useRealtimeDriverLocations";
+export { useRealtimeDriverMap } from "./realtime/useRealtimeDriverMap";
+export { useDriverGPS } from "./realtime/useDriverGPS";
 
 // Dispatch & BLAST System
-export { useDispatchBlast } from "./useDispatchBlast";
-export { useDriverAvailability } from "./useDriverAvailability";
-export { useDriverSuggestion } from "./useDriverSuggestion";
-export { useLoadStatusActions } from "./useLoadStatusActions";
+export { useDispatchBlast } from "./dispatch/useDispatchBlast";
+export { useDriverAvailability } from "./dispatch/useDriverAvailability";
+export { useDriverSuggestion } from "./dispatch/useDriverSuggestion";
+export { useLoadStatusActions } from "./dispatch/useLoadStatusActions";
+export { useAlerts } from "./dispatch/useAlerts";
 
-// Routing & Navigation
+// Routing & Navigation (not moved)
 export { useETA } from "./useETA";
 export { useRouteOptimizer } from "./useRouteOptimizer";
 
-// Notifications & Alerts
-export { useAlerts } from "./useAlerts";
+// Notifications (not moved)
 export { useNotifications } from "./useNotifications";
-export { useToast } from "./use-toast";
 
-// Integrations
+// Integrations (not moved)
 export { useQuickBooks } from "./useQuickBooks";
 
 // UI Utilities
-export { useMobile } from "./use-mobile";
+export { useToast } from "./ui/use-toast";
+export { useIsMobile } from "./ui/use-mobile";

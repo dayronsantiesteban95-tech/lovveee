@@ -18,10 +18,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useToast } from '@/hooks';
 import { toast } from "sonner";
-import { useDriverGPS } from "@/hooks/useDriverGPS";
+import { useDriverGPS } from '@/hooks';
 import { captureLoadError, captureFleetError } from "@/lib/sentry";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

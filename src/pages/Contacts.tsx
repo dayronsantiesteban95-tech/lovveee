@@ -44,8 +44,8 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Pencil, Trash2, Mail, Phone, X } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useToast } from '@/hooks';
 
 // --- Types -----------------------------------------------
 type Contact = {

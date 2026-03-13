@@ -61,8 +61,8 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useToast } from '@/hooks';
 
 // --- Types -----------------------------------------------
 type Company = {

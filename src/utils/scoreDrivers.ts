@@ -1,5 +1,5 @@
 import type { Driver, Load } from "@/pages/dispatch/types";
-import type { DriverLocation } from "@/hooks/useRealtimeDriverLocations";
+import type { DriverLocation } from '@/hooks';
 
 // --- Haversine distance in miles ---------------------------------------------
 

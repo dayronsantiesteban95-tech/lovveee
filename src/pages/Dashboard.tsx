@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks';
 import ETABadge from "@/components/ETABadge";
 import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney, todayISO, daysAgoISO } from "@/lib/formatters";

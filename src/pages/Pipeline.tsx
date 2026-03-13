@@ -61,8 +61,8 @@ import {
   Truck,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks';
+import { useToast } from '@/hooks';
 import { toast } from "sonner";
 import LeadDetailPanel from "@/components/LeadDetailPanel";
 import { captureScopedError } from "@/lib/sentry";

@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Copy } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks';
 import type { Load, Driver } from "./types";
 
 // Wait badge helpers (duplicated from parent to avoid coupling)
