@@ -12,12 +12,12 @@ Complete setup guide for all external services.
 **Purpose**: Primary database, authentication, realtime, storage
 
 **Setup**:
-1. Project: https://vdsknsypobnutnqcafre.supabase.co
+1. Visit your Supabase project dashboard
 2. Get credentials: Settings → API
 3. Add to `.env.local`:
    ```bash
-   VITE_SUPABASE_URL=https://vdsknsypobnutnqcafre.supabase.co
-   VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
+   VITE_SUPABASE_URL=https://your-project-id.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your_anon_key_here
    ```
 
 **Features Used**:

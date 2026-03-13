@@ -17,6 +17,14 @@ dist-ssr
 .env.local
 .env.production
 .env.*.local
+.env.vercel.local
+
+# Sensitive internal files
+seed-data.mjs
+MORNING_BRIEFING.md
+
+# Supabase temporary files
+supabase/.temp/
 
 # Editor directories and files
 .vscode/*

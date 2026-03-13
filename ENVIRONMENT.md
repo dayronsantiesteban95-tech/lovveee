@@ -44,7 +44,7 @@ Complete guide to all environment variables used across Anika Control OS platfor
 #### `VITE_SUPABASE_URL`
 - **Required**: ✅ Yes
 - **Purpose**: Supabase project URL
-- **Example**: `https://vdsknsypobnutnqcafre.supabase.co`
+- **Example**: `https://your-project-id.supabase.co`
 - **Where to get**: Supabase Project Settings → API → Project URL
 - **Used in**: All database operations, authentication, realtime subscriptions
 - **Critical**: App will not load without this
@@ -248,7 +248,7 @@ supabase secrets set ONESIGNAL_REST_API_KEY=your_key
    ```
 
 2. **Get Supabase credentials**
-   - Visit: https://vdsknsypobnutnqcafre.supabase.co
+   - Visit your Supabase project dashboard
    - Go to Project Settings → API
    - Copy **Project URL** → `VITE_SUPABASE_URL`
    - Copy **anon public** key → `VITE_SUPABASE_PUBLISHABLE_KEY`
@@ -276,8 +276,8 @@ supabase secrets set ONESIGNAL_REST_API_KEY=your_key
 
 ```bash
 # Supabase
-VITE_SUPABASE_URL=https://vdsknsypobnutnqcafre.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your_anon_key_here
 
 # Google Maps
 VITE_GOOGLE_MAPS_KEY=AIzaSyC_your_development_key_here
@@ -307,9 +307,9 @@ Set via Vercel Dashboard → Settings → Environment Variables
 
 **Production values**:
 ```bash
-VITE_SUPABASE_URL=https://vdsknsypobnutnqcafre.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=eyJ... (production anon key)
-VITE_GOOGLE_MAPS_KEY=AIzaSyC... (production key with domain restrictions)
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your_anon_key_here
+VITE_GOOGLE_MAPS_KEY=AIzaSyC_your_production_key_here
 VITE_SENTRY_DSN=https://... (production Sentry project)
 SENTRY_AUTH_TOKEN=sntrys_... (for source map uploads)
 VITE_QB_CLIENT_ID=AB... (production QB app)

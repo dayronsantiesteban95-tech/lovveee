@@ -83,10 +83,10 @@ npm run dev
 ### First Login
 
 **Admin Credentials**:
-- Email: `info@anikalogistics.com`
-- Password: `admin`
+- Email: Contact project owner for credentials
+- Password: Contact project owner for credentials
 
-**Supabase Console**: https://vdsknsypobnutnqcafre.supabase.co
+**Supabase Console**: Contact project owner for access
 
 ---
 
@@ -476,8 +476,8 @@ Last health check: **2026-03-08 12:00 AM** - All systems operational
 
 ### Key Contacts
 
-- **Project Owner**: Dayron Santi
-- **Supabase Project**: https://vdsknsypobnutnqcafre.supabase.co
+- **Project Owner**: Contact repository owner for access
+- **Supabase Project**: Contact project owner for credentials
 - **Vercel Project**: lovveee.vercel.app
 - **Sentry Organization**: anika-qi
 

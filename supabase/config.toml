@@ -1,4 +1,4 @@
-project_id = "vdsknsypobnutnqcafre"
+project_id = "your-project-id-here"
 
 [functions.send-outreach-email]
 verify_jwt = false
