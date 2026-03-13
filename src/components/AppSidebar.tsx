@@ -63,7 +63,9 @@ const fleetNav = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const { isOwner } = useUserRole();
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains("dark"),
+  );
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -74,7 +76,7 @@ export function AppSidebar() {
     navigate("/auth");
   };
 
-  const NavItem = ({ item }: { item: typeof mainNav[0] }) => (
+  const NavItem = ({ item }: { item: (typeof mainNav)[0] }) => (
     <SidebarMenuItem>
       <SidebarMenuButton asChild>
         <NavLink
@@ -97,7 +99,11 @@ export function AppSidebar() {
       <SidebarContent className="pt-3 flex flex-col h-full overflow-hidden">
         {/* Logo */}
         <div className="px-5 pb-3 flex-shrink-0">
-          <img src={logoBlanco} alt="Anika Logistics" className="h-7 w-auto object-contain" />
+          <img
+            src={logoBlanco}
+            alt="Anika Logistics"
+            className="h-7 w-auto object-contain"
+          />
         </div>
         <Separator className="bg-sidebar-border/50 mb-1 flex-shrink-0" />
 
@@ -106,28 +112,40 @@ export function AppSidebar() {
           <div className="space-y-0">
             {/* Operations */}
             <div className="px-3 pt-1 pb-0.5">
-              <span className="text-sidebar-foreground/40 uppercase text-[9px] tracking-[0.18em] font-semibold">Operations</span>
+              <span className="text-sidebar-foreground/40 uppercase text-[9px] tracking-[0.18em] font-semibold">
+                Operations
+              </span>
             </div>
             <SidebarMenu className="space-y-0 px-1">
-              {mainNav.map((item) => <NavItem key={item.title} item={item} />)}
+              {mainNav.map((item) => (
+                <NavItem key={item.title} item={item} />
+              ))}
             </SidebarMenu>
 
             <Separator className="bg-sidebar-border/30 my-1 mx-3" />
 
             {/* Fleet */}
             <div className="px-3 pt-0.5 pb-0.5">
-              <span className="text-sidebar-foreground/40 uppercase text-[9px] tracking-[0.18em] font-semibold">Fleet</span>
+              <span className="text-sidebar-foreground/40 uppercase text-[9px] tracking-[0.18em] font-semibold">
+                Fleet
+              </span>
             </div>
             <SidebarMenu className="space-y-0 px-1">
-              {fleetNav.map((item) => <NavItem key={item.title} item={item} />)}
+              {fleetNav.map((item) => (
+                <NavItem key={item.title} item={item} />
+              ))}
             </SidebarMenu>
 
             <Separator className="bg-sidebar-border/30 my-1 mx-3" />
 
             {/* Resources + Admin */}
             <SidebarMenu className="space-y-0 px-1">
-              {resourcesNav.map((item) => <NavItem key={item.title} item={item} />)}
-              <NavItem item={{ title: "Team Management", url: "/team", icon: Shield }} />
+              {resourcesNav.map((item) => (
+                <NavItem key={item.title} item={item} />
+              ))}
+              <NavItem
+                item={{ title: "Team Management", url: "/team", icon: Shield }}
+              />
             </SidebarMenu>
           </div>
 
@@ -140,8 +158,14 @@ export function AppSidebar() {
               className="w-full justify-start gap-3 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-full transition-all duration-300 h-8"
               onClick={() => setDark(!dark)}
             >
-              {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-              <span className="text-xs">{dark ? "Light Mode" : "Dark Mode"}</span>
+              {dark ? (
+                <Sun className="h-3.5 w-3.5" />
+              ) : (
+                <Moon className="h-3.5 w-3.5" />
+              )}
+              <span className="text-xs">
+                {dark ? "Light Mode" : "Dark Mode"}
+              </span>
             </Button>
             <Button
               variant="ghost"

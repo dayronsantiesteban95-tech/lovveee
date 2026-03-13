@@ -24,13 +24,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-    X, MapPin, Clock, Package, DollarSign, Truck, FileText, Route,
-    AlertTriangle, CheckCircle2, Timer, Copy, ExternalLink, Navigation,
-    Building2, User, Hash, Ruler, Weight, Gauge, History, ReceiptText,
-    MessageSquare, Send, Link, Upload, Download, FolderOpen,
+  X,
+  MapPin,
+  Clock,
+  Package,
+  DollarSign,
+  Truck,
+  FileText,
+  Route,
+  AlertTriangle,
+  CheckCircle2,
+  Timer,
+  Copy,
+  ExternalLink,
+  Navigation,
+  Building2,
+  User,
+  Hash,
+  Ruler,
+  Weight,
+  Gauge,
+  History,
+  ReceiptText,
+  MessageSquare,
+  Send,
+  Link,
+  Upload,
+  Download,
+  FolderOpen,
 } from "lucide-react";
 import { generateInvoice } from "@/lib/generateInvoice";
 import StatusTimeline from "@/components/StatusTimeline";
@@ -40,297 +68,337 @@ import DriverSuggestionBadge from "@/components/dispatch/DriverSuggestionBadge";
 
 // --- Types ------------------------------------------
 export interface LoadDetail {
-    id: string;
-    load_date: string;
-    reference_number: string | null;
-    dispatcher_id: string | null;
-    driver_id: string | null;
-    vehicle_id: string | null;
-    shift: string;
-    hub: string;
-    client_name: string | null;
-    pickup_address: string | null;
-    delivery_address: string | null;
-    miles: number;
-    deadhead_miles: number;
-    start_time: string | null;
-    end_time: string | null;
-    wait_time_minutes: number;
-    revenue: number;
-    driver_pay: number;
-    fuel_cost: number;
-    status: string;
-    detention_eligible: boolean;
-    detention_billed: number;
-    service_type: string;
-    packages: number;
-    weight_lbs: number | null;
-    comments: string | null;
-    pod_confirmed: boolean;
-    created_at: string;
-    updated_at: string;
-    // OnTime-parity fields
-    shipper_name?: string | null;
-    requested_by?: string | null;
-    pickup_company?: string | null;
-    delivery_company?: string | null;
-    collection_time?: string | null;
-    delivery_time?: string | null;
-    description?: string | null;
-    dimensions_text?: string | null;
-    vehicle_required?: string | null;
-    po_number?: string | null;
-    inbound_tracking?: string | null;
-    outbound_tracking?: string | null;
-    estimated_pickup?: string | null;
-    estimated_delivery?: string | null;
-    actual_pickup?: string | null;
-    actual_delivery?: string | null;
-    current_eta?: string | null;
-    eta_status?: string | null;
-    sla_deadline?: string | null;
-    route_distance_meters?: number | null;
-    route_duration_seconds?: number | null;
-    tracking_token?: string | null;
-    pickup_lat?: number | null;
-    pickup_lng?: number | null;
-    cutoff_time?: string | null;
-    bol_url?: string | null;
+  id: string;
+  load_date: string;
+  reference_number: string | null;
+  dispatcher_id: string | null;
+  driver_id: string | null;
+  vehicle_id: string | null;
+  shift: string;
+  hub: string;
+  client_name: string | null;
+  pickup_address: string | null;
+  delivery_address: string | null;
+  miles: number;
+  deadhead_miles: number;
+  start_time: string | null;
+  end_time: string | null;
+  wait_time_minutes: number;
+  revenue: number;
+  driver_pay: number;
+  fuel_cost: number;
+  status: string;
+  detention_eligible: boolean;
+  detention_billed: number;
+  service_type: string;
+  packages: number;
+  weight_lbs: number | null;
+  comments: string | null;
+  pod_confirmed: boolean;
+  created_at: string;
+  updated_at: string;
+  // OnTime-parity fields
+  shipper_name?: string | null;
+  requested_by?: string | null;
+  pickup_company?: string | null;
+  delivery_company?: string | null;
+  collection_time?: string | null;
+  delivery_time?: string | null;
+  description?: string | null;
+  dimensions_text?: string | null;
+  vehicle_required?: string | null;
+  po_number?: string | null;
+  inbound_tracking?: string | null;
+  outbound_tracking?: string | null;
+  estimated_pickup?: string | null;
+  estimated_delivery?: string | null;
+  actual_pickup?: string | null;
+  actual_delivery?: string | null;
+  current_eta?: string | null;
+  eta_status?: string | null;
+  sla_deadline?: string | null;
+  route_distance_meters?: number | null;
+  route_duration_seconds?: number | null;
+  tracking_token?: string | null;
+  pickup_lat?: number | null;
+  pickup_lng?: number | null;
+  cutoff_time?: string | null;
+  bol_url?: string | null;
 }
 
 interface LoadDetailPanelProps {
-    load: LoadDetail;
-    driverName: string;
-    vehicleName: string;
-    dispatcherName: string;
-    onClose: () => void;
-    onStatusChange: (id: string, status: string) => void;
-    onEdit: (load: LoadDetail) => void;
-    onRefresh: () => void;
+  load: LoadDetail;
+  driverName: string;
+  vehicleName: string;
+  dispatcherName: string;
+  onClose: () => void;
+  onStatusChange: (id: string, status: string) => void;
+  onEdit: (load: LoadDetail) => void;
+  onRefresh: () => void;
 }
 
 // --- Helpers -----------------------------------------
 
 const STATUSES = [
-    { value: "pending", label: "Pending", color: "bg-gray-500" },
-    { value: "assigned", label: "Assigned", color: "bg-blue-500" },
-    { value: "blasted", label: "Blasted", color: "bg-violet-500" },
-    { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
-    { value: "delivered", label: "Delivered", color: "bg-green-500" },
-    { value: "completed", label: "Completed", color: "bg-green-600" },
-    { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
-    { value: "failed", label: "Failed", color: "bg-red-500" },
+  { value: "pending", label: "Pending", color: "bg-gray-500" },
+  { value: "assigned", label: "Assigned", color: "bg-blue-500" },
+  { value: "blasted", label: "Blasted", color: "bg-violet-500" },
+  { value: "in_progress", label: "In Transit", color: "bg-yellow-500" },
+  { value: "delivered", label: "Delivered", color: "bg-green-500" },
+  { value: "completed", label: "Completed", color: "bg-green-600" },
+  { value: "cancelled", label: "Cancelled", color: "bg-gray-500" },
+  { value: "failed", label: "Failed", color: "bg-red-500" },
 ];
 
 function EtaBadge({ status }: { status: string | null | undefined }) {
-    if (!status || status === "unknown") return null;
-    const configs: Record<string, { label: string; className: string }> = {
-        on_time: { label: "On Time", className: "status-on-time" },
-        at_risk: { label: "At Risk", className: "status-at-risk" },
-        late: { label: "Late", className: "status-late" },
-    };
-    const c = configs[status] ?? { label: status, className: "status-idle" };
-    return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full ${c.className}`}>
-            {status === "late" && <AlertTriangle className="h-3 w-3" />}
-            {status === "on_time" && <CheckCircle2 className="h-3 w-3" />}
-            {c.label}
-        </span>
-    );
+  if (!status || status === "unknown") return null;
+  const configs: Record<string, { label: string; className: string }> = {
+    on_time: { label: "On Time", className: "status-on-time" },
+    at_risk: { label: "At Risk", className: "status-at-risk" },
+    late: { label: "Late", className: "status-late" },
+  };
+  const c = configs[status] ?? { label: status, className: "status-idle" };
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full ${c.className}`}
+    >
+      {status === "late" && <AlertTriangle className="h-3 w-3" />}
+      {status === "on_time" && <CheckCircle2 className="h-3 w-3" />}
+      {c.label}
+    </span>
+  );
 }
 
 function fmtTimestamp(ts: string | null | undefined): string {
-    if (!ts) return "--";
-    try {
-        return new Date(ts).toLocaleString("en-US", {
-            month: "short", day: "numeric",
-            hour: "numeric", minute: "2-digit",
-        });
-    } catch { return "--"; }
+  if (!ts) return "--";
+  try {
+    return new Date(ts).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "--";
+  }
 }
 
 function fmtDuration(seconds: number | null | undefined): string {
-    if (!seconds) return "--";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.round((seconds % 3600) / 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  if (!seconds) return "--";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.round((seconds % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 function fmtDistance(meters: number | null | undefined): string {
-    if (!meters) return "--";
-    return `${(meters / 1609.34).toFixed(1)} mi`;
+  if (!meters) return "--";
+  return `${(meters / 1609.34).toFixed(1)} mi`;
 }
 
 // --- Section helper ----------------------------------
 
-function Section({ title, icon: Icon, children, accentColor = "bg-primary" }: {
-    title: string;
-    icon: React.ElementType;
-    children: React.ReactNode;
-    accentColor?: string;
+function Section({
+  title,
+  icon: Icon,
+  children,
+  accentColor = "bg-primary",
+}: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  accentColor?: string;
 }) {
-    return (
-        <div className="space-y-2">
-            <div className="flex items-center gap-2">
-                <span className={`h-1.5 w-1.5 rounded-full ${accentColor}`} />
-                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</span>
-            </div>
-            <div className="pl-4 border-l border-border/30 space-y-1.5">
-                {children}
-            </div>
-        </div>
-    );
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className={`h-1.5 w-1.5 rounded-full ${accentColor}`} />
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+          {title}
+        </span>
+      </div>
+      <div className="pl-4 border-l border-border/30 space-y-1.5">
+        {children}
+      </div>
+    </div>
+  );
 }
 
-function Field({ label, value, mono = false, className = "" }: {
-    label: string;
-    value: React.ReactNode;
-    mono?: boolean;
-    className?: string;
+function Field({
+  label,
+  value,
+  mono = false,
+  className = "",
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+  className?: string;
 }) {
-    return (
-        <div className={`flex items-start justify-between gap-4 py-1 ${className}`}>
-            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{label}</span>
-            <span className={`text-[11px] text-foreground text-right ${mono ? "text-data" : ""}`}>{value || "--"}</span>
-        </div>
-    );
+  return (
+    <div className={`flex items-start justify-between gap-4 py-1 ${className}`}>
+      <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+        {label}
+      </span>
+      <span
+        className={`text-[11px] text-foreground text-right ${mono ? "text-data" : ""}`}
+      >
+        {value || "--"}
+      </span>
+    </div>
+  );
 }
 
 // --- Chat Panel -------------------------------------------------------------
 
 interface ChatPanelProps {
-    loadId: string;
-    dispatcherName: string;
-    userId: string;
-    unreadCount: number;
+  loadId: string;
+  dispatcherName: string;
+  userId: string;
+  unreadCount: number;
 }
 
-function ChatPanel({ loadId, dispatcherName, userId, unreadCount }: ChatPanelProps) {
-    const { messages, loading, sendMessage, markAsRead } = useMessages(loadId, userId);
-    const [inputText, setInputText] = useState("");
-    const [sending, setSending] = useState(false);
-    const bottomRef = useRef<HTMLDivElement>(null);
+function ChatPanel({
+  loadId,
+  dispatcherName,
+  userId,
+  unreadCount,
+}: ChatPanelProps) {
+  const { messages, loading, sendMessage, markAsRead } = useMessages(
+    loadId,
+    userId,
+  );
+  const [inputText, setInputText] = useState("");
+  const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-    // Mark as read on mount + when messages arrive
-    useEffect(() => {
-        markAsRead();
-    }, [messages.length, markAsRead]);
+  // Mark as read on mount + when messages arrive
+  useEffect(() => {
+    markAsRead();
+  }, [messages.length, markAsRead]);
 
-    // Auto-scroll to bottom
-    useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [messages.length]);
-
-    const handleSend = async () => {
-        if (!inputText.trim() || sending) return;
-        const text = inputText.trim();
-        setInputText("");
-        setSending(true);
-        try {
-            await sendMessage(text, dispatcherName || "Dispatcher", "dispatcher");
-        } finally {
-            setSending(false);
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-40">
-                <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
+  }, [messages.length]);
 
+  const handleSend = async () => {
+    if (!inputText.trim() || sending) return;
+    const text = inputText.trim();
+    setInputText("");
+    setSending(true);
+    try {
+      await sendMessage(text, dispatcherName || "Dispatcher", "dispatcher");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="flex flex-col h-[360px]">
-            {/* Message list */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 sleek-scroll">
-                {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-                        <MessageSquare className="h-8 w-8 opacity-40" />
-                        <p className="text-xs">No messages yet. Send the first one!</p>
-                    </div>
-                ) : (
-                    messages.map(msg => {
-                        const isOwn = msg.sender_id === userId;
-                        const time = new Date(msg.created_at).toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        });
-                        const isRead = msg.read_by.length > 1;
-
-                        return (
-                            <div
-                                key={msg.id}
-                                className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                            >
-                                <div
-                                    className={`max-w-[75%] rounded-2xl px-3 py-2 ${
-                                        isOwn
-                                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                                            : "bg-muted border border-border rounded-bl-sm"
-                                    }`}
-                                >
-                                    {!isOwn && (
-                                        <p className="text-[10px] font-semibold text-muted-foreground mb-1">
-                                            {msg.sender_name}
-                                        </p>
-                                    )}
-                                    <p className="text-[13px] leading-snug break-words">{msg.message}</p>
-                                    <div className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}>
-                                        <span className={`text-[10px] ${isOwn ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                                            {time}
-                                        </span>
-                                        {isOwn && (
-                                            <span className={`text-[10px] ${isRead ? "text-cyan-400" : "text-primary-foreground/50"}`}>
-                                                {isRead ? "vv" : "v"}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })
-                )}
-                <div ref={bottomRef} />
-            </div>
-
-            {/* Input bar */}
-            <div className="flex items-center gap-2 p-3 border-t border-border/30">
-                <Input
-                    value={inputText}
-                    onChange={e => setInputText(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Type a message..."
-                    className="flex-1 h-9 text-sm"
-                    maxLength={1000}
-                    disabled={sending}
-                />
-                <Button
-                    size="sm"
-                    className="h-9 w-9 p-0"
-                    onClick={handleSend}
-                    disabled={!inputText.trim() || sending}
-                >
-                    {sending ? (
-                        <div className="h-3 w-3 border border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                        <Send className="h-3.5 w-3.5" />
-                    )}
-                </Button>
-            </div>
-        </div>
+      <div className="flex items-center justify-center h-40">
+        <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
+  }
+
+  return (
+    <div className="flex flex-col h-[360px]">
+      {/* Message list */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 sleek-scroll">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+            <MessageSquare className="h-8 w-8 opacity-40" />
+            <p className="text-xs">No messages yet. Send the first one!</p>
+          </div>
+        ) : (
+          messages.map((msg) => {
+            const isOwn = msg.sender_id === userId;
+            const time = new Date(msg.created_at).toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            const isRead = msg.read_by.length > 1;
+
+            return (
+              <div
+                key={msg.id}
+                className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 ${
+                    isOwn
+                      ? "bg-primary text-primary-foreground rounded-br-sm"
+                      : "bg-muted border border-border rounded-bl-sm"
+                  }`}
+                >
+                  {!isOwn && (
+                    <p className="text-[10px] font-semibold text-muted-foreground mb-1">
+                      {msg.sender_name}
+                    </p>
+                  )}
+                  <p className="text-[13px] leading-snug break-words">
+                    {msg.message}
+                  </p>
+                  <div
+                    className={`flex items-center gap-1 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}
+                  >
+                    <span
+                      className={`text-[10px] ${isOwn ? "text-primary-foreground/60" : "text-muted-foreground"}`}
+                    >
+                      {time}
+                    </span>
+                    {isOwn && (
+                      <span
+                        className={`text-[10px] ${isRead ? "text-cyan-400" : "text-primary-foreground/50"}`}
+                      >
+                        {isRead ? "vv" : "v"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input bar */}
+      <div className="flex items-center gap-2 p-3 border-t border-border/30">
+        <Input
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message..."
+          className="flex-1 h-9 text-sm"
+          maxLength={1000}
+          disabled={sending}
+        />
+        <Button
+          size="sm"
+          className="h-9 w-9 p-0"
+          onClick={handleSend}
+          disabled={!inputText.trim() || sending}
+        >
+          {sending ? (
+            <div className="h-3 w-3 border border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Send className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 // -----------------------------------------------------------
@@ -338,553 +406,763 @@ function ChatPanel({ loadId, dispatcherName, userId, unreadCount }: ChatPanelPro
 // -----------------------------------------------------------
 
 export default function LoadDetailPanel({
-    load: loadProp,
-    driverName,
-    vehicleName,
-    dispatcherName,
-    onClose,
-    onStatusChange,
-    onEdit,
-    onRefresh,
+  load: loadProp,
+  driverName,
+  vehicleName,
+  dispatcherName,
+  onClose,
+  onStatusChange,
+  onEdit,
+  onRefresh,
 }: LoadDetailPanelProps) {
-    const { toast } = useToast();
-    const { user } = useAuth();
-    const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'details' | 'messages'>('details');
-    const [bolUploading, setBolUploading] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "messages">("details");
+  const [bolUploading, setBolUploading] = useState(false);
 
-    // ---- Realtime load state ------------------------------------------------
-    // Keep a local copy of the load so realtime updates reflect immediately
-    // without waiting for the parent to re-render.
-    const [load, setLoad] = useState<LoadDetail>(loadProp);
+  // ---- Realtime load state ------------------------------------------------
+  // Keep a local copy of the load so realtime updates reflect immediately
+  // without waiting for the parent to re-render.
+  const [load, setLoad] = useState<LoadDetail>(loadProp);
 
-    // Sync from parent prop when the prop itself changes (e.g. parent refetch)
-    useEffect(() => {
-        setLoad(loadProp);
-    }, [loadProp]);
+  // Sync from parent prop when the prop itself changes (e.g. parent refetch)
+  useEffect(() => {
+    setLoad(loadProp);
+  }, [loadProp]);
 
-    // Subscribe to Supabase realtime UPDATE events for this specific load
-    useEffect(() => {
-        const channel = supabase
-            .channel(`load-detail-panel:${load.id}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "UPDATE",
-                    schema: "public",
-                    table: "daily_loads",
-                    filter: `id=eq.${load.id}`,
-                },
-                (payload: { new: Record<string, any> }) => {
-                    // Merge the updated row into local state
-                    setLoad((prev) => ({ ...prev, ...payload.new } as LoadDetail));
-                    // Also notify the parent so its own data stays in sync
-                    onRefresh();
-                }
-            )
-            .subscribe();
+  // Subscribe to Supabase realtime UPDATE events for this specific load
+  useEffect(() => {
+    const channel = supabase
+      .channel(`load-detail-panel:${load.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "daily_loads",
+          filter: `id=eq.${load.id}`,
+        },
+        (payload: { new: Record<string, any> }) => {
+          // Merge the updated row into local state
+          setLoad((prev) => ({ ...prev, ...payload.new }) as LoadDetail);
+          // Also notify the parent so its own data stays in sync
+          onRefresh();
+        },
+      )
+      .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [load.id, onRefresh]);
-    // ---- End realtime -------------------------------------------------------
-
-    const [bolUrl, setBolUrl] = useState<string | null>(load.bol_url ?? null);
-    const bolInputRef = useRef<HTMLInputElement>(null);
-    const { messages: allMessages } = useMessages(load.id, user?.id ?? null);
-    const unreadCount = user
-        ? allMessages.filter(
-            m => m.sender_role === 'driver' && !m.read_by.includes(user.id)
-          ).length
-        : 0;
-
-    // Keep bolUrl in sync when realtime updates change the load's bol_url
-    useEffect(() => {
-        setBolUrl(load.bol_url ?? null);
-    }, [load.bol_url]);
-
-    const profit = Number(load.revenue) - Number(load.driver_pay) - Number(load.fuel_cost);
-    const margin = Number(load.revenue) > 0 ? (profit / Number(load.revenue) * 100) : 0;
-    const statusCfg = STATUSES.find(s => s.value === load.status) ?? STATUSES[0];
-
-    const isCompleted = load.status === "completed" || load.status === "delivered";
-
-    const handleGenerateInvoice = () => {
-        try {
-            generateInvoice(
-                {
-                    id: load.id,
-                    reference_number: load.reference_number,
-                    client_name: load.client_name,
-                    pickup_address: load.pickup_address,
-                    delivery_address: load.delivery_address,
-                    pickup_company: load.pickup_company ?? null,
-                    delivery_company: load.delivery_company ?? null,
-                    revenue: Number(load.revenue),
-                    packages: load.packages,
-                    weight_kg: (load as any).weight_kg ?? null,
-                    weight_lbs: load.weight_lbs ?? null,
-                    package_type: (load as any).package_type ?? null,
-                    service_type: load.service_type,
-                    actual_pickup: load.actual_pickup ?? null,
-                    actual_delivery: load.actual_delivery ?? null,
-                    load_date: load.load_date,
-                    miles: Number(load.miles),
-                    hub: load.hub,
-                },
-                driverName,
-            );
-            toast({ title: "Invoice generated", description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded` });
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : "An unexpected error occurred while generating the PDF.";
-            toast({ title: "PDF generation failed", description: message, variant: "destructive" });
-        }
+    return () => {
+      supabase.removeChannel(channel);
     };
+  }, [load.id, onRefresh]);
+  // ---- End realtime -------------------------------------------------------
 
-    const copyRef = () => {
-        const ref = load.reference_number || load.id.slice(0, 8);
-        navigator.clipboard.writeText(ref);
-        toast({ title: "Copied", description: ref });
+  const [bolUrl, setBolUrl] = useState<string | null>(load.bol_url ?? null);
+  const bolInputRef = useRef<HTMLInputElement>(null);
+  const { messages: allMessages } = useMessages(load.id, user?.id ?? null);
+  const unreadCount = user
+    ? allMessages.filter(
+        (m) => m.sender_role === "driver" && !m.read_by.includes(user.id),
+      ).length
+    : 0;
+
+  // Keep bolUrl in sync when realtime updates change the load's bol_url
+  useEffect(() => {
+    setBolUrl(load.bol_url ?? null);
+  }, [load.bol_url]);
+
+  const profit =
+    Number(load.revenue) - Number(load.driver_pay) - Number(load.fuel_cost);
+  const margin =
+    Number(load.revenue) > 0 ? (profit / Number(load.revenue)) * 100 : 0;
+  const statusCfg =
+    STATUSES.find((s) => s.value === load.status) ?? STATUSES[0];
+
+  const isCompleted =
+    load.status === "completed" || load.status === "delivered";
+
+  const handleGenerateInvoice = () => {
+    try {
+      generateInvoice(
+        {
+          id: load.id,
+          reference_number: load.reference_number,
+          client_name: load.client_name,
+          pickup_address: load.pickup_address,
+          delivery_address: load.delivery_address,
+          pickup_company: load.pickup_company ?? null,
+          delivery_company: load.delivery_company ?? null,
+          revenue: Number(load.revenue),
+          packages: load.packages,
+          weight_kg: (load as any).weight_kg ?? null,
+          weight_lbs: load.weight_lbs ?? null,
+          package_type: (load as any).package_type ?? null,
+          service_type: load.service_type,
+          actual_pickup: load.actual_pickup ?? null,
+          actual_delivery: load.actual_delivery ?? null,
+          load_date: load.load_date,
+          miles: Number(load.miles),
+          hub: load.hub,
+        },
+        driverName,
+      );
+      toast({
+        title: "Invoice generated",
+        description: `ANIKA-INV-${load.reference_number || load.id.slice(0, 8)} downloaded`,
+      });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while generating the PDF.";
+      toast({
+        title: "PDF generation failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const copyRef = () => {
+    const ref = load.reference_number || load.id.slice(0, 8);
+    navigator.clipboard.writeText(ref);
+    toast({ title: "Copied", description: ref });
+  };
+
+  // Quick field update
+  const quickUpdate = useCallback(
+    async (field: string, value: any) => {
+      setSaving(true);
+      const { error } = await supabase
+        .from("daily_loads")
+        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .eq("id", load.id);
+      setSaving(false);
+      if (error) {
+        toast({
+          title: "Update failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        onRefresh();
+      }
+    },
+    [load.id, toast, onRefresh],
+  );
+
+  // BOL Upload handler
+  const handleBolUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.includes("pdf") && !file.type.includes("image")) {
+        toast({
+          title: "Invalid file",
+          description: "Please upload a PDF or image file",
+          variant: "destructive",
+        });
+        return;
+      }
+      setBolUploading(true);
+      try {
+        const ext = file.name.split(".").pop() ?? "pdf";
+        const path = `bol/${load.id}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("pod-files")
+          .upload(path, file, { upsert: true, contentType: file.type });
+        if (uploadError) throw uploadError;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("pod-files").getPublicUrl(path);
+        const { error: dbError } = await supabase
+          .from("daily_loads")
+          .update({ bol_url: publicUrl, updated_at: new Date().toISOString() })
+          .eq("id", load.id);
+        if (dbError) throw dbError;
+        setBolUrl(publicUrl);
+        toast({
+          title: "? BOL uploaded",
+          description: "Driver can now download it from their app",
+        });
+        onRefresh();
+      } catch (err: any) {
+        toast({
+          title: "Upload failed",
+          description: err.message,
+          variant: "destructive",
+        });
+      } finally {
+        setBolUploading(false);
+        if (bolInputRef.current) bolInputRef.current.value = "";
+      }
+    },
+    [load.id, toast, onRefresh],
+  );
+
+  // ESC key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
     };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
-    // Quick field update
-    const quickUpdate = useCallback(async (field: string, value: any) => {
-        setSaving(true);
-        const { error } = await supabase
-            .from("daily_loads")
-            .update({ [field]: value, updated_at: new Date().toISOString() })
-            .eq("id", load.id);
-        setSaving(false);
-        if (error) {
-            toast({ title: "Update failed", description: error.message, variant: "destructive" });
-        } else {
-            onRefresh();
-        }
-    }, [load.id, toast, onRefresh]);
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-    // BOL Upload handler
-    const handleBolUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (!file.type.includes('pdf') && !file.type.includes('image')) {
-            toast({ title: "Invalid file", description: "Please upload a PDF or image file", variant: "destructive" });
-            return;
-        }
-        setBolUploading(true);
-        try {
-            const ext = file.name.split('.').pop() ?? 'pdf';
-            const path = `bol/${load.id}/${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabase.storage
-                .from('pod-files')
-                .upload(path, file, { upsert: true, contentType: file.type });
-            if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = supabase.storage
-                .from('pod-files')
-                .getPublicUrl(path);
-            const { error: dbError } = await supabase
-                .from('daily_loads')
-                .update({ bol_url: publicUrl, updated_at: new Date().toISOString() })
-                .eq('id', load.id);
-            if (dbError) throw dbError;
-            setBolUrl(publicUrl);
-            toast({ title: "? BOL uploaded", description: "Driver can now download it from their app" });
-            onRefresh();
-        } catch (err: any) {
-            toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-        } finally {
-            setBolUploading(false);
-            if (bolInputRef.current) bolInputRef.current.value = '';
-        }
-    }, [load.id, toast, onRefresh]);
-
-    // ESC key to close
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [onClose]);
-
-    return (
-        <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-
-            {/* Panel */}
-            <div
-                className="relative w-full max-w-lg h-full overflow-y-auto sleek-scroll animate-in-right"
-                style={{
-                    background: "hsl(var(--cos-glass-bg))",
-                    backdropFilter: "blur(24px) saturate(180%)",
-                    WebkitBackdropFilter: "blur(24px) saturate(180%)",
-                    borderLeft: "1px solid hsl(var(--cos-glass-border))",
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* ------ Header ------ */}
-                <div className="sticky top-0 z-10 p-4 space-y-3"
-                    style={{
-                        background: "hsl(var(--cos-glass-bg))",
-                        backdropFilter: "blur(16px)",
-                        borderBottom: "1px solid hsl(var(--border) / 0.3)",
-                    }}
-                >
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className="text-data text-sm font-bold text-foreground">
-                                {load.reference_number || "No Ref"}
-                            </span>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyRef}>
-                                <Copy className="h-3 w-3" />
-                            </Button>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {/* Status selector */}
-                        <Select value={load.status} onValueChange={(v) => onStatusChange(load.id, v)}>
-                            <SelectTrigger className="h-7 w-32 text-[10px]">
-                                <div className="flex items-center gap-1.5">
-                                    <span className={`h-2 w-2 rounded-full ${statusCfg.color}`} />
-                                    <SelectValue />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {STATUSES.map((s) => (
-                                    <SelectItem key={s.value} value={s.value} className="text-xs">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className={`h-2 w-2 rounded-full ${s.color}`} />
-                                            {s.label}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <EtaBadge status={load.eta_status} />
-
-                        <Badge variant="outline" className="text-[10px]">
-                            {load.service_type?.replace(/_/g, " ") ?? "standard"}
-                        </Badge>
-
-                        {load.pod_confirmed && (
-                            <Badge className="bg-emerald-500/15 text-emerald-500 border-0 text-[10px]">
-                                POD v
-                            </Badge>
-                        )}
-
-                        {load.detention_eligible && (
-                            <Badge className="bg-orange-500/15 text-orange-500 border-0 text-[10px]">
-                                ? Detention
-                            </Badge>
-                        )}
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex gap-1.5 flex-wrap">
-                        <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 flex-1" onClick={() => onEdit(load)}>
-                            <FileText className="h-3 w-3" /> Edit Full Record
-                        </Button>
-                        {isCompleted && (
-                            <Button
-                                size="sm"
-                                className="h-7 text-[10px] gap-1 flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                onClick={handleGenerateInvoice}
-                            >
-                                <ReceiptText className="h-3 w-3" /> Generate Invoice
-                            </Button>
-                        )}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-[10px] gap-1 flex-1"
-                            onClick={() => {
-                                const trackingUrl = `${window.location.origin}/track/${load.tracking_token || load.reference_number}`;
-                                navigator.clipboard.writeText(trackingUrl);
-                                toast({ title: "Link copied!", description: "Share with your client" });
-                            }}
-                        >
-                            <Link className="h-3 w-3" /> Share Tracking Link
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-[10px] gap-1 flex-1"
-                            onClick={async () => {
-                                if (!load.client_name) {
-                                    toast({ title: "No client name", description: "Add a client name to this load first.", variant: "destructive" });
-                                    return;
-                                }
-                                // Check for existing portal token, create if missing
-                                const { data: existing } = await supabase
-                                    .from("client_portal_tokens")
-                                    .select("portal_token")
-                                    .ilike("client_name", load.client_name)
-                                    .eq("is_active", true)
-                                    .maybeSingle();
-                                let portalToken = existing?.portal_token ?? null;
-                                if (!portalToken) {
-                                    const { data: created } = await supabase
-                                        .from("client_portal_tokens")
-                                        .insert({ client_name: load.client_name })
-                                        .select("portal_token")
-                                        .single();
-                                    portalToken = created?.portal_token ?? null;
-                                }
-                                if (!portalToken) {
-                                    toast({ title: "Error", description: "Could not generate portal link.", variant: "destructive" });
-                                    return;
-                                }
-                                const portalUrl = `${window.location.origin}/portal/${portalToken}`;
-                                navigator.clipboard.writeText(portalUrl);
-                                toast({
-                                    title: "Client portal link copied!",
-                                    description: `All loads for ${load.client_name} at this link.`,
-                                });
-                            }}
-                        >
-                            <Building2 className="h-3 w-3" /> Client Portal
-                        </Button>
-                    </div>
-
-                    {/* Tab switcher */}
-                    <div className="flex gap-1 mt-1">
-                        <button
-                            onClick={() => setActiveTab('details')}
-                            className={`flex-1 h-7 text-[10px] font-semibold rounded-md transition-colors ${
-                                activeTab === 'details'
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:bg-muted'
-                            }`}
-                        >
-                            Details
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('messages')}
-                            className={`flex-1 h-7 text-[10px] font-semibold rounded-md transition-colors relative ${
-                                activeTab === 'messages'
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:bg-muted'
-                            }`}
-                        >
-                            Messages
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
-                                    {unreadCount > 99 ? '99+' : unreadCount}
-                                </span>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                {/* ------ Messages Tab ------ */}
-                {activeTab === 'messages' && user && (
-                    <ChatPanel
-                        loadId={load.id}
-                        dispatcherName={dispatcherName}
-                        userId={user.id}
-                        unreadCount={unreadCount}
-                    />
-                )}
-
-                {/* ------ Details Tab ------ */}
-                {activeTab === 'details' && <div className="p-4 space-y-5">
-                    {/* Shipper / Client */}
-                    <Section title="Client & Shipper" icon={Building2} accentColor="bg-blue-500">
-                        <Field label="Client" value={load.client_name} />
-                        <Field label="Shipper" value={load.shipper_name} />
-                        <Field label="Requested By" value={load.requested_by} />
-                    </Section>
-
-                    {/* Addresses */}
-                    <Section title="Route" icon={MapPin} accentColor="bg-green-500">
-                        <Field label="Pickup Company" value={load.pickup_company} />
-                        <Field label="Pickup Address" value={load.pickup_address} />
-                        <Field label="Delivery Company" value={load.delivery_company} />
-                        <Field label="Delivery Address" value={load.delivery_address} />
-                        <Field label="Distance" value={load.route_distance_meters ? fmtDistance(load.route_distance_meters) : `${Number(load.miles).toFixed(0)} mi`} mono />
-                        <Field label="Est. Drive Time" value={fmtDuration(load.route_duration_seconds)} mono />
-                        <Field label="Deadhead" value={`${Number(load.deadhead_miles).toFixed(0)} mi`} mono />
-                    </Section>
-
-                    {/* Timing */}
-                    <Section title="Timing & ETA" icon={Clock} accentColor="bg-amber-500">
-                        {/* Live ETA (in_progress only) */}
-                        {load.status === "in_progress" && (
-                            <ETASection
-                                pickupAddress={load.pickup_address}
-                                deliveryAddress={load.delivery_address}
-                                slaDeadline={load.sla_deadline}
-                                enabled={load.status === "in_progress"}
-                            />
-                        )}
-                        <Field label="Collection Window" value={fmtTimestamp(load.collection_time)} />
-                        <Field label="Delivery Window" value={fmtTimestamp(load.delivery_time)} />
-                        <Field label="SLA Deadline" value={fmtTimestamp(load.sla_deadline)} />
-                        <div className="h-px bg-border/20 my-1" />
-                        <Field label="Est. Pickup" value={fmtTimestamp(load.estimated_pickup)} />
-                        <Field label="Actual Pickup" value={fmtTimestamp(load.actual_pickup)} />
-                        <Field label="Est. Delivery" value={fmtTimestamp(load.estimated_delivery)} />
-                        <Field label="Actual Delivery" value={fmtTimestamp(load.actual_delivery)} />
-                        <Field label="Current ETA" value={
-                            <span className="flex items-center gap-1.5">
-                                {fmtTimestamp(load.current_eta)}
-                                <EtaBadge status={load.eta_status} />
-                            </span>
-                        } />
-                        <div className="h-px bg-border/20 my-1" />
-                        <Field label="Start Time" value={load.start_time || "--"} mono />
-                        <Field label="End Time" value={load.end_time || "--"} mono />
-                        <Field label="Wait Time" value={
-                            load.wait_time_minutes > 0 ? (
-                                <span className={load.wait_time_minutes >= 30 ? "text-red-400 font-semibold" : load.wait_time_minutes >= 15 ? "text-amber-400" : "text-green-400"}>
-                                    {fmtWait(load.wait_time_minutes)}
-                                    {load.wait_time_minutes >= 30 && " ?"}
-                                </span>
-                            ) : "--"
-                        } />
-                    </Section>
-
-                    {/* Package / Cargo */}
-                    <Section title="Cargo Details" icon={Package} accentColor="bg-violet-500">
-                        <Field label="Description" value={load.description} />
-                        <Field label="Packages" value={load.packages} mono />
-                        <Field label="Weight" value={load.weight_lbs ? `${load.weight_lbs} lbs` : null} mono />
-                        <Field label="Dimensions" value={load.dimensions_text} mono />
-                        <Field label="Vehicle Required" value={load.vehicle_required} />
-                    </Section>
-
-                    {/* Tracking */}
-                    <Section title="Tracking Numbers" icon={Hash} accentColor="bg-cyan-500">
-                        <Field label="PO Number" value={load.po_number} mono />
-                        <Field label="Inbound Tracking" value={load.inbound_tracking} mono />
-                        <Field label="Outbound Tracking" value={load.outbound_tracking} mono />
-                    </Section>
-
-                    {/* Documents -- BOL Upload */}
-                    <Section title="Documents" icon={FolderOpen} accentColor="bg-orange-500">
-                        <div className="space-y-2">
-                            {/* BOL */}
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-semibold text-muted-foreground mb-0.5">Bill of Lading (BOL)</p>
-                                    {bolUrl ? (
-                                        <a
-                                            href={bolUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors truncate"
-                                        >
-                                            <Download className="h-3 w-3 shrink-0" />
-                                            <span className="truncate">View / Download BOL</span>
-                                        </a>
-                                    ) : (
-                                        <p className="text-[10px] text-muted-foreground/60 italic">No BOL uploaded yet</p>
-                                    )}
-                                </div>
-                                <div className="shrink-0">
-                                    <input
-                                        ref={bolInputRef}
-                                        type="file"
-                                        accept=".pdf,image/*"
-                                        className="hidden"
-                                        onChange={handleBolUpload}
-                                    />
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 text-[10px] gap-1"
-                                        disabled={bolUploading}
-                                        onClick={() => bolInputRef.current?.click()}
-                                    >
-                                        {bolUploading ? (
-                                            <span className="animate-pulse">Uploading...</span>
-                                        ) : (
-                                            <>
-                                                <Upload className="h-3 w-3" />
-                                                {bolUrl ? "Replace" : "Upload"} BOL
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </Section>
-
-                    {/* Auto-Dispatch Suggestion -- only when no driver assigned and GPS coords available */}
-                    {!load.driver_id && load.pickup_lat != null && load.pickup_lng != null && (
-                        <DriverSuggestionBadge
-                            load={{
-                                id: load.id,
-                                pickup_lat: load.pickup_lat,
-                                pickup_lng: load.pickup_lng,
-                                driver_id: load.driver_id,
-                                cutoff_time: load.cutoff_time ?? null,
-                            }}
-                            onAssigned={() => onRefresh()}
-                        />
-                    )}
-
-                    {/* Assignment */}
-                    <Section title="Assignment" icon={User} accentColor="bg-indigo-500">
-                        <Field label="Driver" value={driverName} />
-                        <Field label="Vehicle" value={vehicleName} />
-                        <Field label="Dispatcher" value={dispatcherName} />
-                        <Field label="Hub" value={load.hub?.replace(/_/g, " ")} />
-                        <Field label="Shift" value={load.shift === "day" ? "Day" : "Night"} />
-                    </Section>
-
-                    {/* Financials */}
-                    <Section title="Financials" icon={DollarSign} accentColor="bg-emerald-500">
-                        <Field label="Revenue" value={fmtMoney(Number(load.revenue))} mono />
-                        <Field label="Driver Pay" value={fmtMoney(Number(load.driver_pay))} mono />
-                        <Field label="Fuel Cost" value={fmtMoney(Number(load.fuel_cost))} mono />
-                        <div className="h-px bg-border/20 my-1" />
-                        <Field label="Profit" value={
-                            <span className={profit >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}>
-                                {fmtMoney(profit)}
-                            </span>
-                        } mono />
-                        <Field label="Margin" value={`${margin.toFixed(1)}%`} mono />
-                        {load.detention_eligible && (
-                            <>
-                                <div className="h-px bg-border/20 my-1" />
-                                <Field label="Detention Billed" value={
-                                    load.detention_billed > 0
-                                        ? fmtMoney(Number(load.detention_billed))
-                                        : <span className="text-red-400 text-[10px]">Not billed</span>
-                                } mono />
-                            </>
-                        )}
-                    </Section>
-
-                    {/* Comments */}
-                    {load.comments && (
-                        <Section title="Notes" icon={FileText} accentColor="bg-gray-500">
-                            <p className="text-[11px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                                {load.comments}
-                            </p>
-                        </Section>
-                    )}
-
-                    {/* Status Timeline */}
-                    <Section title="Status History" icon={History} accentColor="bg-primary">
-                        <StatusTimeline loadId={load.id} />
-                    </Section>
-
-                    {/* Metadata footer */}
-                    <div className="pt-4 border-t border-border/20 space-y-1">
-                        <Field label="Created" value={fmtTimestamp(load.created_at)} className="text-muted-foreground/60" />
-                        <Field label="Updated" value={fmtTimestamp(load.updated_at)} className="text-muted-foreground/60" />
-                        <Field label="ID" value={<span className="text-data text-[9px]">{load.id}</span>} />
-                    </div>
-                </div>}
+      {/* Panel */}
+      <div
+        className="relative w-full max-w-lg h-full overflow-y-auto sleek-scroll animate-in-right"
+        style={{
+          background: "hsl(var(--cos-glass-bg))",
+          backdropFilter: "blur(24px) saturate(180%)",
+          WebkitBackdropFilter: "blur(24px) saturate(180%)",
+          borderLeft: "1px solid hsl(var(--cos-glass-border))",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ------ Header ------ */}
+        <div
+          className="sticky top-0 z-10 p-4 space-y-3"
+          style={{
+            background: "hsl(var(--cos-glass-bg))",
+            backdropFilter: "blur(16px)",
+            borderBottom: "1px solid hsl(var(--border) / 0.3)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-data text-sm font-bold text-foreground">
+                {load.reference_number || "No Ref"}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={copyRef}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Status selector */}
+            <Select
+              value={load.status}
+              onValueChange={(v) => onStatusChange(load.id, v)}
+            >
+              <SelectTrigger className="h-7 w-32 text-[10px]">
+                <div className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${statusCfg.color}`} />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value} className="text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-2 w-2 rounded-full ${s.color}`} />
+                      {s.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <EtaBadge status={load.eta_status} />
+
+            <Badge variant="outline" className="text-[10px]">
+              {load.service_type?.replace(/_/g, " ") ?? "standard"}
+            </Badge>
+
+            {load.pod_confirmed && (
+              <Badge className="bg-emerald-500/15 text-emerald-500 border-0 text-[10px]">
+                POD v
+              </Badge>
+            )}
+
+            {load.detention_eligible && (
+              <Badge className="bg-orange-500/15 text-orange-500 border-0 text-[10px]">
+                ? Detention
+              </Badge>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-1.5 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[10px] gap-1 flex-1"
+              onClick={() => onEdit(load)}
+            >
+              <FileText className="h-3 w-3" /> Edit Full Record
+            </Button>
+            {isCompleted && (
+              <Button
+                size="sm"
+                className="h-7 text-[10px] gap-1 flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={handleGenerateInvoice}
+              >
+                <ReceiptText className="h-3 w-3" /> Generate Invoice
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[10px] gap-1 flex-1"
+              onClick={() => {
+                const trackingUrl = `${window.location.origin}/track/${load.tracking_token || load.reference_number}`;
+                navigator.clipboard.writeText(trackingUrl);
+                toast({
+                  title: "Link copied!",
+                  description: "Share with your client",
+                });
+              }}
+            >
+              <Link className="h-3 w-3" /> Share Tracking Link
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[10px] gap-1 flex-1"
+              onClick={async () => {
+                if (!load.client_name) {
+                  toast({
+                    title: "No client name",
+                    description: "Add a client name to this load first.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                // Check for existing portal token, create if missing
+                const { data: existing } = await supabase
+                  .from("client_portal_tokens")
+                  .select("portal_token")
+                  .ilike("client_name", load.client_name)
+                  .eq("is_active", true)
+                  .maybeSingle();
+                let portalToken = existing?.portal_token ?? null;
+                if (!portalToken) {
+                  const { data: created } = await supabase
+                    .from("client_portal_tokens")
+                    .insert({ client_name: load.client_name })
+                    .select("portal_token")
+                    .single();
+                  portalToken = created?.portal_token ?? null;
+                }
+                if (!portalToken) {
+                  toast({
+                    title: "Error",
+                    description: "Could not generate portal link.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                const portalUrl = `${window.location.origin}/portal/${portalToken}`;
+                navigator.clipboard.writeText(portalUrl);
+                toast({
+                  title: "Client portal link copied!",
+                  description: `All loads for ${load.client_name} at this link.`,
+                });
+              }}
+            >
+              <Building2 className="h-3 w-3" /> Client Portal
+            </Button>
+          </div>
+
+          {/* Tab switcher */}
+          <div className="flex gap-1 mt-1">
+            <button
+              onClick={() => setActiveTab("details")}
+              className={`flex-1 h-7 text-[10px] font-semibold rounded-md transition-colors ${
+                activeTab === "details"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Details
+            </button>
+            <button
+              onClick={() => setActiveTab("messages")}
+              className={`flex-1 h-7 text-[10px] font-semibold rounded-md transition-colors relative ${
+                activeTab === "messages"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Messages
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
-    );
+
+        {/* ------ Messages Tab ------ */}
+        {activeTab === "messages" && user && (
+          <ChatPanel
+            loadId={load.id}
+            dispatcherName={dispatcherName}
+            userId={user.id}
+            unreadCount={unreadCount}
+          />
+        )}
+
+        {/* ------ Details Tab ------ */}
+        {activeTab === "details" && (
+          <div className="p-4 space-y-5">
+            {/* Shipper / Client */}
+            <Section
+              title="Client & Shipper"
+              icon={Building2}
+              accentColor="bg-blue-500"
+            >
+              <Field label="Client" value={load.client_name} />
+              <Field label="Shipper" value={load.shipper_name} />
+              <Field label="Requested By" value={load.requested_by} />
+            </Section>
+
+            {/* Addresses */}
+            <Section title="Route" icon={MapPin} accentColor="bg-green-500">
+              <Field label="Pickup Company" value={load.pickup_company} />
+              <Field label="Pickup Address" value={load.pickup_address} />
+              <Field label="Delivery Company" value={load.delivery_company} />
+              <Field label="Delivery Address" value={load.delivery_address} />
+              <Field
+                label="Distance"
+                value={
+                  load.route_distance_meters
+                    ? fmtDistance(load.route_distance_meters)
+                    : `${Number(load.miles).toFixed(0)} mi`
+                }
+                mono
+              />
+              <Field
+                label="Est. Drive Time"
+                value={fmtDuration(load.route_duration_seconds)}
+                mono
+              />
+              <Field
+                label="Deadhead"
+                value={`${Number(load.deadhead_miles).toFixed(0)} mi`}
+                mono
+              />
+            </Section>
+
+            {/* Timing */}
+            <Section
+              title="Timing & ETA"
+              icon={Clock}
+              accentColor="bg-amber-500"
+            >
+              {/* Live ETA (in_progress only) */}
+              {load.status === "in_progress" && (
+                <ETASection
+                  pickupAddress={load.pickup_address}
+                  deliveryAddress={load.delivery_address}
+                  slaDeadline={load.sla_deadline}
+                  enabled={load.status === "in_progress"}
+                />
+              )}
+              <Field
+                label="Collection Window"
+                value={fmtTimestamp(load.collection_time)}
+              />
+              <Field
+                label="Delivery Window"
+                value={fmtTimestamp(load.delivery_time)}
+              />
+              <Field
+                label="SLA Deadline"
+                value={fmtTimestamp(load.sla_deadline)}
+              />
+              <div className="h-px bg-border/20 my-1" />
+              <Field
+                label="Est. Pickup"
+                value={fmtTimestamp(load.estimated_pickup)}
+              />
+              <Field
+                label="Actual Pickup"
+                value={fmtTimestamp(load.actual_pickup)}
+              />
+              <Field
+                label="Est. Delivery"
+                value={fmtTimestamp(load.estimated_delivery)}
+              />
+              <Field
+                label="Actual Delivery"
+                value={fmtTimestamp(load.actual_delivery)}
+              />
+              <Field
+                label="Current ETA"
+                value={
+                  <span className="flex items-center gap-1.5">
+                    {fmtTimestamp(load.current_eta)}
+                    <EtaBadge status={load.eta_status} />
+                  </span>
+                }
+              />
+              <div className="h-px bg-border/20 my-1" />
+              <Field label="Start Time" value={load.start_time || "--"} mono />
+              <Field label="End Time" value={load.end_time || "--"} mono />
+              <Field
+                label="Wait Time"
+                value={
+                  load.wait_time_minutes > 0 ? (
+                    <span
+                      className={
+                        load.wait_time_minutes >= 30
+                          ? "text-red-400 font-semibold"
+                          : load.wait_time_minutes >= 15
+                            ? "text-amber-400"
+                            : "text-green-400"
+                      }
+                    >
+                      {fmtWait(load.wait_time_minutes)}
+                      {load.wait_time_minutes >= 30 && " ?"}
+                    </span>
+                  ) : (
+                    "--"
+                  )
+                }
+              />
+            </Section>
+
+            {/* Package / Cargo */}
+            <Section
+              title="Cargo Details"
+              icon={Package}
+              accentColor="bg-violet-500"
+            >
+              <Field label="Description" value={load.description} />
+              <Field label="Packages" value={load.packages} mono />
+              <Field
+                label="Weight"
+                value={load.weight_lbs ? `${load.weight_lbs} lbs` : null}
+                mono
+              />
+              <Field label="Dimensions" value={load.dimensions_text} mono />
+              <Field label="Vehicle Required" value={load.vehicle_required} />
+            </Section>
+
+            {/* Tracking */}
+            <Section
+              title="Tracking Numbers"
+              icon={Hash}
+              accentColor="bg-cyan-500"
+            >
+              <Field label="PO Number" value={load.po_number} mono />
+              <Field
+                label="Inbound Tracking"
+                value={load.inbound_tracking}
+                mono
+              />
+              <Field
+                label="Outbound Tracking"
+                value={load.outbound_tracking}
+                mono
+              />
+            </Section>
+
+            {/* Documents -- BOL Upload */}
+            <Section
+              title="Documents"
+              icon={FolderOpen}
+              accentColor="bg-orange-500"
+            >
+              <div className="space-y-2">
+                {/* BOL */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-muted-foreground mb-0.5">
+                      Bill of Lading (BOL)
+                    </p>
+                    {bolUrl ? (
+                      <a
+                        href={bolUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors truncate"
+                      >
+                        <Download className="h-3 w-3 shrink-0" />
+                        <span className="truncate">View / Download BOL</span>
+                      </a>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground/60 italic">
+                        No BOL uploaded yet
+                      </p>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    <input
+                      ref={bolInputRef}
+                      type="file"
+                      accept=".pdf,image/*"
+                      className="hidden"
+                      onChange={handleBolUpload}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px] gap-1"
+                      disabled={bolUploading}
+                      onClick={() => bolInputRef.current?.click()}
+                    >
+                      {bolUploading ? (
+                        <span className="animate-pulse">Uploading...</span>
+                      ) : (
+                        <>
+                          <Upload className="h-3 w-3" />
+                          {bolUrl ? "Replace" : "Upload"} BOL
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* Auto-Dispatch Suggestion -- only when no driver assigned and GPS coords available */}
+            {!load.driver_id &&
+              load.pickup_lat != null &&
+              load.pickup_lng != null && (
+                <DriverSuggestionBadge
+                  load={{
+                    id: load.id,
+                    pickup_lat: load.pickup_lat,
+                    pickup_lng: load.pickup_lng,
+                    driver_id: load.driver_id,
+                    cutoff_time: load.cutoff_time ?? null,
+                  }}
+                  onAssigned={() => onRefresh()}
+                />
+              )}
+
+            {/* Assignment */}
+            <Section title="Assignment" icon={User} accentColor="bg-indigo-500">
+              <Field label="Driver" value={driverName} />
+              <Field label="Vehicle" value={vehicleName} />
+              <Field label="Dispatcher" value={dispatcherName} />
+              <Field label="Hub" value={load.hub?.replace(/_/g, " ")} />
+              <Field
+                label="Shift"
+                value={load.shift === "day" ? "Day" : "Night"}
+              />
+            </Section>
+
+            {/* Financials */}
+            <Section
+              title="Financials"
+              icon={DollarSign}
+              accentColor="bg-emerald-500"
+            >
+              <Field
+                label="Revenue"
+                value={fmtMoney(Number(load.revenue))}
+                mono
+              />
+              <Field
+                label="Driver Pay"
+                value={fmtMoney(Number(load.driver_pay))}
+                mono
+              />
+              <Field
+                label="Fuel Cost"
+                value={fmtMoney(Number(load.fuel_cost))}
+                mono
+              />
+              <div className="h-px bg-border/20 my-1" />
+              <Field
+                label="Profit"
+                value={
+                  <span
+                    className={
+                      profit >= 0
+                        ? "text-emerald-400 font-semibold"
+                        : "text-red-400 font-semibold"
+                    }
+                  >
+                    {fmtMoney(profit)}
+                  </span>
+                }
+                mono
+              />
+              <Field label="Margin" value={`${margin.toFixed(1)}%`} mono />
+              {load.detention_eligible && (
+                <>
+                  <div className="h-px bg-border/20 my-1" />
+                  <Field
+                    label="Detention Billed"
+                    value={
+                      load.detention_billed > 0 ? (
+                        fmtMoney(Number(load.detention_billed))
+                      ) : (
+                        <span className="text-red-400 text-[10px]">
+                          Not billed
+                        </span>
+                      )
+                    }
+                    mono
+                  />
+                </>
+              )}
+            </Section>
+
+            {/* Comments */}
+            {load.comments && (
+              <Section title="Notes" icon={FileText} accentColor="bg-gray-500">
+                <p className="text-[11px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                  {load.comments}
+                </p>
+              </Section>
+            )}
+
+            {/* Status Timeline */}
+            <Section
+              title="Status History"
+              icon={History}
+              accentColor="bg-primary"
+            >
+              <StatusTimeline loadId={load.id} />
+            </Section>
+
+            {/* Metadata footer */}
+            <div className="pt-4 border-t border-border/20 space-y-1">
+              <Field
+                label="Created"
+                value={fmtTimestamp(load.created_at)}
+                className="text-muted-foreground/60"
+              />
+              <Field
+                label="Updated"
+                value={fmtTimestamp(load.updated_at)}
+                className="text-muted-foreground/60"
+              />
+              <Field
+                label="ID"
+                value={<span className="text-data text-[9px]">{load.id}</span>}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

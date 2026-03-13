@@ -29,9 +29,7 @@ describe("ALLOWED_TRANSITIONS map integrity", () => {
   it("has no duplicate targets for any status", () => {
     for (const [from, targets] of Object.entries(ALLOWED_TRANSITIONS)) {
       const unique = new Set(targets);
-      expect(unique.size).toBe(
-        targets.length,
-      );
+      expect(unique.size).toBe(targets.length);
     }
   });
 
@@ -46,56 +44,90 @@ describe("ALLOWED_TRANSITIONS map integrity", () => {
 // ============================================================
 describe("valid forward transitions", () => {
   // pending
-  it("pending -> assigned", () => expect(isTransitionAllowed("pending", "assigned")).toBe(true));
-  it("pending -> blasted", () => expect(isTransitionAllowed("pending", "blasted")).toBe(true));
-  it("pending -> cancelled", () => expect(isTransitionAllowed("pending", "cancelled")).toBe(true));
+  it("pending -> assigned", () =>
+    expect(isTransitionAllowed("pending", "assigned")).toBe(true));
+  it("pending -> blasted", () =>
+    expect(isTransitionAllowed("pending", "blasted")).toBe(true));
+  it("pending -> cancelled", () =>
+    expect(isTransitionAllowed("pending", "cancelled")).toBe(true));
 
   // assigned
-  it("assigned -> in_progress", () => expect(isTransitionAllowed("assigned", "in_progress")).toBe(true));
-  it("assigned -> arrived_pickup", () => expect(isTransitionAllowed("assigned", "arrived_pickup")).toBe(true));
-  it("assigned -> pending (unassign)", () => expect(isTransitionAllowed("assigned", "pending")).toBe(true));
-  it("assigned -> cancelled", () => expect(isTransitionAllowed("assigned", "cancelled")).toBe(true));
-  it("assigned -> failed", () => expect(isTransitionAllowed("assigned", "failed")).toBe(true));
+  it("assigned -> in_progress", () =>
+    expect(isTransitionAllowed("assigned", "in_progress")).toBe(true));
+  it("assigned -> arrived_pickup", () =>
+    expect(isTransitionAllowed("assigned", "arrived_pickup")).toBe(true));
+  it("assigned -> pending (unassign)", () =>
+    expect(isTransitionAllowed("assigned", "pending")).toBe(true));
+  it("assigned -> cancelled", () =>
+    expect(isTransitionAllowed("assigned", "cancelled")).toBe(true));
+  it("assigned -> failed", () =>
+    expect(isTransitionAllowed("assigned", "failed")).toBe(true));
 
   // blasted
-  it("blasted -> assigned", () => expect(isTransitionAllowed("blasted", "assigned")).toBe(true));
-  it("blasted -> in_progress", () => expect(isTransitionAllowed("blasted", "in_progress")).toBe(true));
-  it("blasted -> pending", () => expect(isTransitionAllowed("blasted", "pending")).toBe(true));
-  it("blasted -> cancelled", () => expect(isTransitionAllowed("blasted", "cancelled")).toBe(true));
+  it("blasted -> assigned", () =>
+    expect(isTransitionAllowed("blasted", "assigned")).toBe(true));
+  it("blasted -> in_progress", () =>
+    expect(isTransitionAllowed("blasted", "in_progress")).toBe(true));
+  it("blasted -> pending", () =>
+    expect(isTransitionAllowed("blasted", "pending")).toBe(true));
+  it("blasted -> cancelled", () =>
+    expect(isTransitionAllowed("blasted", "cancelled")).toBe(true));
 
   // in_progress
-  it("in_progress -> arrived_pickup", () => expect(isTransitionAllowed("in_progress", "arrived_pickup")).toBe(true));
-  it("in_progress -> in_transit", () => expect(isTransitionAllowed("in_progress", "in_transit")).toBe(true));
-  it("in_progress -> arrived_delivery", () => expect(isTransitionAllowed("in_progress", "arrived_delivery")).toBe(true));
-  it("in_progress -> delivered", () => expect(isTransitionAllowed("in_progress", "delivered")).toBe(true));
-  it("in_progress -> cancelled", () => expect(isTransitionAllowed("in_progress", "cancelled")).toBe(true));
-  it("in_progress -> failed", () => expect(isTransitionAllowed("in_progress", "failed")).toBe(true));
+  it("in_progress -> arrived_pickup", () =>
+    expect(isTransitionAllowed("in_progress", "arrived_pickup")).toBe(true));
+  it("in_progress -> in_transit", () =>
+    expect(isTransitionAllowed("in_progress", "in_transit")).toBe(true));
+  it("in_progress -> arrived_delivery", () =>
+    expect(isTransitionAllowed("in_progress", "arrived_delivery")).toBe(true));
+  it("in_progress -> delivered", () =>
+    expect(isTransitionAllowed("in_progress", "delivered")).toBe(true));
+  it("in_progress -> cancelled", () =>
+    expect(isTransitionAllowed("in_progress", "cancelled")).toBe(true));
+  it("in_progress -> failed", () =>
+    expect(isTransitionAllowed("in_progress", "failed")).toBe(true));
 
   // arrived_pickup
-  it("arrived_pickup -> in_transit", () => expect(isTransitionAllowed("arrived_pickup", "in_transit")).toBe(true));
-  it("arrived_pickup -> in_progress (back)", () => expect(isTransitionAllowed("arrived_pickup", "in_progress")).toBe(true));
-  it("arrived_pickup -> cancelled", () => expect(isTransitionAllowed("arrived_pickup", "cancelled")).toBe(true));
-  it("arrived_pickup -> failed", () => expect(isTransitionAllowed("arrived_pickup", "failed")).toBe(true));
+  it("arrived_pickup -> in_transit", () =>
+    expect(isTransitionAllowed("arrived_pickup", "in_transit")).toBe(true));
+  it("arrived_pickup -> in_progress (back)", () =>
+    expect(isTransitionAllowed("arrived_pickup", "in_progress")).toBe(true));
+  it("arrived_pickup -> cancelled", () =>
+    expect(isTransitionAllowed("arrived_pickup", "cancelled")).toBe(true));
+  it("arrived_pickup -> failed", () =>
+    expect(isTransitionAllowed("arrived_pickup", "failed")).toBe(true));
 
   // in_transit
-  it("in_transit -> arrived_delivery", () => expect(isTransitionAllowed("in_transit", "arrived_delivery")).toBe(true));
-  it("in_transit -> delivered", () => expect(isTransitionAllowed("in_transit", "delivered")).toBe(true));
-  it("in_transit -> cancelled", () => expect(isTransitionAllowed("in_transit", "cancelled")).toBe(true));
-  it("in_transit -> failed", () => expect(isTransitionAllowed("in_transit", "failed")).toBe(true));
+  it("in_transit -> arrived_delivery", () =>
+    expect(isTransitionAllowed("in_transit", "arrived_delivery")).toBe(true));
+  it("in_transit -> delivered", () =>
+    expect(isTransitionAllowed("in_transit", "delivered")).toBe(true));
+  it("in_transit -> cancelled", () =>
+    expect(isTransitionAllowed("in_transit", "cancelled")).toBe(true));
+  it("in_transit -> failed", () =>
+    expect(isTransitionAllowed("in_transit", "failed")).toBe(true));
 
   // arrived_delivery
-  it("arrived_delivery -> delivered", () => expect(isTransitionAllowed("arrived_delivery", "delivered")).toBe(true));
-  it("arrived_delivery -> completed", () => expect(isTransitionAllowed("arrived_delivery", "completed")).toBe(true));
-  it("arrived_delivery -> in_transit (back)", () => expect(isTransitionAllowed("arrived_delivery", "in_transit")).toBe(true));
-  it("arrived_delivery -> failed", () => expect(isTransitionAllowed("arrived_delivery", "failed")).toBe(true));
+  it("arrived_delivery -> delivered", () =>
+    expect(isTransitionAllowed("arrived_delivery", "delivered")).toBe(true));
+  it("arrived_delivery -> completed", () =>
+    expect(isTransitionAllowed("arrived_delivery", "completed")).toBe(true));
+  it("arrived_delivery -> in_transit (back)", () =>
+    expect(isTransitionAllowed("arrived_delivery", "in_transit")).toBe(true));
+  it("arrived_delivery -> failed", () =>
+    expect(isTransitionAllowed("arrived_delivery", "failed")).toBe(true));
 
   // delivered
-  it("delivered -> completed", () => expect(isTransitionAllowed("delivered", "completed")).toBe(true));
-  it("delivered -> failed", () => expect(isTransitionAllowed("delivered", "failed")).toBe(true));
+  it("delivered -> completed", () =>
+    expect(isTransitionAllowed("delivered", "completed")).toBe(true));
+  it("delivered -> failed", () =>
+    expect(isTransitionAllowed("delivered", "failed")).toBe(true));
 
   // reopen from terminal states
-  it("cancelled -> pending (reopen)", () => expect(isTransitionAllowed("cancelled", "pending")).toBe(true));
-  it("failed -> pending (reopen)", () => expect(isTransitionAllowed("failed", "pending")).toBe(true));
+  it("cancelled -> pending (reopen)", () =>
+    expect(isTransitionAllowed("cancelled", "pending")).toBe(true));
+  it("failed -> pending (reopen)", () =>
+    expect(isTransitionAllowed("failed", "pending")).toBe(true));
 });
 
 // ============================================================
@@ -265,9 +297,7 @@ describe("complete delivery lifecycle paths", () => {
       "completed",
     ];
     for (let i = 0; i < path.length - 1; i++) {
-      expect(
-        isTransitionAllowed(path[i], path[i + 1]),
-      ).toBe(true);
+      expect(isTransitionAllowed(path[i], path[i + 1])).toBe(true);
     }
   });
 
@@ -280,9 +310,7 @@ describe("complete delivery lifecycle paths", () => {
       "completed",
     ];
     for (let i = 0; i < path.length - 1; i++) {
-      expect(
-        isTransitionAllowed(path[i], path[i + 1]),
-      ).toBe(true);
+      expect(isTransitionAllowed(path[i], path[i + 1])).toBe(true);
     }
   });
 
@@ -297,9 +325,7 @@ describe("complete delivery lifecycle paths", () => {
       "completed",
     ];
     for (let i = 0; i < path.length - 1; i++) {
-      expect(
-        isTransitionAllowed(path[i], path[i + 1]),
-      ).toBe(true);
+      expect(isTransitionAllowed(path[i], path[i + 1])).toBe(true);
     }
   });
 
@@ -312,9 +338,7 @@ describe("complete delivery lifecycle paths", () => {
       "pending",
     ];
     for (let i = 0; i < path.length - 1; i++) {
-      expect(
-        isTransitionAllowed(path[i], path[i + 1]),
-      ).toBe(true);
+      expect(isTransitionAllowed(path[i], path[i + 1])).toBe(true);
     }
   });
 
@@ -327,9 +351,7 @@ describe("complete delivery lifecycle paths", () => {
       "assigned",
     ];
     for (let i = 0; i < path.length - 1; i++) {
-      expect(
-        isTransitionAllowed(path[i], path[i + 1]),
-      ).toBe(true);
+      expect(isTransitionAllowed(path[i], path[i + 1])).toBe(true);
     }
   });
 
@@ -341,9 +363,7 @@ describe("complete delivery lifecycle paths", () => {
       "completed",
     ];
     for (let i = 0; i < path.length - 1; i++) {
-      expect(
-        isTransitionAllowed(path[i], path[i + 1]),
-      ).toBe(true);
+      expect(isTransitionAllowed(path[i], path[i + 1])).toBe(true);
     }
   });
 });

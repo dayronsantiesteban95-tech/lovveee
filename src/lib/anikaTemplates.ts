@@ -320,8 +320,20 @@ Anika Logistics Group`,
 
 const HUBS = ["atlanta", "phoenix", "la"];
 
-export function getAnikaTemplates(): { name: string; hub: string; step_type: string; subject: string; body: string }[] {
-  const templates: { name: string; hub: string; step_type: string; subject: string; body: string }[] = [];
+export function getAnikaTemplates(): {
+  name: string;
+  hub: string;
+  step_type: string;
+  subject: string;
+  body: string;
+}[] {
+  const templates: {
+    name: string;
+    hub: string;
+    step_type: string;
+    subject: string;
+    body: string;
+  }[] = [];
   for (const hub of HUBS) {
     for (const t of UNIQUE_TEMPLATES) {
       templates.push({

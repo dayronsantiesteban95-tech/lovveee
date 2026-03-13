@@ -48,7 +48,9 @@ interface GetDriverSuggestionParams {
 
 // --- Hook ---------------------------------------------------------------------
 
-export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSuggestionResult {
+export function useDriverSuggestion(
+  load: LoadWithCoords | null,
+): UseDriverSuggestionResult {
   const [suggestion, setSuggestion] = useState<DriverSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,8 +79,11 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
       const client = supabase as unknown as {
         rpc: (
           fn: string,
-          params: GetDriverSuggestionParams
-        ) => Promise<{ data: DriverSuggestion[] | null; error: { message: string } | null }>;
+          params: GetDriverSuggestionParams,
+        ) => Promise<{
+          data: DriverSuggestion[] | null;
+          error: { message: string } | null;
+        }>;
       };
 
       const params: GetDriverSuggestionParams = {
@@ -88,7 +93,10 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
         p_cutoff_time: load.cutoff_time ?? null,
       };
 
-      const { data, error: rpcError } = await client.rpc("get_driver_suggestion", params);
+      const { data, error: rpcError } = await client.rpc(
+        "get_driver_suggestion",
+        params,
+      );
 
       if (cancelled) return;
 
@@ -109,7 +117,13 @@ export function useDriverSuggestion(load: LoadWithCoords | null): UseDriverSugge
     return () => {
       cancelled = true;
     };
-  }, [load?.id, load?.pickup_lat, load?.pickup_lng, load?.driver_id, load?.cutoff_time]);
+  }, [
+    load?.id,
+    load?.pickup_lat,
+    load?.pickup_lng,
+    load?.driver_id,
+    load?.cutoff_time,
+  ]);
 
   return { suggestion, loading, error };
 }

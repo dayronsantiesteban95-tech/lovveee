@@ -84,11 +84,7 @@ function initials(name: string): string {
 function ProgressBar({ value, label }: { value: number; label: string }) {
   const pct = Math.min(Math.max(value, 0), 100);
   const color =
-    pct >= 80
-      ? "bg-emerald-500"
-      : pct >= 60
-      ? "bg-yellow-500"
-      : "bg-red-500";
+    pct >= 80 ? "bg-emerald-500" : pct >= 60 ? "bg-yellow-500" : "bg-red-500";
 
   return (
     <div className="space-y-1">
@@ -117,7 +113,8 @@ function SortIcon({
   active: SortKey;
   dir: SortDir;
 }) {
-  if (col !== active) return <ChevronsUpDown className="h-3 w-3 ml-1 inline opacity-40" />;
+  if (col !== active)
+    return <ChevronsUpDown className="h-3 w-3 ml-1 inline opacity-40" />;
   return dir === "asc" ? (
     <ChevronUp className="h-3 w-3 ml-1 inline" />
   ) : (
@@ -152,25 +149,30 @@ function DriverPerformance() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: rows, error } = await supabase.rpc("get_driver_performance", {
-        p_start_date: daysAgoISO(days),
-        p_end_date: todayISO(),
-      });
+      const { data: rows, error } = await supabase.rpc(
+        "get_driver_performance",
+        {
+          p_start_date: daysAgoISO(days),
+          p_end_date: todayISO(),
+        },
+      );
       if (error) throw error;
       // Cast numbers (Supabase may return strings for numeric columns)
-      const parsed: DriverPerf[] = (rows ?? []).map((r: Record<string, unknown>) => ({
-        driver_id: r.driver_id as string,
-        driver_name: r.driver_name as string,
-        hub: r.hub as string,
-        total_loads: Number(r.total_loads ?? 0),
-        delivered_loads: Number(r.delivered_loads ?? 0),
-        failed_loads: Number(r.failed_loads ?? 0),
-        on_time_rate: Number(r.on_time_rate ?? 0),
-        total_revenue: Number(r.total_revenue ?? 0),
-        total_miles: Number(r.total_miles ?? 0),
-        avg_revenue_per_load: Number(r.avg_revenue_per_load ?? 0),
-        pod_compliance_rate: Number(r.pod_compliance_rate ?? 0),
-      }));
+      const parsed: DriverPerf[] = (rows ?? []).map(
+        (r: Record<string, unknown>) => ({
+          driver_id: r.driver_id as string,
+          driver_name: r.driver_name as string,
+          hub: r.hub as string,
+          total_loads: Number(r.total_loads ?? 0),
+          delivered_loads: Number(r.delivered_loads ?? 0),
+          failed_loads: Number(r.failed_loads ?? 0),
+          on_time_rate: Number(r.on_time_rate ?? 0),
+          total_revenue: Number(r.total_revenue ?? 0),
+          total_miles: Number(r.total_miles ?? 0),
+          avg_revenue_per_load: Number(r.avg_revenue_per_load ?? 0),
+          pod_compliance_rate: Number(r.pod_compliance_rate ?? 0),
+        }),
+      );
       setData(parsed);
     } catch {
       setData([]);
@@ -197,9 +199,7 @@ function DriverPerformance() {
     const av = a[sortKey];
     const bv = b[sortKey];
     if (typeof av === "string" && typeof bv === "string") {
-      return sortDir === "asc"
-        ? av.localeCompare(bv)
-        : bv.localeCompare(av);
+      return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
     }
     return sortDir === "asc"
       ? (av as number) - (bv as number)
@@ -241,8 +241,12 @@ function DriverPerformance() {
       {/* -- Header ----------------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight gradient-text">Driver Performance</h1>
-          <p className="text-muted-foreground text-sm mt-1">Ranked by revenue ? Sortable table ? {days}-day window</p>
+          <h1 className="text-2xl font-bold tracking-tight gradient-text">
+            Driver Performance
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Ranked by revenue ? Sortable table ? {days}-day window
+          </p>
         </div>
         <div className="flex gap-1.5">
           {RANGE_OPTIONS.map((opt) => (
@@ -265,7 +269,9 @@ function DriverPerformance() {
         <Card className="border border-yellow-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Top Driver</span>
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
+                Top Driver
+              </span>
               <div className="p-1.5 rounded-md bg-yellow-500/10">
                 <Trophy className="h-4 w-4 text-yellow-500" />
               </div>
@@ -274,7 +280,9 @@ function DriverPerformance() {
               <div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
             ) : topDriver ? (
               <>
-                <p className="text-base font-bold truncate leading-tight">{topDriver.driver_name}</p>
+                <p className="text-base font-bold truncate leading-tight">
+                  {topDriver.driver_name}
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {fmtMoney(topDriver.total_revenue)} revenue
                 </p>
@@ -289,7 +297,9 @@ function DriverPerformance() {
         <Card className="border border-blue-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Avg On-Time</span>
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
+                Avg On-Time
+              </span>
               <div className="p-1.5 rounded-md bg-blue-500/10">
                 <Clock className="h-4 w-4 text-blue-500" />
               </div>
@@ -298,7 +308,9 @@ function DriverPerformance() {
               <div className="h-6 w-1/2 bg-muted rounded animate-pulse" />
             ) : (
               <>
-                <p className="text-2xl font-bold tabular-nums leading-none">{avgOnTime.toFixed(1)}%</p>
+                <p className="text-2xl font-bold tabular-nums leading-none">
+                  {avgOnTime.toFixed(1)}%
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {data.length} driver{data.length !== 1 ? "s" : ""}
                 </p>
@@ -311,7 +323,9 @@ function DriverPerformance() {
         <Card className="border border-emerald-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">Total Revenue</span>
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
+                Total Revenue
+              </span>
               <div className="p-1.5 rounded-md bg-emerald-500/10">
                 <DollarSign className="h-4 w-4 text-emerald-500" />
               </div>
@@ -320,8 +334,12 @@ function DriverPerformance() {
               <div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
             ) : (
               <>
-                <p className="text-2xl font-bold text-emerald-400 tabular-nums leading-none">{fmtMoney(totalRevenue)}</p>
-                <p className="text-xs text-muted-foreground mt-1">all active drivers</p>
+                <p className="text-2xl font-bold text-emerald-400 tabular-nums leading-none">
+                  {fmtMoney(totalRevenue)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  all active drivers
+                </p>
               </>
             )}
           </CardContent>
@@ -331,7 +349,9 @@ function DriverPerformance() {
         <Card className="border border-purple-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">POD Compliance</span>
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
+                POD Compliance
+              </span>
               <div className="p-1.5 rounded-md bg-purple-500/10">
                 <ClipboardCheck className="h-4 w-4 text-purple-500" />
               </div>
@@ -340,8 +360,12 @@ function DriverPerformance() {
               <div className="h-6 w-1/2 bg-muted rounded animate-pulse" />
             ) : (
               <>
-                <p className="text-2xl font-bold tabular-nums leading-none">{avgPOD.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground mt-1">proof of delivery</p>
+                <p className="text-2xl font-bold tabular-nums leading-none">
+                  {avgPOD.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  proof of delivery
+                </p>
               </>
             )}
           </CardContent>
@@ -360,9 +384,12 @@ function DriverPerformance() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-3">
             <TrendingUp className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-muted-foreground font-medium">No performance data found</p>
+            <p className="text-muted-foreground font-medium">
+              No performance data found
+            </p>
             <p className="text-xs text-muted-foreground">
-              Try extending the date range or check that drivers have active loads.
+              Try extending the date range or check that drivers have active
+              loads.
             </p>
           </CardContent>
         </Card>
@@ -372,7 +399,10 @@ function DriverPerformance() {
       {!loading && data.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {data.map((d) => (
-            <Card key={d.driver_id} className="overflow-hidden border border-border/50 hover:border-border transition-colors">
+            <Card
+              key={d.driver_id}
+              className="overflow-hidden border border-border/50 hover:border-border transition-colors"
+            >
               <CardContent className="p-4 space-y-3">
                 {/* Header row */}
                 <div className="flex items-center gap-3">
@@ -382,14 +412,23 @@ function DriverPerformance() {
                     {initials(d.driver_name)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold truncate text-sm">{d.driver_name}</p>
-                    <Badge variant="secondary" className="text-[10px] mt-0.5 h-4 px-1.5">
+                    <p className="font-semibold truncate text-sm">
+                      {d.driver_name}
+                    </p>
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] mt-0.5 h-4 px-1.5"
+                    >
                       {d.hub}
                     </Badge>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-base font-bold text-emerald-400 tabular-nums">{fmtMoney(d.total_revenue)}</p>
-                    <p className="text-[10px] text-muted-foreground">{d.total_loads} loads</p>
+                    <p className="text-base font-bold text-emerald-400 tabular-nums">
+                      {fmtMoney(d.total_revenue)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {d.total_loads} loads
+                    </p>
                   </div>
                 </div>
 
@@ -397,18 +436,36 @@ function DriverPerformance() {
                 <div className="grid grid-cols-4 gap-1.5">
                   {(
                     [
-                      { label: "Rev/Load", value: fmtMoney(d.avg_revenue_per_load) },
-                      { label: "Miles", value: d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
-                      { label: "On-Time", value: `${d.on_time_rate.toFixed(1)}%` },
-                      { label: "POD%", value: `${d.pod_compliance_rate.toFixed(1)}%` },
+                      {
+                        label: "Rev/Load",
+                        value: fmtMoney(d.avg_revenue_per_load),
+                      },
+                      {
+                        label: "Miles",
+                        value: d.total_miles.toLocaleString("en-US", {
+                          maximumFractionDigits: 0,
+                        }),
+                      },
+                      {
+                        label: "On-Time",
+                        value: `${d.on_time_rate.toFixed(1)}%`,
+                      },
+                      {
+                        label: "POD%",
+                        value: `${d.pod_compliance_rate.toFixed(1)}%`,
+                      },
                     ] as const
                   ).map((s) => (
                     <div
                       key={s.label}
                       className="bg-muted/40 rounded-lg p-2 text-center"
                     >
-                      <p className="text-[9px] text-muted-foreground mb-0.5 uppercase tracking-wide">{s.label}</p>
-                      <p className="text-xs font-bold truncate tabular-nums">{s.value}</p>
+                      <p className="text-[9px] text-muted-foreground mb-0.5 uppercase tracking-wide">
+                        {s.label}
+                      </p>
+                      <p className="text-xs font-bold truncate tabular-nums">
+                        {s.value}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -416,14 +473,20 @@ function DriverPerformance() {
                 {/* Progress bars */}
                 <div className="space-y-1.5">
                   <ProgressBar value={d.on_time_rate} label="On-Time Rate" />
-                  <ProgressBar value={d.pod_compliance_rate} label="POD Compliance" />
+                  <ProgressBar
+                    value={d.pod_compliance_rate}
+                    label="POD Compliance"
+                  />
                 </div>
 
                 {/* Footer row */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40">
                   <span className="flex items-center gap-1">
                     <span className="text-muted-foreground">--</span>
-                    {d.total_miles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi driven
+                    {d.total_miles.toLocaleString("en-US", {
+                      maximumFractionDigits: 0,
+                    })}{" "}
+                    mi driven
                   </span>
                   {d.failed_loads > 0 ? (
                     <span className="flex items-center gap-1 text-red-400 font-medium">
@@ -431,7 +494,9 @@ function DriverPerformance() {
                       {d.failed_loads} failed
                     </span>
                   ) : (
-                    <span className="text-emerald-500 font-medium text-[10px]">v Zero failures</span>
+                    <span className="text-emerald-500 font-medium text-[10px]">
+                      v Zero failures
+                    </span>
                   )}
                 </div>
               </CardContent>
@@ -444,7 +509,9 @@ function DriverPerformance() {
       {!loading && data.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Driver Rankings</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Driver Rankings
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -465,7 +532,7 @@ function DriverPerformance() {
                   {sorted.map((d, i) => {
                     // Find original rank by revenue for medal coloring
                     const revenueRank = data.findIndex(
-                      (x) => x.driver_id === d.driver_id
+                      (x) => x.driver_id === d.driver_id,
                     );
                     const rowClass =
                       rankStyle[revenueRank] ??
@@ -480,10 +547,10 @@ function DriverPerformance() {
                           {revenueRank === 0
                             ? ""
                             : revenueRank === 1
-                            ? ""
-                            : revenueRank === 2
-                            ? ""
-                            : i + 1}
+                              ? ""
+                              : revenueRank === 2
+                                ? ""
+                                : i + 1}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -504,15 +571,17 @@ function DriverPerformance() {
                         <TableCell className="font-medium">
                           {fmtMoney(d.total_revenue)}
                         </TableCell>
-                        <TableCell>{fmtMoney(d.avg_revenue_per_load)}</TableCell>
+                        <TableCell>
+                          {fmtMoney(d.avg_revenue_per_load)}
+                        </TableCell>
                         <TableCell>
                           <span
                             className={
                               d.on_time_rate >= 80
                                 ? "text-emerald-600 font-medium"
                                 : d.on_time_rate >= 60
-                                ? "text-yellow-600 font-medium"
-                                : "text-red-600 font-medium"
+                                  ? "text-yellow-600 font-medium"
+                                  : "text-red-600 font-medium"
                             }
                           >
                             {d.on_time_rate.toFixed(1)}%
@@ -524,8 +593,8 @@ function DriverPerformance() {
                               d.pod_compliance_rate >= 80
                                 ? "text-emerald-600 font-medium"
                                 : d.pod_compliance_rate >= 60
-                                ? "text-yellow-600 font-medium"
-                                : "text-red-600 font-medium"
+                                  ? "text-yellow-600 font-medium"
+                                  : "text-red-600 font-medium"
                             }
                           >
                             {d.pod_compliance_rate.toFixed(1)}%

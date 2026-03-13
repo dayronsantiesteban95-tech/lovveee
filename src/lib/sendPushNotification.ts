@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Send push notification to drivers by their driver_id (UUID).
@@ -9,18 +9,21 @@ export async function sendPushToDrivers(
   driverIds: string[],
   title: string,
   body: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): Promise<void> {
   if (!driverIds.length) return;
 
   // Look up device tokens from the drivers table
   const { data: drivers, error: lookupError } = await supabase
-    .from('drivers')
-    .select('id, device_token')
-    .in('id', driverIds);
+    .from("drivers")
+    .select("id, device_token")
+    .in("id", driverIds);
 
   if (lookupError) {
-    console.warn('[sendPushToDrivers] Driver lookup failed:', lookupError.message);
+    console.warn(
+      "[sendPushToDrivers] Driver lookup failed:",
+      lookupError.message,
+    );
     return;
   }
 
@@ -30,11 +33,14 @@ export async function sendPushToDrivers(
     .filter((token): token is string => !!token);
 
   if (!playerIds.length) {
-    console.warn('[sendPushToDrivers] No device tokens found for drivers:', driverIds);
+    console.warn(
+      "[sendPushToDrivers] No device tokens found for drivers:",
+      driverIds,
+    );
     return;
   }
 
-  const { error } = await supabase.functions.invoke('send-push-notification', {
+  const { error } = await supabase.functions.invoke("send-push-notification", {
     body: { playerIds, title, body, data },
   });
   if (error) throw new Error(`Push notification failed: ${error.message}`);

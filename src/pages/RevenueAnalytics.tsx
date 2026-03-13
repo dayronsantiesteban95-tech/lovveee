@@ -121,7 +121,10 @@ interface AnalyticsData {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function monthRange(year: number, month: number): { start: string; end: string } {
+function monthRange(
+  year: number,
+  month: number,
+): { start: string; end: string } {
   const start = new Date(year, month, 1);
   const end = new Date(year, month + 1, 0);
   const fmt = (d: Date) => d.toISOString().split("T")[0];
@@ -161,7 +164,9 @@ async function fetchAnalyticsData(): Promise<AnalyticsData> {
   // Fetch all non-cancelled loads in the 6-month window
   const { data, error } = await supabase
     .from("daily_loads")
-    .select("revenue, driver_pay, hub, client_name, driver_id, load_date, status")
+    .select(
+      "revenue, driver_pay, hub, client_name, driver_id, load_date, status",
+    )
     .neq("status", "cancelled")
     .gte("load_date", sixMonthsAgo)
     .lte("load_date", endOfThisMonth);
@@ -173,21 +178,30 @@ async function fetchAnalyticsData(): Promise<AnalyticsData> {
   // ---- KPI: this month and last month ----
   const thisMR = monthRange(thisYear, thisMonth);
   const lastMonthDate = new Date(thisYear, thisMonth - 1, 1);
-  const lastMR = monthRange(lastMonthDate.getFullYear(), lastMonthDate.getMonth());
+  const lastMR = monthRange(
+    lastMonthDate.getFullYear(),
+    lastMonthDate.getMonth(),
+  );
 
   const thisMonthRows = rows.filter(
-    (r) => r.load_date >= thisMR.start && r.load_date <= thisMR.end
+    (r) => r.load_date >= thisMR.start && r.load_date <= thisMR.end,
   );
   const lastMonthRows = rows.filter(
-    (r) => r.load_date >= lastMR.start && r.load_date <= lastMR.end
+    (r) => r.load_date >= lastMR.start && r.load_date <= lastMR.end,
   );
 
-  const thisMonthRevenue = thisMonthRows.reduce((s, r) => s + safeNum(r.revenue), 0);
-  const lastMonthRevenue = lastMonthRows.reduce((s, r) => s + safeNum(r.revenue), 0);
+  const thisMonthRevenue = thisMonthRows.reduce(
+    (s, r) => s + safeNum(r.revenue),
+    0,
+  );
+  const lastMonthRevenue = lastMonthRows.reduce(
+    (s, r) => s + safeNum(r.revenue),
+    0,
+  );
 
   const thisMonthGross = thisMonthRows.reduce(
     (s, r) => s + (safeNum(r.revenue) - safeNum(r.driver_pay)),
-    0
+    0,
   );
   const grossMarginPct =
     thisMonthRevenue > 0 ? (thisMonthGross / thisMonthRevenue) * 100 : 0;
@@ -202,11 +216,13 @@ async function fetchAnalyticsData(): Promise<AnalyticsData> {
   // ---- 6-Month trend ----
   const trend: MonthPoint[] = months.map(({ year, month }) => {
     const mr = monthRange(year, month);
-    const mRows = rows.filter((r) => r.load_date >= mr.start && r.load_date <= mr.end);
+    const mRows = rows.filter(
+      (r) => r.load_date >= mr.start && r.load_date <= mr.end,
+    );
     const rev = mRows.reduce((s, r) => s + safeNum(r.revenue), 0);
     const gross = mRows.reduce(
       (s, r) => s + (safeNum(r.revenue) - safeNum(r.driver_pay)),
-      0
+      0,
     );
     return {
       label: monthLabel(year, month),
@@ -223,7 +239,10 @@ async function fetchAnalyticsData(): Promise<AnalyticsData> {
     hubMap[h].loads += 1;
     hubMap[h].revenue += safeNum(r.revenue);
   }
-  const totalRevAllHubs = Object.values(hubMap).reduce((s, h) => s + h.revenue, 0);
+  const totalRevAllHubs = Object.values(hubMap).reduce(
+    (s, h) => s + h.revenue,
+    0,
+  );
   const hubs: HubRow[] = Object.entries(hubMap)
     .map(([hub, v]) => ({
       hub,
@@ -235,7 +254,10 @@ async function fetchAnalyticsData(): Promise<AnalyticsData> {
     .sort((a, b) => b.revenue - a.revenue);
 
   // ---- Top Drivers ----
-  const driverMap: Record<string, { loads: number; revenue: number; gross: number }> = {};
+  const driverMap: Record<
+    string,
+    { loads: number; revenue: number; gross: number }
+  > = {};
   for (const r of rows) {
     const did = r.driver_id ?? "unknown";
     if (!driverMap[did]) driverMap[did] = { loads: 0, revenue: 0, gross: 0 };
@@ -263,7 +285,10 @@ async function fetchAnalyticsData(): Promise<AnalyticsData> {
     clientMap[cn].loads += 1;
     clientMap[cn].revenue += safeNum(r.revenue);
   }
-  const totalRevAllClients = Object.values(clientMap).reduce((s, c) => s + c.revenue, 0);
+  const totalRevAllClients = Object.values(clientMap).reduce(
+    (s, c) => s + c.revenue,
+    0,
+  );
   const clients: ClientRow[] = Object.entries(clientMap)
     .sort((a, b) => b[1].revenue - a[1].revenue)
     .slice(0, 10)
@@ -323,8 +348,12 @@ function KpiCards({ kpi }: KpiCardsProps) {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{fmtMoney(kpi.thisMonthRevenue)}</div>
-          <p className="text-xs text-muted-foreground mt-1">Current calendar month</p>
+          <div className="text-2xl font-bold">
+            {fmtMoney(kpi.thisMonthRevenue)}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Current calendar month
+          </p>
         </CardContent>
       </Card>
 
@@ -341,8 +370,12 @@ function KpiCards({ kpi }: KpiCardsProps) {
           )}
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{fmtMoney(kpi.lastMonthRevenue)}</div>
-          <p className={`text-xs mt-1 ${isUp ? "text-green-600" : "text-red-500"}`}>
+          <div className="text-2xl font-bold">
+            {fmtMoney(kpi.lastMonthRevenue)}
+          </div>
+          <p
+            className={`text-xs mt-1 ${isUp ? "text-green-600" : "text-red-500"}`}
+          >
             {isUp ? "+" : ""}
             {kpi.pctChange.toFixed(1)}% vs last month
           </p>
@@ -358,8 +391,12 @@ function KpiCards({ kpi }: KpiCardsProps) {
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{kpi.grossMarginPct.toFixed(1)}%</div>
-          <p className="text-xs text-muted-foreground mt-1">Revenue minus driver pay</p>
+          <div className="text-2xl font-bold">
+            {kpi.grossMarginPct.toFixed(1)}%
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Revenue minus driver pay
+          </p>
         </CardContent>
       </Card>
 
@@ -404,10 +441,17 @@ function TrendChart({ data }: TrendChartProps) {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={320}>
-          <LineChart data={data} margin={{ top: 8, right: 24, left: 12, bottom: 8 }}>
+          <LineChart
+            data={data}
+            margin={{ top: 8, right: 24, left: 12, bottom: 8 }}
+          >
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-            <YAxis tickFormatter={fmtAxisMoney} tick={{ fontSize: 12 }} width={70} />
+            <YAxis
+              tickFormatter={fmtAxisMoney}
+              tick={{ fontSize: 12 }}
+              width={70}
+            />
             <Tooltip
               formatter={(val: number, name: string) => [
                 fmtMoney(val),
@@ -423,7 +467,12 @@ function TrendChart({ data }: TrendChartProps) {
               y={MONTHLY_TARGET}
               stroke="#ef4444"
               strokeDasharray="6 3"
-              label={{ value: "Target", position: "insideTopRight", fontSize: 11, fill: "#ef4444" }}
+              label={{
+                value: "Target",
+                position: "insideTopRight",
+                fontSize: 11,
+                fill: "#ef4444",
+              }}
             />
             <Line
               type="monotone"
@@ -470,13 +519,27 @@ function HubChart({ data }: HubChartProps) {
             margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis type="number" tickFormatter={fmtAxisMoney} tick={{ fontSize: 11 }} />
-            <YAxis type="category" dataKey="hub" tick={{ fontSize: 12 }} width={56} />
+            <XAxis
+              type="number"
+              tickFormatter={fmtAxisMoney}
+              tick={{ fontSize: 11 }}
+            />
+            <YAxis
+              type="category"
+              dataKey="hub"
+              tick={{ fontSize: 12 }}
+              width={56}
+            />
             <Tooltip
               formatter={(val: number) => fmtMoney(val)}
               labelFormatter={(label) => `Hub: ${label}`}
             />
-            <Bar dataKey="revenue" fill="#3b82f6" radius={[0, 4, 4, 0]} name="Revenue" />
+            <Bar
+              dataKey="revenue"
+              fill="#3b82f6"
+              radius={[0, 4, 4, 0]}
+              name="Revenue"
+            />
           </BarChart>
         </ResponsiveContainer>
 
@@ -496,15 +559,26 @@ function HubChart({ data }: HubChartProps) {
               {data.map((row) => (
                 <TableRow key={row.hub}>
                   <TableCell className="font-medium">{row.hub}</TableCell>
-                  <TableCell className="text-right">{row.loads.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(row.revenue)}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Math.round(row.avgPerLoad))}</TableCell>
-                  <TableCell className="text-right">{row.pct.toFixed(1)}%</TableCell>
+                  <TableCell className="text-right">
+                    {row.loads.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {fmtMoney(row.revenue)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {fmtMoney(Math.round(row.avgPerLoad))}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {row.pct.toFixed(1)}%
+                  </TableCell>
                 </TableRow>
               ))}
               {data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground"
+                  >
                     No hub data available
                   </TableCell>
                 </TableRow>
@@ -529,7 +603,9 @@ function DriversTable({ data }: DriversTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Top Drivers by Revenue (6-Month Window)</CardTitle>
+        <CardTitle className="text-base">
+          Top Drivers by Revenue (6-Month Window)
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -555,15 +631,26 @@ function DriversTable({ data }: DriversTableProps) {
                       ? "Unassigned"
                       : row.driverId.slice(0, 8)}
                   </TableCell>
-                  <TableCell className="text-right">{row.loads.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(row.revenue)}</TableCell>
-                  <TableCell className="text-right">{row.margin.toFixed(1)}%</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Math.round(row.avgPerLoad))}</TableCell>
+                  <TableCell className="text-right">
+                    {row.loads.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {fmtMoney(row.revenue)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {row.margin.toFixed(1)}%
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {fmtMoney(Math.round(row.avgPerLoad))}
+                  </TableCell>
                 </TableRow>
               ))}
               {data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground"
+                  >
                     No driver data available
                   </TableCell>
                 </TableRow>
@@ -588,7 +675,9 @@ function ClientsTable({ data }: ClientsTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Top Clients by Revenue (6-Month Window)</CardTitle>
+        <CardTitle className="text-base">
+          Top Clients by Revenue (6-Month Window)
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -610,15 +699,26 @@ function ClientsTable({ data }: ClientsTableProps) {
                     #{row.rank}
                   </TableCell>
                   <TableCell className="font-medium">{row.client}</TableCell>
-                  <TableCell className="text-right">{row.loads.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">{fmtMoney(row.revenue)}</TableCell>
-                  <TableCell className="text-right">{row.pct.toFixed(1)}%</TableCell>
-                  <TableCell className="text-right">{fmtMoney(Math.round(row.avgPerLoad))}</TableCell>
+                  <TableCell className="text-right">
+                    {row.loads.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {fmtMoney(row.revenue)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {row.pct.toFixed(1)}%
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {fmtMoney(Math.round(row.avgPerLoad))}
+                  </TableCell>
                 </TableRow>
               ))}
               {data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground"
+                  >
                     No client data available
                   </TableCell>
                 </TableRow>
@@ -643,11 +743,14 @@ interface PathWidgetProps {
 function PathWidget({ kpi, thisMonthLoads }: PathWidgetProps) {
   const today = new Date();
   const dayOfMonth = today.getDate();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const daysInMonth = new Date(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    0,
+  ).getDate();
   const daysRemaining = daysInMonth - dayOfMonth;
 
-  const dailyPace =
-    dayOfMonth > 0 ? kpi.thisMonthRevenue / dayOfMonth : 0;
+  const dailyPace = dayOfMonth > 0 ? kpi.thisMonthRevenue / dayOfMonth : 0;
   const projectedMonthly = dailyPace * daysInMonth;
   const gap = Math.max(0, MONTHLY_TARGET - kpi.thisMonthRevenue);
   const driversNeeded =
@@ -671,23 +774,35 @@ function PathWidget({ kpi, thisMonthLoads }: PathWidgetProps) {
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Daily Pace</p>
-            <p className="text-lg font-bold">{fmtMoney(Math.round(dailyPace))}/day</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              Daily Pace
+            </p>
+            <p className="text-lg font-bold">
+              {fmtMoney(Math.round(dailyPace))}/day
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Projected Monthly</p>
-            <p className={`text-lg font-bold ${onTrack ? "text-green-600" : "text-orange-500"}`}>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              Projected Monthly
+            </p>
+            <p
+              className={`text-lg font-bold ${onTrack ? "text-green-600" : "text-orange-500"}`}
+            >
               {fmtMoney(Math.round(projectedMonthly))}
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Gap to Target</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              Gap to Target
+            </p>
             <p className="text-lg font-bold text-red-500">
               {gap > 0 ? fmtMoney(Math.round(gap)) : "Target met!"}
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Days Remaining</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              Days Remaining
+            </p>
             <p className="text-lg font-bold">{daysRemaining}</p>
           </div>
           <div>
@@ -703,7 +818,11 @@ function PathWidget({ kpi, thisMonthLoads }: PathWidgetProps) {
               Loads Needed (at {fmtMoney(Math.round(avgPerLoad))} avg)
             </p>
             <p className="text-lg font-bold">
-              {gap > 0 && loadsNeeded > 0 ? `${loadsNeeded} more` : gap === 0 ? "Done" : "N/A"}
+              {gap > 0 && loadsNeeded > 0
+                ? `${loadsNeeded} more`
+                : gap === 0
+                  ? "Done"
+                  : "N/A"}
             </p>
           </div>
         </div>
@@ -721,7 +840,9 @@ function LoadingSkeleton() {
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-3">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="text-muted-foreground text-sm">Loading revenue data...</span>
+        <span className="text-muted-foreground text-sm">
+          Loading revenue data...
+        </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[0, 1, 2, 3].map((i) => (
@@ -784,7 +905,8 @@ function RevenueAnalyticsContent() {
         }
       } catch (err) {
         if (cancelled) return;
-        const msg = err instanceof Error ? err.message : "Failed to load revenue data";
+        const msg =
+          err instanceof Error ? err.message : "Failed to load revenue data";
         toast({ title: "Error", description: msg, variant: "destructive" });
         setLoading(false);
       }
@@ -797,8 +919,16 @@ function RevenueAnalyticsContent() {
   }, [toast]);
 
   // -- Role guard (after all hooks) --
-  if (roleLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-  if (role !== "owner" && role !== "dispatcher") return <AccessDenied message="Admin or dispatcher access required to view Revenue Analytics." />;
+  if (roleLoading)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  if (role !== "owner" && role !== "dispatcher")
+    return (
+      <AccessDenied message="Admin or dispatcher access required to view Revenue Analytics." />
+    );
 
   if (loading) return <LoadingSkeleton />;
   if (!data) {

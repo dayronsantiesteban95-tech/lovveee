@@ -15,12 +15,14 @@ function formatTime(timezone: string) {
 
 export function GlobalHeader() {
   const [times, setTimes] = useState(
-    TIMEZONES.map((tz) => ({ ...tz, time: formatTime(tz.timezone) }))
+    TIMEZONES.map((tz) => ({ ...tz, time: formatTime(tz.timezone) })),
   );
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimes(TIMEZONES.map((tz) => ({ ...tz, time: formatTime(tz.timezone) })));
+      setTimes(
+        TIMEZONES.map((tz) => ({ ...tz, time: formatTime(tz.timezone) })),
+      );
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -28,7 +30,11 @@ export function GlobalHeader() {
   return (
     <header className="h-14 bg-card/95 backdrop-blur-md flex items-center justify-between px-6 shrink-0 border-b border-border/50">
       <div className="flex items-center gap-3">
-        <img src={logoAzul} alt="Anika Logistics" className="h-8 w-auto object-contain" />
+        <img
+          src={logoAzul}
+          alt="Anika Logistics"
+          className="h-8 w-auto object-contain"
+        />
       </div>
       <div className="flex items-center gap-5">
         {times.map((tz, i) => (

@@ -8,20 +8,44 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Calendar, User, Pencil, Trash2, Search, Building2, ClipboardList } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  User,
+  Pencil,
+  Trash2,
+  Search,
+  Building2,
+  ClipboardList,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
@@ -42,12 +66,18 @@ type Task = {
 };
 
 type Profile = { user_id: string; full_name: string };
-type TaskLeadLink = { task_id: string; lead_id: string; leads?: { company_name: string } };
+type TaskLeadLink = {
+  task_id: string;
+  lead_id: string;
+  leads?: { company_name: string };
+};
 
 function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [leads, setLeads] = useState<{ id: string; company_name: string }[]>([]);
+  const [leads, setLeads] = useState<{ id: string; company_name: string }[]>(
+    [],
+  );
   const [taskLeadLinks, setTaskLeadLinks] = useState<TaskLeadLink[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -63,8 +93,15 @@ function TaskBoard() {
 
   const fetchTasks = useCallback(async () => {
     const [{ data: tasksData }, { data: linksData }] = await Promise.all([
-      supabase.from("tasks").select("*").order("created_at", { ascending: false }).limit(500),
-      supabase.from("task_lead_links").select("task_id, lead_id, leads(company_name)").limit(500),
+      supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("task_lead_links")
+        .select("task_id, lead_id, leads(company_name)")
+        .limit(500),
     ]);
     if (tasksData) setTasks(tasksData as Task[]);
     if (linksData) setTaskLeadLinks(linksData as TaskLeadLink[]);
@@ -73,29 +110,50 @@ function TaskBoard() {
 
   useEffect(() => {
     fetchTasks();
-    supabase.from("profiles").select("user_id, full_name").then(({ data }) => { if (data) setProfiles(data); });
-    supabase.from("leads").select("id, company_name").limit(500).then(({ data }) => { if (data) setLeads(data); });
+    supabase
+      .from("profiles")
+      .select("user_id, full_name")
+      .then(({ data }) => {
+        if (data) setProfiles(data);
+      });
+    supabase
+      .from("leads")
+      .select("id, company_name")
+      .limit(500)
+      .then(({ data }) => {
+        if (data) setLeads(data);
+      });
   }, [fetchTasks]);
 
   useEffect(() => {
     const channel = supabase
       .channel("tasks-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => fetchTasks())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks" },
+        () => fetchTasks(),
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchTasks]);
 
   const filteredTasks = tasks.filter((t) => {
     if (!isOwner && t.assigned_to !== user?.id) return false;
     if (activeDept && t.department !== activeDept) return false;
-    if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !t.title.toLowerCase().includes(search.toLowerCase()))
+      return false;
     return true;
   });
 
   const handleDrop = async (status: "todo" | "in_progress" | "done") => {
     if (!draggedId) return;
     try {
-      const { error: dragErr } = await supabase.from("tasks").update({ status }).eq("id", draggedId);
+      const { error: dragErr } = await supabase
+        .from("tasks")
+        .update({ status })
+        .eq("id", draggedId);
       if (dragErr) throw dragErr;
       fetchTasks();
     } catch (err) {
@@ -110,7 +168,7 @@ function TaskBoard() {
     e.preventDefault();
     if (!user) return;
     const fd = new FormData(e.currentTarget);
-    const title = (fd.get("title") as string || "").trim();
+    const title = ((fd.get("title") as string) || "").trim();
 
     // Validate
     const errors: Record<string, string> = {};
@@ -121,27 +179,49 @@ function TaskBoard() {
     }
     setFormErrors({});
 
-    const priority = (fd.get("priority") as string || "medium") as "critical" | "high" | "medium" | "low";
-    const dept = fd.get("department") as string || null;
+    const priority = ((fd.get("priority") as string) || "medium") as
+      | "critical"
+      | "high"
+      | "medium"
+      | "low";
+    const dept = (fd.get("department") as string) || null;
     const payload = {
       title,
-      description: fd.get("description") as string || null,
+      description: (fd.get("description") as string) || null,
       priority,
-      assigned_to: fd.get("assigned_to") as string || null,
-      due_date: fd.get("due_date") as string || null,
+      assigned_to: (fd.get("assigned_to") as string) || null,
+      due_date: (fd.get("due_date") as string) || null,
       department: dept as Database["public"]["Enums"]["department"] | null,
     };
 
     if (editTask) {
-      const { error } = await supabase.from("tasks").update(payload).eq("id", editTask.id);
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      const { error } = await supabase
+        .from("tasks")
+        .update(payload)
+        .eq("id", editTask.id);
+      if (error)
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       else {
-        const assigneeName = payload.assigned_to ? profiles.find(p => p.user_id === payload.assigned_to)?.full_name : null;
+        const assigneeName = payload.assigned_to
+          ? profiles.find((p) => p.user_id === payload.assigned_to)?.full_name
+          : null;
         const assigneeChanged = payload.assigned_to !== editTask.assigned_to;
-        if (assigneeName && assigneeChanged && payload.assigned_to !== user.id) {
-          toast({ title: "Task Updated", description: `${assigneeName} has been notified of this assignment.` });
+        if (
+          assigneeName &&
+          assigneeChanged &&
+          payload.assigned_to !== user.id
+        ) {
+          toast({
+            title: "Task Updated",
+            description: `${assigneeName} has been notified of this assignment.`,
+          });
         }
-        setEditTask(null); fetchTasks();
+        setEditTask(null);
+        fetchTasks();
       }
     } else {
       // Use .select("id").single() to get the new task ID directly
@@ -150,21 +230,37 @@ function TaskBoard() {
         .insert([{ ...payload, created_by: user.id }])
         .select("id")
         .single();
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (error)
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       else {
         const leadId = fd.get("linked_lead") as string;
         if (leadId && newTask) {
           try {
-            const { error: linkErr } = await supabase.from("task_lead_links").insert({ task_id: newTask.id, lead_id: leadId });
+            const { error: linkErr } = await supabase
+              .from("task_lead_links")
+              .insert({ task_id: newTask.id, lead_id: leadId });
             if (linkErr) throw linkErr;
           } catch (linkErr) {
             console.error("Failed to link task to lead:", linkErr);
-            captureScopedError("tasks", { taskId: newTask.id, leadId }, linkErr);
+            captureScopedError(
+              "tasks",
+              { taskId: newTask.id, leadId },
+              linkErr,
+            );
           }
         }
-        const assigneeName = payload.assigned_to ? profiles.find(p => p.user_id === payload.assigned_to)?.full_name : null;
+        const assigneeName = payload.assigned_to
+          ? profiles.find((p) => p.user_id === payload.assigned_to)?.full_name
+          : null;
         if (assigneeName && payload.assigned_to !== user.id) {
-          toast({ title: "Task Created", description: `${assigneeName} has been notified of this assignment.` });
+          toast({
+            title: "Task Created",
+            description: `${assigneeName} has been notified of this assignment.`,
+          });
         }
         setShowAdd(false);
         fetchTasks();
@@ -174,8 +270,18 @@ function TaskBoard() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error: delErr } = await supabase.from("tasks").delete().eq("id", deleteId);
-    if (delErr) { toast({ title: "Error deleting task", description: delErr.message, variant: "destructive" }); return; }
+    const { error: delErr } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("id", deleteId);
+    if (delErr) {
+      toast({
+        title: "Error deleting task",
+        description: delErr.message,
+        variant: "destructive",
+      });
+      return;
+    }
     setDeleteId(null);
     fetchTasks();
   };
@@ -186,14 +292,20 @@ function TaskBoard() {
   };
 
   const priorityColor = (p: string) => {
-    const map: Record<string, string> = { critical: "bg-red-500", high: "bg-orange-500", medium: "bg-yellow-500", low: "bg-green-500" };
+    const map: Record<string, string> = {
+      critical: "bg-red-500",
+      high: "bg-orange-500",
+      medium: "bg-yellow-500",
+      low: "bg-green-500",
+    };
     return map[p] || "bg-muted";
   };
 
   const statusColumnStyle = (s: string) => {
     const map: Record<string, string> = {
       todo: "bg-muted/30 border border-border/50 border-t-2 border-t-yellow-400",
-      in_progress: "bg-muted/30 border border-border/50 border-t-2 border-t-blue-500",
+      in_progress:
+        "bg-muted/30 border border-border/50 border-t-2 border-t-blue-500",
       done: "bg-muted/30 border border-border/50 border-t-2 border-t-green-500",
     };
     return map[s] || "bg-muted/30 border border-border/50";
@@ -224,7 +336,8 @@ function TaskBoard() {
     return profiles.find((p) => p.user_id === userId)?.full_name ?? "Unknown";
   };
 
-  const deptLabel = (v: string | null) => DEPARTMENTS.find((d) => d.value === v)?.label;
+  const deptLabel = (v: string | null) =>
+    DEPARTMENTS.find((d) => d.value === v)?.label;
 
   const isFormOpen = showAdd || !!editTask;
 
@@ -243,7 +356,10 @@ function TaskBoard() {
             <div key={col} className="bg-muted/50 rounded-xl p-3 space-y-3">
               <Skeleton className="h-5 w-24 shimmer" />
               {[1, 2, 3].map((card) => (
-                <Skeleton key={card} className="h-24 w-full rounded-xl shimmer" />
+                <Skeleton
+                  key={card}
+                  className="h-24 w-full rounded-xl shimmer"
+                />
               ))}
             </div>
           ))}
@@ -256,12 +372,20 @@ function TaskBoard() {
     <div className="space-y-4 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight gradient-text">Task Board</h1>
+          <h1 className="text-2xl font-bold tracking-tight gradient-text">
+            Task Board
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {isOwner ? "All team tasks" : "Your assigned tasks"}
           </p>
         </div>
-        <Button onClick={() => { setFormErrors({}); setShowAdd(true); }} className="gap-2 btn-gradient">
+        <Button
+          onClick={() => {
+            setFormErrors({});
+            setShowAdd(true);
+          }}
+          className="gap-2 btn-gradient"
+        >
           <Plus className="h-4 w-4" /> New Task
         </Button>
       </div>
@@ -292,7 +416,9 @@ function TaskBoard() {
               variant={activeDept === d.value ? "default" : "outline"}
               size="sm"
               className="h-7 text-xs"
-              onClick={() => setActiveDept(activeDept === d.value ? null : d.value)}
+              onClick={() =>
+                setActiveDept(activeDept === d.value ? null : d.value)
+              }
             >
               {d.label}
             </Button>
@@ -303,7 +429,9 @@ function TaskBoard() {
       {/* Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[60vh]">
         {TASK_STATUSES.map((status) => {
-          const columnTasks = filteredTasks.filter((t) => t.status === status.value);
+          const columnTasks = filteredTasks.filter(
+            (t) => t.status === status.value,
+          );
           return (
             <div
               key={status.value}
@@ -312,8 +440,13 @@ function TaskBoard() {
               onDrop={() => handleDrop(status.value)}
             >
               <div className="flex items-center justify-between mb-3 px-0.5">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{status.label}</h3>
-                <Badge variant="secondary" className="text-[10px] font-mono h-5 min-w-[1.25rem] flex items-center justify-center">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  {status.label}
+                </h3>
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] font-mono h-5 min-w-[1.25rem] flex items-center justify-center"
+                >
                   {columnTasks.length}
                 </Badge>
               </div>
@@ -321,7 +454,9 @@ function TaskBoard() {
                 {columnTasks.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-8 text-muted-foreground border-2 border-dashed border-border/30 rounded-xl">
                     <ClipboardList className="h-6 w-6 mb-1.5 opacity-30" />
-                    <p className="text-xs text-muted-foreground/60">Drop tasks here</p>
+                    <p className="text-xs text-muted-foreground/60">
+                      Drop tasks here
+                    </p>
                   </div>
                 )}
                 {columnTasks.map((task) => {
@@ -337,42 +472,74 @@ function TaskBoard() {
                       <CardContent className="p-3 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2 flex-1">
-                            <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${priorityColor(task.priority)}`} />
-                            <p className="font-semibold text-sm leading-tight">{task.title}</p>
+                            <div
+                              className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${priorityColor(task.priority)}`}
+                            />
+                            <p className="font-semibold text-sm leading-tight">
+                              {task.title}
+                            </p>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => { e.stopPropagation(); setFormErrors({}); setEditTask(task); }} className="p-1 rounded hover:bg-muted">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFormErrors({});
+                                setEditTask(task);
+                              }}
+                              className="p-1 rounded hover:bg-muted"
+                            >
                               <Pencil className="h-3 w-3 text-muted-foreground" />
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); setDeleteId(task.id); }} className="p-1 rounded hover:bg-destructive/10">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(task.id);
+                              }}
+                              className="p-1 rounded hover:bg-destructive/10"
+                            >
                               <Trash2 className="h-3 w-3 text-destructive" />
                             </button>
                           </div>
                         </div>
                         {task.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {task.description}
+                          </p>
                         )}
                         <div className="flex items-center flex-wrap gap-2 text-xs text-muted-foreground">
                           {linkedLead && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-accent/50 text-accent">
-                              <Building2 className="h-2.5 w-2.5 mr-0.5" />{linkedLead}
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0 border-accent/50 text-accent"
+                            >
+                              <Building2 className="h-2.5 w-2.5 mr-0.5" />
+                              {linkedLead}
                             </Badge>
                           )}
                           {task.department && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0"
+                            >
                               {deptLabel(task.department)}
                             </Badge>
                           )}
                           {task.due_date && (
-                            <span className={`flex items-center gap-1 ${dueDateColor(task.due_date)}`}>
+                            <span
+                              className={`flex items-center gap-1 ${dueDateColor(task.due_date)}`}
+                            >
                               {new Date(task.due_date) <= new Date() && (
                                 <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
                               )}
-                              <Calendar className="h-3 w-3" /> {format(new Date(task.due_date), "MMM d, h:mm a")}
+                              <Calendar className="h-3 w-3" />{" "}
+                              {format(new Date(task.due_date), "MMM d, h:mm a")}
                             </span>
                           )}
                           {task.assigned_to && (
-                            <span className="flex items-center gap-1"><User className="h-3 w-3" /> {getAssigneeName(task.assigned_to)}</span>
+                            <span className="flex items-center gap-1">
+                              <User className="h-3 w-3" />{" "}
+                              {getAssigneeName(task.assigned_to)}
+                            </span>
                           )}
                         </div>
                       </CardContent>
@@ -386,38 +553,77 @@ function TaskBoard() {
       </div>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={() => { setShowAdd(false); setEditTask(null); setFormErrors({}); }}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={() => {
+          setShowAdd(false);
+          setEditTask(null);
+          setFormErrors({});
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editTask ? "Edit Task" : "Create Task"}</DialogTitle>
-            <DialogDescription>{editTask ? "Update the task details below." : "Fill in the task details to create a new task."}</DialogDescription>
+            <DialogDescription>
+              {editTask
+                ? "Update the task details below."
+                : "Fill in the task details to create a new task."}
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <Label>Title *</Label>
-              <Input name="title" defaultValue={editTask?.title ?? ""} required />
-              {formErrors.title && <p className="text-xs text-destructive mt-1">{formErrors.title}</p>}
+              <Input
+                name="title"
+                defaultValue={editTask?.title ?? ""}
+                required
+              />
+              {formErrors.title && (
+                <p className="text-xs text-destructive mt-1">
+                  {formErrors.title}
+                </p>
+              )}
             </div>
-            <div><Label>Description</Label><Textarea name="description" defaultValue={editTask?.description ?? ""} /></div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                name="description"
+                defaultValue={editTask?.description ?? ""}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Priority</Label>
-                <Select name="priority" defaultValue={editTask?.priority ?? "medium"}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  name="priority"
+                  defaultValue={editTask?.priority ?? "medium"}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {TASK_PRIORITIES.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Department</Label>
-                <Select name="department" defaultValue={editTask?.department ?? ""}>
-                  <SelectTrigger><SelectValue placeholder="Select dept" /></SelectTrigger>
+                <Select
+                  name="department"
+                  defaultValue={editTask?.department ?? ""}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select dept" />
+                  </SelectTrigger>
                   <SelectContent>
                     {DEPARTMENTS.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      <SelectItem key={d.value} value={d.value}>
+                        {d.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -426,31 +632,60 @@ function TaskBoard() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Assign To</Label>
-                <Select name="assigned_to" defaultValue={editTask?.assigned_to ?? ""}>
-                  <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
+                <Select
+                  name="assigned_to"
+                  defaultValue={editTask?.assigned_to ?? ""}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select member" />
+                  </SelectTrigger>
                   <SelectContent>
                     {profiles.map((p) => (
-                      <SelectItem key={p.user_id} value={p.user_id}>{p.full_name}</SelectItem>
+                      <SelectItem key={p.user_id} value={p.user_id}>
+                        {p.full_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Due Date & Time</Label><Input name="due_date" type="datetime-local" defaultValue={editTask?.due_date ? format(new Date(editTask.due_date), "yyyy-MM-dd'T'HH:mm") : ""} /></div>
+              <div>
+                <Label>Due Date & Time</Label>
+                <Input
+                  name="due_date"
+                  type="datetime-local"
+                  defaultValue={
+                    editTask?.due_date
+                      ? format(
+                          new Date(editTask.due_date),
+                          "yyyy-MM-dd'T'HH:mm",
+                        )
+                      : ""
+                  }
+                />
+              </div>
             </div>
             {!editTask && (
               <div>
                 <Label>Link to Lead</Label>
                 <Select name="linked_lead">
-                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Optional" />
+                  </SelectTrigger>
                   <SelectContent>
                     {leads.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>{l.company_name}</SelectItem>
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.company_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
-            <DialogFooter><Button type="submit">{editTask ? "Save Changes" : "Create Task"}</Button></DialogFooter>
+            <DialogFooter>
+              <Button type="submit">
+                {editTask ? "Save Changes" : "Create Task"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -460,11 +695,18 @@ function TaskBoard() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete task?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

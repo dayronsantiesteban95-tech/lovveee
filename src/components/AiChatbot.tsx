@@ -21,7 +21,9 @@ async function streamChat({
   onDelta: (t: string) => void;
   onDone: () => void;
 }) {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.access_token) {
     toast.error("Please log in to use the AI assistant.");
     onDone();
@@ -44,7 +46,9 @@ async function streamChat({
     return;
   }
   if (resp.status === 402) {
-    toast.error("AI credits exhausted. Please add funds in workspace settings.");
+    toast.error(
+      "AI credits exhausted. Please add funds in workspace settings.",
+    );
     onDone();
     return;
   }
@@ -68,7 +72,10 @@ async function streamChat({
       if (line.startsWith(":") || line.trim() === "") continue;
       if (!line.startsWith("data: ")) continue;
       const json = line.slice(6).trim();
-      if (json === "[DONE]") { done = true; break; }
+      if (json === "[DONE]") {
+        done = true;
+        break;
+      }
       try {
         const parsed = JSON.parse(json);
         const c = parsed.choices?.[0]?.delta?.content as string | undefined;
@@ -115,7 +122,9 @@ export default function AiChatbot() {
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
-          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+          return prev.map((m, i) =>
+            i === prev.length - 1 ? { ...m, content: assistantSoFar } : m,
+          );
         }
         return [...prev, { role: "assistant", content: assistantSoFar }];
       });
@@ -148,7 +157,11 @@ export default function AiChatbot() {
         className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
         aria-label="Open AI Assistant"
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {open ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <MessageCircle className="h-6 w-6" />
+        )}
       </button>
 
       {/* Chat panel */}
@@ -161,7 +174,9 @@ export default function AiChatbot() {
             </div>
             <div>
               <p className="text-sm font-semibold">Anika AI</p>
-              <p className="text-[11px] text-muted-foreground">Ask about leads, tasks & pipeline</p>
+              <p className="text-[11px] text-muted-foreground">
+                Ask about leads, tasks & pipeline
+              </p>
             </div>
           </div>
 
@@ -186,7 +201,10 @@ export default function AiChatbot() {
               </div>
             )}
             {messages.map((m, i) => (
-              <div key={i} className={`flex gap-2 mb-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                key={i}
+                className={`flex gap-2 mb-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 {m.role === "assistant" && (
                   <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
                     <Bot className="h-3 w-3 text-primary" />
@@ -201,7 +219,9 @@ export default function AiChatbot() {
                 >
                   {m.role === "assistant" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                      <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{m.content}</ReactMarkdown>
+                      <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                        {m.content}
+                      </ReactMarkdown>
                     </div>
                   ) : (
                     m.content

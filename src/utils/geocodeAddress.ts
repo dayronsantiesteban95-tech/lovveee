@@ -1,4 +1,6 @@
-const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined;
+const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY as
+  | string
+  | undefined;
 
 export async function geocodeAddress(
   address: string,

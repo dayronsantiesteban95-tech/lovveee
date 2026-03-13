@@ -6,10 +6,7 @@
  */
 
 import { useEffect, useState, useMemo } from "react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +38,8 @@ type HubMode = "locked" | "override";
 function statusDot(status: string): string {
   const s = status.toLowerCase();
   if (s === "idle" || s === "active") return "Active";
-  if (s === "finishing_soon" || s === "on_load" || s === "in_progress") return "On Load";
+  if (s === "finishing_soon" || s === "on_load" || s === "in_progress")
+    return "On Load";
   return "Inactive";
 }
 
@@ -62,7 +60,12 @@ interface DriverCardProps {
   onAssign: () => void;
 }
 
-function DriverCard({ entry, isSelected, isSuggested, onAssign }: DriverCardProps) {
+function DriverCard({
+  entry,
+  isSelected,
+  isSuggested,
+  onAssign,
+}: DriverCardProps) {
   const { driver, distanceMi, reasoning } = entry;
 
   const distanceLabel =
@@ -77,8 +80,8 @@ function DriverCard({ entry, isSelected, isSuggested, onAssign }: DriverCardProp
         isSuggested
           ? "border-orange-500 bg-orange-500/5 ring-1 ring-orange-500/30"
           : isSelected
-          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-          : "border-border hover:border-muted-foreground/40 hover:bg-muted/20"
+            ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+            : "border-border hover:border-muted-foreground/40 hover:bg-muted/20"
       }`}
     >
       {/* AI badge (top-left corner) */}
@@ -107,11 +110,10 @@ function DriverCard({ entry, isSelected, isSuggested, onAssign }: DriverCardProp
       {/* Info */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">{dot} {driver.full_name}</span>
-          <Badge
-            variant="outline"
-            className="shrink-0 px-1.5 text-[10px]"
-          >
+          <span className="text-sm font-medium">
+            {dot} {driver.full_name}
+          </span>
+          <Badge variant="outline" className="shrink-0 px-1.5 text-[10px]">
             {driver.hub.toUpperCase()}
           </Badge>
         </div>
@@ -122,7 +124,9 @@ function DriverCard({ entry, isSelected, isSuggested, onAssign }: DriverCardProp
 
       {/* Distance badge + assign button */}
       <div className="flex shrink-0 flex-col items-end gap-1.5">
-        <span className="font-mono text-xs text-muted-foreground">{distanceLabel}</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {distanceLabel}
+        </span>
         <Button
           size="sm"
           variant={isSelected ? "default" : isSuggested ? "default" : "outline"}
@@ -186,15 +190,20 @@ export default function DriverPickerModal({
     if (!pickupAddress) return "PHX";
     const addr = pickupAddress.toLowerCase();
     if (addr.includes("atlanta") || addr.includes("atl")) return "ATL";
-    if (addr.includes("los angeles") || addr.includes(" la ") || addr.includes(", la")) return "LA";
+    if (
+      addr.includes("los angeles") ||
+      addr.includes(" la ") ||
+      addr.includes(", la")
+    )
+      return "LA";
     return "PHX";
   }, [pickupAddress]);
 
-  const { drivers: scored, loading, refresh } = useDriverAvailability(
-    resolvedLat,
-    resolvedLng,
-    inferredHub,
-  );
+  const {
+    drivers: scored,
+    loading,
+    refresh,
+  } = useDriverAvailability(resolvedLat, resolvedLng, inferredHub);
 
   // AI top suggestion = first in scored list (highest score)
   const topSuggestion: DriverScore | undefined = scored[0];
@@ -214,7 +223,8 @@ export default function DriverPickerModal({
 
   // Separate AI suggestion from the rest for display
   const suggestionEntry =
-    topSuggestion && filtered.some((e) => e.driver.id === topSuggestion.driver.id)
+    topSuggestion &&
+    filtered.some((e) => e.driver.id === topSuggestion.driver.id)
       ? topSuggestion
       : null;
   const restList = suggestionEntry
@@ -227,12 +237,19 @@ export default function DriverPickerModal({
       : pickupAddress;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="flex max-h-[90vh] max-w-lg flex-col gap-0 overflow-hidden p-0">
         {/* Header */}
         <div className="flex items-start justify-between border-b px-5 pt-5 pb-4">
           <div>
-            <h2 className="text-base font-bold tracking-tight">Assign Driver</h2>
+            <h2 className="text-base font-bold tracking-tight">
+              Assign Driver
+            </h2>
             {pickupAddress && (
               <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3 shrink-0 text-orange-500" />
@@ -250,7 +267,12 @@ export default function DriverPickerModal({
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={onClose}
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -290,7 +312,9 @@ export default function DriverPickerModal({
                   : "bg-muted text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600"
               }`}
             >
-              {hubMode === "override" ? "? Override -- All Hubs" : "Override -- All Hubs"}
+              {hubMode === "override"
+                ? "? Override -- All Hubs"
+                : "Override -- All Hubs"}
             </button>
           </div>
         </div>
@@ -298,7 +322,9 @@ export default function DriverPickerModal({
         {/* Override warning banner */}
         {hubMode === "override" && (
           <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-xs text-amber-700 dark:text-amber-400">
-            <span className="shrink-0 font-bold">? Cross-hub override active.</span>
+            <span className="shrink-0 font-bold">
+              ? Cross-hub override active.
+            </span>
             <span>Showing all hubs -- use only in emergencies.</span>
           </div>
         )}
@@ -314,7 +340,9 @@ export default function DriverPickerModal({
 
           {!loading && filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
-              <p className="text-sm">No {inferredHub.toUpperCase()} drivers available</p>
+              <p className="text-sm">
+                No {inferredHub.toUpperCase()} drivers available
+              </p>
               <p className="text-xs opacity-60">
                 {hubMode === "locked"
                   ? 'Use "Override -- All Hubs" to cross-assign in an emergency'
@@ -331,7 +359,10 @@ export default function DriverPickerModal({
                 isSelected={currentDriverId === suggestionEntry.driver.id}
                 isSuggested
                 onAssign={() =>
-                  onSelect(suggestionEntry.driver.id, suggestionEntry.driver.full_name)
+                  onSelect(
+                    suggestionEntry.driver.id,
+                    suggestionEntry.driver.full_name,
+                  )
                 }
               />
             </div>
@@ -345,7 +376,9 @@ export default function DriverPickerModal({
                 entry={entry}
                 isSelected={currentDriverId === entry.driver.id}
                 isSuggested={false}
-                onAssign={() => onSelect(entry.driver.id, entry.driver.full_name)}
+                onAssign={() =>
+                  onSelect(entry.driver.id, entry.driver.full_name)
+                }
               />
             ))}
         </div>
@@ -355,8 +388,8 @@ export default function DriverPickerModal({
           <div className="border-t bg-orange-500/5 px-4 py-2.5">
             <p className="text-[11px] text-orange-700 dark:text-orange-400 leading-snug">
               <Star className="mr-1 inline h-3 w-3" />
-              <strong>AI Pick:</strong>{" "}
-              {suggestionEntry.driver.full_name} -- {suggestionEntry.reasoning}
+              <strong>AI Pick:</strong> {suggestionEntry.driver.full_name} --{" "}
+              {suggestionEntry.reasoning}
             </p>
           </div>
         )}

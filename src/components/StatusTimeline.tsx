@@ -27,27 +27,64 @@ interface StatusTimelineProps {
 }
 
 // --- Helpers -----------------------------------------
-const STATUS_CONFIG: Record<string, { label: string; dot: string; text: string }> = {
-  pending:    { label: "Pending",    dot: "bg-gray-400",   text: "text-gray-500 dark:text-gray-400" },
-  assigned:   { label: "Assigned",   dot: "bg-blue-500",   text: "text-blue-600 dark:text-blue-400" },
-  blasted:    { label: "Blasted",    dot: "bg-violet-500", text: "text-violet-600 dark:text-violet-400" },
-  in_progress:{ label: "In Transit", dot: "bg-yellow-400", text: "text-yellow-600 dark:text-yellow-400" },
-  delivered:  { label: "Delivered",  dot: "bg-green-500",  text: "text-green-600 dark:text-green-400" },
-  completed:  { label: "Completed",  dot: "bg-green-600",  text: "text-green-600 dark:text-green-400" },
-  cancelled:  { label: "Cancelled",  dot: "bg-gray-500",   text: "text-gray-500 dark:text-gray-400" },
-  failed:     { label: "Failed",     dot: "bg-red-500",    text: "text-red-600 dark:text-red-400" },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
+  pending: {
+    label: "Pending",
+    dot: "bg-gray-400",
+    text: "text-gray-500 dark:text-gray-400",
+  },
+  assigned: {
+    label: "Assigned",
+    dot: "bg-blue-500",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+  blasted: {
+    label: "Blasted",
+    dot: "bg-violet-500",
+    text: "text-violet-600 dark:text-violet-400",
+  },
+  in_progress: {
+    label: "In Transit",
+    dot: "bg-yellow-400",
+    text: "text-yellow-600 dark:text-yellow-400",
+  },
+  delivered: {
+    label: "Delivered",
+    dot: "bg-green-500",
+    text: "text-green-600 dark:text-green-400",
+  },
+  completed: {
+    label: "Completed",
+    dot: "bg-green-600",
+    text: "text-green-600 dark:text-green-400",
+  },
+  cancelled: {
+    label: "Cancelled",
+    dot: "bg-gray-500",
+    text: "text-gray-500 dark:text-gray-400",
+  },
+  failed: {
+    label: "Failed",
+    dot: "bg-red-500",
+    text: "text-red-600 dark:text-red-400",
+  },
 };
 
 function fmtTimelineTs(ts: string): string {
   try {
     const d = new Date(ts);
-    return d.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    }).replace(",", " ?");
+    return d
+      .toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", " ?");
   } catch {
     return ts;
   }
@@ -66,7 +103,9 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
       // Fetch status events for this load
       const { data: evtData, error } = await supabase
         .from("load_status_events")
-        .select("id, load_id, previous_status, new_status, changed_by, reason, created_at")
+        .select(
+          "id, load_id, previous_status, new_status, changed_by, reason, created_at",
+        )
         .eq("load_id", loadId)
         .order("created_at", { ascending: false });
 
@@ -77,13 +116,15 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
       }
 
       // Gather unique changed_by UUIDs to resolve names
-      const userIds: string[] = [...new Set(
-        evtData
-          .map((e: StatusEvent) => e.changed_by)
-          .filter(Boolean) as string[]
-      )];
+      const userIds: string[] = [
+        ...new Set(
+          evtData
+            .map((e: StatusEvent) => e.changed_by)
+            .filter(Boolean) as string[],
+        ),
+      ];
 
-      let nameMap: Record<string, string> = {};
+      const nameMap: Record<string, string> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
@@ -99,7 +140,9 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
 
       const enriched: StatusEvent[] = evtData.map((e: StatusEvent) => ({
         ...e,
-        changedByName: e.changed_by ? (nameMap[e.changed_by] ?? "Dispatcher") : "System",
+        changedByName: e.changed_by
+          ? (nameMap[e.changed_by] ?? "Dispatcher")
+          : "System",
       }));
 
       if (!cancelled) {
@@ -109,7 +152,9 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
     }
 
     fetchEvents();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [loadId]);
 
   if (loading) {
@@ -153,7 +198,9 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
           return (
             <div key={evt.id} className="flex items-start gap-3">
               {/* Dot */}
-              <div className={`h-2.5 w-2.5 rounded-full shrink-0 mt-0.5 ring-2 ring-background ${cfg.dot} ${isLatest ? "ring-offset-1" : ""}`} />
+              <div
+                className={`h-2.5 w-2.5 rounded-full shrink-0 mt-0.5 ring-2 ring-background ${cfg.dot} ${isLatest ? "ring-offset-1" : ""}`}
+              />
 
               {/* Content */}
               <div className="flex-1 min-w-0">
@@ -170,7 +217,13 @@ export default function StatusTimeline({ loadId }: StatusTimelineProps) {
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   {fmtTimelineTs(evt.created_at)}
                   {evt.changedByName && (
-                    <> ? <span className="text-foreground/70">{evt.changedByName}</span></>
+                    <>
+                      {" "}
+                      ?{" "}
+                      <span className="text-foreground/70">
+                        {evt.changedByName}
+                      </span>
+                    </>
                   )}
                 </p>
                 {evt.reason && (

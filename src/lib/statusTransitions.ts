@@ -21,17 +21,24 @@ export type LoadStatus =
 // Note: "completed", "cancelled", "failed" are terminal -- no forward transitions.
 // Backwards transitions (reopen) are explicitly allowed from failed/cancelled.
 export const ALLOWED_TRANSITIONS: Record<string, LoadStatus[]> = {
-  pending:          ["assigned", "blasted", "cancelled"],
-  assigned:         ["in_progress", "arrived_pickup", "pending", "cancelled", "failed"],
-  blasted:          ["assigned", "in_progress", "pending", "cancelled"],
-  in_progress:      ["arrived_pickup", "in_transit", "arrived_delivery", "delivered", "cancelled", "failed"],
-  arrived_pickup:   ["in_transit", "in_progress", "cancelled", "failed"],
-  in_transit:       ["arrived_delivery", "delivered", "cancelled", "failed"],
+  pending: ["assigned", "blasted", "cancelled"],
+  assigned: ["in_progress", "arrived_pickup", "pending", "cancelled", "failed"],
+  blasted: ["assigned", "in_progress", "pending", "cancelled"],
+  in_progress: [
+    "arrived_pickup",
+    "in_transit",
+    "arrived_delivery",
+    "delivered",
+    "cancelled",
+    "failed",
+  ],
+  arrived_pickup: ["in_transit", "in_progress", "cancelled", "failed"],
+  in_transit: ["arrived_delivery", "delivered", "cancelled", "failed"],
   arrived_delivery: ["delivered", "completed", "in_transit", "failed"],
-  delivered:        ["completed", "failed"],
-  completed:        [],
-  cancelled:        ["pending"],  // allow reopen
-  failed:           ["pending"],  // allow reopen
+  delivered: ["completed", "failed"],
+  completed: [],
+  cancelled: ["pending"], // allow reopen
+  failed: ["pending"], // allow reopen
 };
 
 // Statuses that mean a driver is actively working a load
@@ -48,8 +55,17 @@ export const TERMINAL_STATUSES: LoadStatus[] = ["completed"];
 
 // All valid statuses
 export const ALL_STATUSES: LoadStatus[] = [
-  "pending", "assigned", "blasted", "in_progress", "arrived_pickup",
-  "in_transit", "arrived_delivery", "delivered", "completed", "cancelled", "failed",
+  "pending",
+  "assigned",
+  "blasted",
+  "in_progress",
+  "arrived_pickup",
+  "in_transit",
+  "arrived_delivery",
+  "delivered",
+  "completed",
+  "cancelled",
+  "failed",
 ];
 
 /**

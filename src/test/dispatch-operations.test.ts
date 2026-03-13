@@ -10,7 +10,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { isTransitionAllowed, ALLOWED_TRANSITIONS } from "@/lib/statusTransitions";
+import {
+  isTransitionAllowed,
+  ALLOWED_TRANSITIONS,
+} from "@/lib/statusTransitions";
 import { calculateRate, EMPTY_ANIKA_MODIFIERS } from "@/lib/rateCalculator";
 import type { AnikaModifiers } from "@/pages/dispatch/types";
 
@@ -30,8 +33,7 @@ function calculateShiftPay(
   const totalWorkHours = totalWorkMinutes / 60;
   const regularHours = Math.min(totalWorkHours, 8);
   const overtimeHours = Math.max(totalWorkHours - 8, 0);
-  const totalPay =
-    regularHours * hourlyRate + overtimeHours * hourlyRate * 1.5;
+  const totalPay = regularHours * hourlyRate + overtimeHours * hourlyRate * 1.5;
   return { regularHours, overtimeHours, totalPay };
 }
 

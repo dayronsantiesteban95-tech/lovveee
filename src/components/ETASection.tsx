@@ -29,7 +29,15 @@ export default function ETASection({
 }: ETASectionProps) {
   const hasAddresses = !!(pickupAddress?.trim() && deliveryAddress?.trim());
 
-  const { eta, durationMinutes, distanceMiles, loading, error, lastUpdated, refresh } = useETA(
+  const {
+    eta,
+    durationMinutes,
+    distanceMiles,
+    loading,
+    error,
+    lastUpdated,
+    refresh,
+  } = useETA(
     pickupAddress ?? "",
     deliveryAddress ?? "",
     enabled && hasAddresses,
@@ -40,17 +48,17 @@ export default function ETASection({
   const color = etaStatusColor(eta, slaDeadline);
 
   const accentClasses: Record<string, string> = {
-    green:  "border-green-500/30 bg-green-500/5",
+    green: "border-green-500/30 bg-green-500/5",
     yellow: "border-yellow-500/30 bg-yellow-500/5",
-    red:    "border-red-500/30 bg-red-500/5",
-    gray:   "border-border/30 bg-muted/10",
+    red: "border-red-500/30 bg-red-500/5",
+    gray: "border-border/30 bg-muted/10",
   };
 
   const labelClasses: Record<string, string> = {
-    green:  "text-green-700 dark:text-green-400",
+    green: "text-green-700 dark:text-green-400",
     yellow: "text-yellow-700 dark:text-yellow-400",
-    red:    "text-red-700 dark:text-red-400",
-    gray:   "text-muted-foreground",
+    red: "text-red-700 dark:text-red-400",
+    gray: "text-muted-foreground",
   };
 
   return (
@@ -59,7 +67,9 @@ export default function ETASection({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Navigation className={`h-3.5 w-3.5 ${labelClasses[color]}`} />
-          <span className={`text-[10px] uppercase tracking-wider font-semibold ${labelClasses[color]}`}>
+          <span
+            className={`text-[10px] uppercase tracking-wider font-semibold ${labelClasses[color]}`}
+          >
             Live ETA
           </span>
         </div>
@@ -86,7 +96,9 @@ export default function ETASection({
       {/* Error state */}
       {!loading && (error || !hasAddresses) && (
         <p className="text-[11px] text-muted-foreground">
-          {!hasAddresses ? "Addresses not set -- cannot calculate ETA." : "ETA unavailable"}
+          {!hasAddresses
+            ? "Addresses not set -- cannot calculate ETA."
+            : "ETA unavailable"}
         </p>
       )}
 
@@ -95,9 +107,14 @@ export default function ETASection({
         <div className="space-y-1.5">
           {/* Estimated Arrival */}
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">Estimated Arrival</span>
+            <span className="text-[11px] text-muted-foreground">
+              Estimated Arrival
+            </span>
             <span className={`text-sm font-bold ${labelClasses[color]}`}>
-              {eta.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              {eta.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+              })}
             </span>
           </div>
 
@@ -128,7 +145,12 @@ export default function ETASection({
           {/* Last updated */}
           {lastUpdated && (
             <p className="text-[10px] text-muted-foreground/60 pt-1 border-t border-border/20">
-              Updated {lastUpdated.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+              Updated{" "}
+              {lastUpdated.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
             </p>
           )}
         </div>

@@ -13,7 +13,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare const google: any;
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Truck } from "lucide-react";
 import { useRealtimeDriverLocations } from "@/hooks/useRealtimeDriverLocations";
 
@@ -27,13 +27,13 @@ const POLL_TIMEOUT_MS = 15_000;
 // -- Status color map ----------------------------------------------------------
 
 const STATUS_COLORS: Record<string, string> = {
-  in_progress:      "#22c55e", // green
-  in_transit:       "#22c55e",
-  arrived_pickup:   "#f97316", // orange
+  in_progress: "#22c55e", // green
+  in_transit: "#22c55e",
+  arrived_pickup: "#f97316", // orange
   arrived_delivery: "#a855f7", // purple
-  assigned:         "#3b82f6", // blue
-  delivered:        "#6b7280", // gray
-  idle:             "#94a3b8", // slate
+  assigned: "#3b82f6", // blue
+  delivered: "#6b7280", // gray
+  idle: "#94a3b8", // slate
 };
 
 function statusColor(status?: string | null): string {
@@ -43,22 +43,66 @@ function statusColor(status?: string | null): string {
 // -- Dark map styles matching app theme ----------------------------------------
 
 const DARK_MAP_STYLES = [
-  { elementType: "geometry",              stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.stroke",    stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.fill",      stylers: [{ color: "#94a3b8" }] },
-  { featureType: "road", elementType: "geometry",        stylers: [{ color: "#1e293b" }] },
-  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#0f172a" }] },
-  { featureType: "road.highway", elementType: "geometry",        stylers: [{ color: "#334155" }] },
-  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
-  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
-  { featureType: "water", elementType: "geometry",          stylers: [{ color: "#0c1222" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#1e3a5f" }] },
-  { featureType: "poi",     stylers: [{ visibility: "off" }] },
+  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#1e293b" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#0f172a" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#334155" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1e293b" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#64748b" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0c1222" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#1e3a5f" }],
+  },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
-  { featureType: "administrative", elementType: "geometry",             stylers: [{ color: "#1e293b" }] },
-  { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#475569" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
-  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+  {
+    featureType: "administrative",
+    elementType: "geometry",
+    stylers: [{ color: "#1e293b" }],
+  },
+  {
+    featureType: "administrative.country",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#475569" }],
+  },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#64748b" }],
+  },
+  {
+    featureType: "landscape",
+    elementType: "geometry",
+    stylers: [{ color: "#0f172a" }],
+  },
 ];
 
 // -- Wait for Maps API (loaded via static script tag in index.html) ------------
@@ -67,10 +111,7 @@ function waitForMaps(): Promise<boolean> {
   return new Promise((resolve) => {
     // Already available -- resolve immediately
     try {
-      if (
-        typeof window !== "undefined" &&
-        (window as any).google?.maps?.Map
-      ) {
+      if (typeof window !== "undefined" && (window as any).google?.maps?.Map) {
         resolve(true);
         return;
       }
@@ -128,17 +169,17 @@ function buildMarkerIcon(
 
 // -- Component -----------------------------------------------------------------
 
-export default function LiveDriverMap() {
+const LiveDriverMap = memo(function LiveDriverMap() {
   const { drivers, realtimeStatus } = useRealtimeDriverLocations();
 
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapsTimedOut, setMapsTimedOut] = useState(false);
 
-  const mapDivRef      = useRef<HTMLDivElement>(null);
+  const mapDivRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
-  const markersRef     = useRef<Map<string, any>>(new Map());
-  const infoWindowRef  = useRef<any>(null);
+  const markersRef = useRef<Map<string, any>>(new Map());
+  const infoWindowRef = useRef<any>(null);
   const initStartedRef = useRef(false);
 
   // -- Initialize map once Google Maps API is available ----------------------
@@ -201,11 +242,16 @@ export default function LiveDriverMap() {
     drivers.forEach((driver) => {
       if (driver.latitude == null || driver.longitude == null) return;
 
-      const name      = driver.driver_name ?? "Driver";
-      const initials  = name.split(" ").map((n: string) => n[0] ?? "").join("").slice(0, 2).toUpperCase();
-      const color     = statusColor((driver as any).load_status);
+      const name = driver.driver_name ?? "Driver";
+      const initials = name
+        .split(" ")
+        .map((n: string) => n[0] ?? "")
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+      const color = statusColor((driver as any).load_status);
       const isSelected = selectedDriverId === driver.driver_id;
-      const position  = { lat: driver.latitude, lng: driver.longitude };
+      const position = { lat: driver.latitude, lng: driver.longitude };
 
       let marker = markersRef.current.get(driver.driver_id);
 
@@ -276,9 +322,9 @@ export default function LiveDriverMap() {
 
   // -- Status dot config -----------------------------------------------------
   const statusDot = {
-    connected:    { color: "bg-emerald-400", label: "Live" },
-    reconnecting: { color: "bg-amber-400",   label: "Reconnecting" },
-    disconnected: { color: "bg-red-400",      label: "Disconnected" },
+    connected: { color: "bg-emerald-400", label: "Live" },
+    reconnecting: { color: "bg-amber-400", label: "Reconnecting" },
+    disconnected: { color: "bg-red-400", label: "Disconnected" },
   }[realtimeStatus];
 
   // -- Timed-out / no-key state ----------------------------------------------
@@ -290,10 +336,12 @@ export default function LiveDriverMap() {
             <Truck className="h-8 w-8 text-red-400" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">Map failed to load</p>
+            <p className="text-sm font-semibold text-foreground">
+              Map failed to load
+            </p>
             <p className="text-xs text-muted-foreground">
-              Google Maps API did not become available within 15 seconds.
-              Check the console for CSP or network errors.
+              Google Maps API did not become available within 15 seconds. Check
+              the console for CSP or network errors.
             </p>
           </div>
           <button
@@ -383,7 +431,9 @@ export default function LiveDriverMap() {
         <div className="absolute bottom-16 left-4 z-20 pointer-events-none">
           <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
             <Truck className="h-3.5 w-3.5 text-muted-foreground" />
-            <p className="text-[11px] text-muted-foreground">No active drivers</p>
+            <p className="text-[11px] text-muted-foreground">
+              No active drivers
+            </p>
           </div>
         </div>
       )}
@@ -408,4 +458,6 @@ export default function LiveDriverMap() {
       </div>
     </div>
   );
-}
+});
+
+export default LiveDriverMap;

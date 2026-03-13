@@ -24,7 +24,11 @@ export function useUserRole() {
     // Don't resolve role until auth has finished loading
     if (authLoading) return;
 
-    if (!user) { setRole(null); setLoading(false); return; }
+    if (!user) {
+      setRole(null);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     supabase

@@ -10,24 +10,50 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
-  Clock, LogIn, LogOut, Coffee, RefreshCw, Users,
-  DollarSign, Timer, TrendingUp, AlertCircle, Play, Square,
-  ChevronDown, ChevronUp, Calendar, BarChart3,
+  Clock,
+  LogIn,
+  LogOut,
+  Coffee,
+  RefreshCw,
+  Users,
+  DollarSign,
+  Timer,
+  TrendingUp,
+  AlertCircle,
+  Play,
+  Square,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -92,13 +118,17 @@ interface PayrollRow {
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 }
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
-    weekday: "short", month: "short", day: "numeric",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 }
 
@@ -116,7 +146,8 @@ function fmtHours(h: number | null): string {
 function fmtPay(pay: number | null): string {
   if (pay == null) return "--";
   return new Intl.NumberFormat("en-US", {
-    style: "currency", currency: "USD",
+    style: "currency",
+    currency: "USD",
   }).format(pay);
 }
 
@@ -133,13 +164,19 @@ interface ActiveCardProps {
   refreshCount: number;
 }
 
-function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refreshCount }: ActiveCardProps) {
+function ActiveDriverCard({
+  clock,
+  onClockOut,
+  onStartBreak,
+  onEndBreak,
+  refreshCount,
+}: ActiveCardProps) {
   const [elapsed, setElapsed] = useState(clock.elapsed_minutes);
 
   // Live tick every minute
   useEffect(() => {
     setElapsed(clock.elapsed_minutes);
-    const interval = setInterval(() => setElapsed(prev => prev + 1), 60_000);
+    const interval = setInterval(() => setElapsed((prev) => prev + 1), 60_000);
     return () => clearInterval(interval);
   }, [clock.elapsed_minutes, refreshCount]);
 
@@ -149,25 +186,39 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
   return (
     <Card className="glass-panel border-0 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
       {/* Subtle top accent line */}
-      <div className={`absolute top-0 left-0 right-0 h-0.5 ${clock.on_break ? "bg-amber-500" : "bg-emerald-500"}`} />
+      <div
+        className={`absolute top-0 left-0 right-0 h-0.5 ${clock.on_break ? "bg-amber-500" : "bg-emerald-500"}`}
+      />
       <CardContent className="p-5 space-y-4">
         {/* Driver header */}
         <div className="flex items-start justify-between">
           <div>
             <p className="font-semibold text-foreground">{clock.driver_name}</p>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs">{clock.hub}</Badge>
-              <Badge variant="outline" className="text-xs capitalize">{clock.shift}</Badge>
+              <Badge variant="outline" className="text-xs">
+                {clock.hub}
+              </Badge>
+              <Badge variant="outline" className="text-xs capitalize">
+                {clock.shift}
+              </Badge>
               {clock.on_break ? (
-                <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">On Break</Badge>
+                <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">
+                  On Break
+                </Badge>
               ) : (
-                <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  Active
+                </Badge>
               )}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xl font-mono font-bold text-foreground">{fmtElapsed(elapsed)}</p>
-            <p className="text-xs text-muted-foreground">since {fmtTime(clock.clock_in)}</p>
+            <p className="text-xl font-mono font-bold text-foreground">
+              {fmtElapsed(elapsed)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              since {fmtTime(clock.clock_in)}
+            </p>
           </div>
         </div>
 
@@ -176,7 +227,9 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <DollarSign className="h-3 w-3" /> Est. earned
           </span>
-          <span className="text-sm font-semibold text-emerald-400">{fmtPay(earnedSoFar)}</span>
+          <span className="text-sm font-semibold text-emerald-400">
+            {fmtPay(earnedSoFar)}
+          </span>
         </div>
 
         {/* Actions */}
@@ -186,7 +239,10 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
               size="sm"
               variant="outline"
               className="flex-1 gap-2 border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
-              onClick={() => clock.active_break_id && onEndBreak(clock.active_break_id, clock.driver_name)}
+              onClick={() =>
+                clock.active_break_id &&
+                onEndBreak(clock.active_break_id, clock.driver_name)
+              }
             >
               <Play className="h-3 w-3" /> End Break
             </Button>
@@ -195,7 +251,9 @@ function ActiveDriverCard({ clock, onClockOut, onStartBreak, onEndBreak, refresh
               size="sm"
               variant="outline"
               className="flex-1 gap-2 border-border hover:bg-muted"
-              onClick={() => onStartBreak(clock.entry_id, clock.driver_id, clock.driver_name)}
+              onClick={() =>
+                onStartBreak(clock.entry_id, clock.driver_id, clock.driver_name)
+              }
             >
               <Coffee className="h-3 w-3" /> Break
             </Button>
@@ -239,14 +297,24 @@ function TimeClock() {
 
   // Clock-out dialog
   const [clockOutOpen, setClockOutOpen] = useState(false);
-  const [clockOutEntry, setClockOutEntry] = useState<{ id: string; name: string } | null>(null);
+  const [clockOutEntry, setClockOutEntry] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [clockOutNotes, setClockOutNotes] = useState<string>("");
   const [clockOutLoading, setClockOutLoading] = useState(false);
-  const [clockOutResult, setClockOutResult] = useState<Record<string, number> | null>(null);
+  const [clockOutResult, setClockOutResult] = useState<Record<
+    string,
+    number
+  > | null>(null);
 
   // Break dialogs
   const [breakDialogOpen, setBreakDialogOpen] = useState(false);
-  const [breakTarget, setBreakTarget] = useState<{ entryId: string; driverId: string; name: string } | null>(null);
+  const [breakTarget, setBreakTarget] = useState<{
+    entryId: string;
+    driverId: string;
+    name: string;
+  } | null>(null);
   const [breakType, setBreakType] = useState<"break" | "lunch">("break");
   const [breakLoading, setBreakLoading] = useState(false);
 
@@ -256,7 +324,10 @@ function TimeClock() {
     setFetchError(null);
     try {
       const [driversRes, activeRes, entriesRes] = await Promise.all([
-        supabase.from("drivers").select("id,full_name,hub,status,hourly_rate,phone").order("full_name"),
+        supabase
+          .from("drivers")
+          .select("id,full_name,hub,status,hourly_rate,phone")
+          .order("full_name"),
         supabase.from("v_active_clocks").select("*"),
         supabase
           .from("time_entries")
@@ -268,8 +339,10 @@ function TimeClock() {
       // Check for errors and report them
       const errors: string[] = [];
       if (driversRes.error) errors.push(`Drivers: ${driversRes.error.message}`);
-      if (activeRes.error) errors.push(`Active clocks: ${activeRes.error.message}`);
-      if (entriesRes.error) errors.push(`Time entries: ${entriesRes.error.message}`);
+      if (activeRes.error)
+        errors.push(`Active clocks: ${activeRes.error.message}`);
+      if (entriesRes.error)
+        errors.push(`Time entries: ${entriesRes.error.message}`);
       if (errors.length > 0) {
         setFetchError(errors.join("; "));
       }
@@ -279,7 +352,7 @@ function TimeClock() {
         const clocks = activeRes.data as ActiveClock[];
         // Fetch cumulative break minutes for each active entry
         if (clocks.length > 0) {
-          const entryIds = clocks.map(c => c.entry_id);
+          const entryIds = clocks.map((c) => c.entry_id);
           const { data: breakData } = await supabase
             .from("time_breaks")
             .select("time_entry_id, break_minutes")
@@ -301,7 +374,8 @@ function TimeClock() {
       }
       if (entriesRes.data) setRecentEntries(entriesRes.data as TimeEntry[]);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load time clock data";
+      const msg =
+        err instanceof Error ? err.message : "Failed to load time clock data";
       setFetchError(msg);
     } finally {
       setLoading(false);
@@ -309,7 +383,10 @@ function TimeClock() {
   }, []);
 
   const fetchPayroll = useCallback(async () => {
-    const { data } = await supabase.from("v_payroll_summary").select("*").limit(100);
+    const { data } = await supabase
+      .from("v_payroll_summary")
+      .select("*")
+      .limit(100);
     if (data) setPayrollRows(data as PayrollRow[]);
   }, []);
 
@@ -318,7 +395,7 @@ function TimeClock() {
   }, [fetchAll, refreshCount]);
 
   const refresh = () => {
-    setRefreshCount(c => c + 1);
+    setRefreshCount((c) => c + 1);
     fetchPayroll();
   };
 
@@ -336,15 +413,23 @@ function TimeClock() {
       });
       if (error) throw error;
 
-      const driverName = drivers.find(d => d.id === selectedDriver)?.full_name ?? "Driver";
-      toast({ title: "Clocked In v", description: `${driverName} is now on shift.` });
+      const driverName =
+        drivers.find((d) => d.id === selectedDriver)?.full_name ?? "Driver";
+      toast({
+        title: "Clocked In v",
+        description: `${driverName} is now on shift.`,
+      });
       setClockInOpen(false);
       setSelectedDriver("");
       setClockInNotes("");
       refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Clock-in failed", description: msg, variant: "destructive" });
+      toast({
+        title: "Clock-in failed",
+        description: msg,
+        variant: "destructive",
+      });
     } finally {
       setClockInLoading(false);
     }
@@ -372,7 +457,11 @@ function TimeClock() {
       refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Clock-out failed", description: msg, variant: "destructive" });
+      toast({
+        title: "Clock-out failed",
+        description: msg,
+        variant: "destructive",
+      });
     } finally {
       setClockOutLoading(false);
     }
@@ -402,12 +491,19 @@ function TimeClock() {
         p_type: breakType,
       });
       if (error) throw error;
-      toast({ title: "Break started", description: `${breakTarget.name} is on ${breakType}.` });
+      toast({
+        title: "Break started",
+        description: `${breakTarget.name} is on ${breakType}.`,
+      });
       setBreakDialogOpen(false);
       refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Break failed", description: msg, variant: "destructive" });
+      toast({
+        title: "Break failed",
+        description: msg,
+        variant: "destructive",
+      });
     } finally {
       setBreakLoading(false);
     }
@@ -422,46 +518,74 @@ function TimeClock() {
         .eq("id", breakId)
         .single();
       if (lookupErr || !breakRecord) {
-        toast({ title: "Break not found", description: "Could not find the break record.", variant: "destructive" });
+        toast({
+          title: "Break not found",
+          description: "Could not find the break record.",
+          variant: "destructive",
+        });
         return;
       }
       if (breakRecord.break_end !== null) {
-        toast({ title: "Break already ended", description: "This break has already been ended.", variant: "destructive" });
+        toast({
+          title: "Break already ended",
+          description: "This break has already been ended.",
+          variant: "destructive",
+        });
         return;
       }
       // Verify the break's time entry is still active (not clocked out)
-      const activeClock = activeClocks.find(c => c.entry_id === breakRecord.time_entry_id);
+      const activeClock = activeClocks.find(
+        (c) => c.entry_id === breakRecord.time_entry_id,
+      );
       if (!activeClock) {
-        toast({ title: "Invalid break", description: "This break does not belong to an active time entry.", variant: "destructive" });
+        toast({
+          title: "Invalid break",
+          description: "This break does not belong to an active time entry.",
+          variant: "destructive",
+        });
         return;
       }
 
-      const { error } = await supabase.rpc("end_break", { p_break_id: breakId });
+      const { error } = await supabase.rpc("end_break", {
+        p_break_id: breakId,
+      });
       if (error) throw error;
       toast({ title: "Break ended", description: `${name} is back on shift.` });
       refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Break end failed", description: msg, variant: "destructive" });
+      toast({
+        title: "Break end failed",
+        description: msg,
+        variant: "destructive",
+      });
     }
   };
 
   // --- Derived stats ---------------------------------------------
 
   const totalOnShift = activeClocks.length;
-  const onBreakCount = activeClocks.filter(c => c.on_break).length;
+  const onBreakCount = activeClocks.filter((c) => c.on_break).length;
   const totalEstPay = activeClocks.reduce((acc, c) => {
     const workMin = Math.max(c.elapsed_minutes - (c.break_minutes ?? 0), 0);
     return acc + (workMin / 60) * c.hourly_rate;
   }, 0);
-  const todayEntries = recentEntries.filter(e =>
-    e.work_date === new Date().toISOString().slice(0, 10)
+  const todayEntries = recentEntries.filter(
+    (e) => e.work_date === new Date().toISOString().slice(0, 10),
   );
-  const todayTotalPay = todayEntries.reduce((acc, e) => acc + (e.total_pay ?? 0), 0);
+  const todayTotalPay = todayEntries.reduce(
+    (acc, e) => acc + (e.total_pay ?? 0),
+    0,
+  );
 
   // Available to clock in = drivers not currently on shift
-  const activeDriverIds = new Set(activeClocks.map(c => c.driver_id));
-  const availableDrivers = drivers.filter(d => !activeDriverIds.has(d.id) && d.status !== "inactive" && d.status !== "on_leave");
+  const activeDriverIds = new Set(activeClocks.map((c) => c.driver_id));
+  const availableDrivers = drivers.filter(
+    (d) =>
+      !activeDriverIds.has(d.id) &&
+      d.status !== "inactive" &&
+      d.status !== "on_leave",
+  );
 
   // --- Render ----------------------------------------------------
 
@@ -473,10 +597,17 @@ function TimeClock() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Clock className="h-6 w-6 text-accent" /> Time Clock
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Driver hours, breaks & payroll tracking</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Driver hours, breaks & payroll tracking
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2" onClick={refresh}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={refresh}
+          >
             <RefreshCw className="h-3 w-3" /> Refresh
           </Button>
           <Button
@@ -518,7 +649,7 @@ function TimeClock() {
             icon: <BarChart3 className="h-5 w-5 text-blue-400" />,
             label: "Today Payroll",
             value: loading ? "--" : fmtPay(todayTotalPay),
-            sub: `${todayEntries.filter(e => e.clock_out).length} completed shifts`,
+            sub: `${todayEntries.filter((e) => e.clock_out).length} completed shifts`,
             color: "text-blue-400",
           },
         ].map((stat) => (
@@ -526,7 +657,9 @@ function TimeClock() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 {stat.icon}
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">{stat.label}</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                  {stat.label}
+                </span>
               </div>
               <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{stat.sub}</p>
@@ -541,10 +674,19 @@ function TimeClock() {
           <CardContent className="p-4 flex items-center gap-3">
             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-500">Failed to load data</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{fetchError}</p>
+              <p className="text-sm font-medium text-red-500">
+                Failed to load data
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {fetchError}
+              </p>
             </div>
-            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={refresh}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 shrink-0"
+              onClick={refresh}
+            >
               <RefreshCw className="h-3 w-3" /> Retry
             </Button>
           </CardContent>
@@ -569,13 +711,17 @@ function TimeClock() {
         <TabsContent value="live" className="space-y-4">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-44" />)}
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-44" />
+              ))}
             </div>
           ) : activeClocks.length === 0 ? (
             <Card className="glass-panel border-0">
               <CardContent className="py-16 flex flex-col items-center justify-center text-center space-y-3">
                 <Clock className="h-10 w-10 text-muted-foreground/40" />
-                <p className="text-muted-foreground">No drivers currently clocked in</p>
+                <p className="text-muted-foreground">
+                  No drivers currently clocked in
+                </p>
                 <Button
                   size="sm"
                   variant="outline"
@@ -589,7 +735,7 @@ function TimeClock() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {activeClocks.map(clock => (
+              {activeClocks.map((clock) => (
                 <ActiveDriverCard
                   key={clock.entry_id}
                   clock={clock}
@@ -607,12 +753,16 @@ function TimeClock() {
         <TabsContent value="history">
           <Card className="glass-panel border-0">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Recent Entries (last 50)</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                Recent Entries (last 50)
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {loading ? (
                 <div className="p-6 space-y-2">
-                  {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10" />)}
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Skeleton key={i} className="h-10" />
+                  ))}
                 </div>
               ) : (
                 <Table>
@@ -631,49 +781,80 @@ function TimeClock() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentEntries.map(entry => (
-                      <TableRow key={entry.id} className="border-border/20 hover:bg-muted/20">
+                    {recentEntries.map((entry) => (
+                      <TableRow
+                        key={entry.id}
+                        className="border-border/20 hover:bg-muted/20"
+                      >
                         <TableCell className="font-medium text-sm">
-                          {(entry.drivers as { full_name: string } | undefined)?.full_name ?? "--"}
+                          {(entry.drivers as { full_name: string } | undefined)
+                            ?.full_name ?? "--"}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {fmtDate(entry.work_date)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">{entry.hub}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {entry.hub}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-xs font-mono">{fmtTime(entry.clock_in)}</TableCell>
                         <TableCell className="text-xs font-mono">
-                          {entry.clock_out ? fmtTime(entry.clock_out) : (
-                            <span className="text-emerald-400 text-xs">Active</span>
+                          {fmtTime(entry.clock_in)}
+                        </TableCell>
+                        <TableCell className="text-xs font-mono">
+                          {entry.clock_out ? (
+                            fmtTime(entry.clock_out)
+                          ) : (
+                            <span className="text-emerald-400 text-xs">
+                              Active
+                            </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs">{fmtHours(entry.regular_hours)}</TableCell>
+                        <TableCell className="text-xs">
+                          {fmtHours(entry.regular_hours)}
+                        </TableCell>
                         <TableCell className="text-xs">
                           {entry.overtime_hours && entry.overtime_hours > 0 ? (
-                            <span className="text-amber-400 font-semibold">{fmtHours(entry.overtime_hours)}</span>
-                          ) : "--"}
+                            <span className="text-amber-400 font-semibold">
+                              {fmtHours(entry.overtime_hours)}
+                            </span>
+                          ) : (
+                            "--"
+                          )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {entry.break_minutes ? `${entry.break_minutes}m` : "--"}
+                          {entry.break_minutes
+                            ? `${entry.break_minutes}m`
+                            : "--"}
                         </TableCell>
                         <TableCell className="text-right text-sm font-semibold">
                           {entry.total_pay != null ? (
-                            <span className="text-emerald-400">{fmtPay(entry.total_pay)}</span>
-                          ) : "--"}
+                            <span className="text-emerald-400">
+                              {fmtPay(entry.total_pay)}
+                            </span>
+                          ) : (
+                            "--"
+                          )}
                         </TableCell>
                         <TableCell>
                           {entry.clock_out ? (
-                            <Badge className="text-xs bg-muted text-muted-foreground border-0">Complete</Badge>
+                            <Badge className="text-xs bg-muted text-muted-foreground border-0">
+                              Complete
+                            </Badge>
                           ) : (
-                            <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Live</Badge>
+                            <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                              Live
+                            </Badge>
                           )}
                         </TableCell>
                       </TableRow>
                     ))}
                     {recentEntries.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                        <TableCell
+                          colSpan={10}
+                          className="text-center text-muted-foreground py-8"
+                        >
                           No time entries yet
                         </TableCell>
                       </TableRow>
@@ -689,7 +870,9 @@ function TimeClock() {
         <TabsContent value="payroll">
           <Card className="glass-panel border-0">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Weekly Payroll Summary</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                Weekly Payroll Summary
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -702,25 +885,40 @@ function TimeClock() {
                     <TableHead className="text-xs">Reg Hours</TableHead>
                     <TableHead className="text-xs">OT Hours</TableHead>
                     <TableHead className="text-xs">Rate</TableHead>
-                    <TableHead className="text-xs text-right">Total Pay</TableHead>
+                    <TableHead className="text-xs text-right">
+                      Total Pay
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {payrollRows.map((row, idx) => (
-                    <TableRow key={idx} className="border-border/20 hover:bg-muted/20">
-                      <TableCell className="font-medium text-sm">{row.full_name}</TableCell>
+                    <TableRow
+                      key={idx}
+                      className="border-border/20 hover:bg-muted/20"
+                    >
+                      <TableCell className="font-medium text-sm">
+                        {row.full_name}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {fmtDate(row.week_start)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">{row.hub}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {row.hub}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-xs">{row.shifts}</TableCell>
-                      <TableCell className="text-xs">{fmtHours(row.total_regular_hours)}</TableCell>
+                      <TableCell className="text-xs">
+                        {fmtHours(row.total_regular_hours)}
+                      </TableCell>
                       <TableCell className="text-xs">
                         {row.total_overtime_hours > 0 ? (
-                          <span className="text-amber-400 font-semibold">{fmtHours(row.total_overtime_hours)}</span>
-                        ) : "--"}
+                          <span className="text-amber-400 font-semibold">
+                            {fmtHours(row.total_overtime_hours)}
+                          </span>
+                        ) : (
+                          "--"
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         ${row.hourly_rate}/hr
@@ -732,7 +930,10 @@ function TimeClock() {
                   ))}
                   {payrollRows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                      <TableCell
+                        colSpan={8}
+                        className="text-center text-muted-foreground py-8"
+                      >
                         No payroll data yet -- complete some shifts first
                       </TableCell>
                     </TableRow>
@@ -755,7 +956,9 @@ function TimeClock() {
             <DialogTitle className="flex items-center gap-2">
               <LogIn className="h-5 w-5 text-emerald-400" /> Clock In Driver
             </DialogTitle>
-            <DialogDescription>Select the driver starting their shift.</DialogDescription>
+            <DialogDescription>
+              Select the driver starting their shift.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
@@ -765,17 +968,23 @@ function TimeClock() {
                   <SelectValue placeholder="Select driver..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDrivers.map(d => (
+                  {availableDrivers.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
                       <span className="flex items-center gap-2">
                         {d.full_name}
-                        <Badge variant="outline" className="text-xs ml-1">{d.hub}</Badge>
-                        <span className="text-muted-foreground text-xs">${d.hourly_rate}/hr</span>
+                        <Badge variant="outline" className="text-xs ml-1">
+                          {d.hub}
+                        </Badge>
+                        <span className="text-muted-foreground text-xs">
+                          ${d.hourly_rate}/hr
+                        </span>
                       </span>
                     </SelectItem>
                   ))}
                   {availableDrivers.length === 0 && (
-                    <SelectItem value="none" disabled>All drivers on shift</SelectItem>
+                    <SelectItem value="none" disabled>
+                      All drivers on shift
+                    </SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -784,19 +993,29 @@ function TimeClock() {
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Hub</label>
                 <Select value={selectedHub} onValueChange={setSelectedHub}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {HUB_OPTIONS.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                    {HUB_OPTIONS.map((h) => (
+                      <SelectItem key={h} value={h}>
+                        {h}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Shift</label>
                 <Select value={selectedShift} onValueChange={setSelectedShift}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    {SHIFT_OPTIONS.map(s => (
-                      <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                    {SHIFT_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s} className="capitalize">
+                        {s}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -807,23 +1026,29 @@ function TimeClock() {
               <Textarea
                 placeholder="e.g. AOG standby, airport run..."
                 value={clockInNotes}
-                onChange={e => setClockInNotes(e.target.value)}
+                onChange={(e) => setClockInNotes(e.target.value)}
                 className="resize-none"
                 rows={2}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setClockInOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setClockInOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={handleClockIn}
               disabled={!selectedDriver || clockInLoading}
               className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               {clockInLoading ? (
-                <><RefreshCw className="h-4 w-4 animate-spin" /> Clocking in...</>
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Clocking in...
+                </>
               ) : (
-                <><LogIn className="h-4 w-4" /> Clock In</>
+                <>
+                  <LogIn className="h-4 w-4" /> Clock In
+                </>
               )}
             </Button>
           </DialogFooter>
@@ -831,7 +1056,12 @@ function TimeClock() {
       </Dialog>
 
       {/* -- Clock Out Dialog -- */}
-      <Dialog open={clockOutOpen} onOpenChange={open => { if (!open) closeClockOut(); }}>
+      <Dialog
+        open={clockOutOpen}
+        onOpenChange={(open) => {
+          if (!open) closeClockOut();
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -844,13 +1074,20 @@ function TimeClock() {
             /* - Summary screen - */
             <div className="space-y-4 py-2">
               <div className="bg-muted/30 rounded-xl p-5 space-y-3">
-                <p className="text-sm font-semibold text-center text-foreground">Shift Summary</p>
+                <p className="text-sm font-semibold text-center text-foreground">
+                  Shift Summary
+                </p>
                 <div className="grid grid-cols-2 gap-y-3 text-sm">
                   {[
                     ["Work Time", fmtElapsed(clockOutResult.total_minutes)],
                     ["Break Time", `${clockOutResult.break_minutes}m`],
                     ["Regular Hours", fmtHours(clockOutResult.regular_hours)],
-                    ["Overtime", clockOutResult.overtime_hours > 0 ? fmtHours(clockOutResult.overtime_hours) : "None"],
+                    [
+                      "Overtime",
+                      clockOutResult.overtime_hours > 0
+                        ? fmtHours(clockOutResult.overtime_hours)
+                        : "None",
+                    ],
                     ["Hourly Rate", `$${clockOutResult.hourly_rate}/hr`],
                   ].map(([label, val]) => (
                     <div key={label}>
@@ -862,38 +1099,50 @@ function TimeClock() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">Total Pay</span>
-                  <span className="text-xl font-bold text-emerald-400">{fmtPay(clockOutResult.total_pay)}</span>
+                  <span className="text-xl font-bold text-emerald-400">
+                    {fmtPay(clockOutResult.total_pay)}
+                  </span>
                 </div>
               </div>
-              <Button className="w-full" onClick={closeClockOut}>Done</Button>
+              <Button className="w-full" onClick={closeClockOut}>
+                Done
+              </Button>
             </div>
           ) : (
             /* - Confirmation screen - */
             <div className="space-y-4 py-2">
               <p className="text-sm text-muted-foreground">
-                Clocking out <strong>{clockOutEntry?.name}</strong>. Their hours and pay will be calculated automatically.
+                Clocking out <strong>{clockOutEntry?.name}</strong>. Their hours
+                and pay will be calculated automatically.
               </p>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Notes (optional)</label>
                 <Textarea
                   placeholder="e.g. Completed all AOG runs, no issues..."
                   value={clockOutNotes}
-                  onChange={e => setClockOutNotes(e.target.value)}
+                  onChange={(e) => setClockOutNotes(e.target.value)}
                   className="resize-none"
                   rows={2}
                 />
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={closeClockOut}>Cancel</Button>
+                <Button variant="outline" onClick={closeClockOut}>
+                  Cancel
+                </Button>
                 <Button
                   onClick={handleClockOut}
                   disabled={clockOutLoading}
                   className="gap-2 bg-red-600 hover:bg-red-700 text-white"
                 >
                   {clockOutLoading ? (
-                    <><RefreshCw className="h-4 w-4 animate-spin" /> Processing...</>
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />{" "}
+                      Processing...
+                    </>
                   ) : (
-                    <><LogOut className="h-4 w-4" /> Clock Out</>
+                    <>
+                      <LogOut className="h-4 w-4" /> Clock Out
+                    </>
                   )}
                 </Button>
               </DialogFooter>
@@ -910,13 +1159,20 @@ function TimeClock() {
               <Coffee className="h-5 w-5 text-amber-400" />
               Start Break -- {breakTarget?.name}
             </DialogTitle>
-            <DialogDescription>Break time will be tracked and deducted from payroll.</DialogDescription>
+            <DialogDescription>
+              Break time will be tracked and deducted from payroll.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Break Type</label>
-              <Select value={breakType} onValueChange={v => setBreakType(v as "break" | "lunch")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={breakType}
+                onValueChange={(v) => setBreakType(v as "break" | "lunch")}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="break">Short Break (15 min)</SelectItem>
                   <SelectItem value="lunch">Lunch Break (30 min)</SelectItem>
@@ -925,16 +1181,22 @@ function TimeClock() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBreakDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setBreakDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={handleStartBreak}
               disabled={breakLoading}
               className="gap-2 bg-amber-600 hover:bg-amber-700 text-white"
             >
               {breakLoading ? (
-                <><RefreshCw className="h-4 w-4 animate-spin" /> Starting...</>
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Starting...
+                </>
               ) : (
-                <><Coffee className="h-4 w-4" /> Start Break</>
+                <>
+                  <Coffee className="h-4 w-4" /> Start Break
+                </>
               )}
             </Button>
           </DialogFooter>

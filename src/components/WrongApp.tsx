@@ -1,8 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const APK_URL =
-  "https://expo.dev/artifacts/eas/52ctcfSw9B2tTC8KfrNsJx.apk";
+const APK_URL = "https://expo.dev/artifacts/eas/52ctcfSw9B2tTC8KfrNsJx.apk";
 
 export function WrongApp() {
   const isMobile = useIsMobile();

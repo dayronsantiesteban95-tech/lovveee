@@ -47,17 +47,24 @@ export type LoadStatus =
 // Note: "completed", "cancelled", "failed" are terminal -- no forward transitions.
 // Backwards transitions (reopen) are explicitly allowed from failed/cancelled.
 const ALLOWED_TRANSITIONS: Record<string, LoadStatus[]> = {
-  pending:          ["assigned", "blasted", "cancelled"],
-  assigned:         ["in_progress", "arrived_pickup", "pending", "cancelled", "failed"],
-  blasted:          ["assigned", "in_progress", "pending", "cancelled"],
-  in_progress:      ["arrived_pickup", "in_transit", "arrived_delivery", "delivered", "cancelled", "failed"],
-  arrived_pickup:   ["in_transit", "in_progress", "cancelled", "failed"],
-  in_transit:       ["arrived_delivery", "delivered", "cancelled", "failed"],
+  pending: ["assigned", "blasted", "cancelled"],
+  assigned: ["in_progress", "arrived_pickup", "pending", "cancelled", "failed"],
+  blasted: ["assigned", "in_progress", "pending", "cancelled"],
+  in_progress: [
+    "arrived_pickup",
+    "in_transit",
+    "arrived_delivery",
+    "delivered",
+    "cancelled",
+    "failed",
+  ],
+  arrived_pickup: ["in_transit", "in_progress", "cancelled", "failed"],
+  in_transit: ["arrived_delivery", "delivered", "cancelled", "failed"],
   arrived_delivery: ["delivered", "completed", "in_transit", "failed"],
-  delivered:        ["completed", "failed"],
-  completed:        [],
-  cancelled:        ["pending"],  // allow reopen
-  failed:           ["pending"],  // allow reopen
+  delivered: ["completed", "failed"],
+  completed: [],
+  cancelled: ["pending"], // allow reopen
+  failed: ["pending"], // allow reopen
 };
 
 // Statuses that mean a driver is actively working a load
@@ -171,11 +178,7 @@ export function useLoadStatusActions() {
       // ----- Driver conflict check (Option C) --------------------------------
       // When assigning a driver, verify they don't already have an active load.
       // Skip if the caller explicitly set force: true (post-confirmation).
-      if (
-        newStatus === "assigned" &&
-        driverId &&
-        !force
-      ) {
+      if (newStatus === "assigned" && driverId && !force) {
         const { available, activeLoads } = await checkDriverAvailability(
           driverId,
           loadId,
@@ -243,7 +246,10 @@ export function useLoadStatusActions() {
       if (evtErr) {
         // Non-fatal -- load was already updated; event record failed
         // Log so the status timeline gap is detectable in production
-        console.warn("[useLoadStatusActions] Failed to insert load_status_events:", evtErr.message);
+        console.warn(
+          "[useLoadStatusActions] Failed to insert load_status_events:",
+          evtErr.message,
+        );
       }
 
       const statusLabels: Record<string, string> = {
@@ -266,13 +272,13 @@ export function useLoadStatusActions() {
           newStatus === "in_progress"
             ? "Actual pickup time recorded."
             : newStatus === "delivered" || newStatus === "completed"
-            ? "Actual delivery time recorded."
-            : undefined,
+              ? "Actual delivery time recorded."
+              : undefined,
       });
 
       onSuccess?.();
     },
-    [user, toast]
+    [user, toast],
   );
 
   return { updateStatus };

@@ -230,7 +230,9 @@ function TeamManagement() {
   const [form, setForm] = useState<InviteForm>(DEFAULT_FORM);
 
   // Credentials dialog state (shown after user creation)
-  const [createdCreds, setCreatedCreds] = useState<CreatedCredentials | null>(null);
+  const [createdCreds, setCreatedCreds] = useState<CreatedCredentials | null>(
+    null,
+  );
 
   // Edit role state
   const [editTarget, setEditTarget] = useState<TeamMember | null>(null);
@@ -239,7 +241,9 @@ function TeamManagement() {
 
   /** Call the invite-user Edge Function via supabase.functions.invoke */
   const callInviteFn = useCallback(async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke("invite-user", { body });
+    const { data, error } = await supabase.functions.invoke("invite-user", {
+      body,
+    });
     if (error) throw error;
     return data as Record<string, unknown>;
   }, []);
@@ -263,16 +267,23 @@ function TeamManagement() {
       roleMap.set(r.user_id, r.role);
     });
 
-    return (profiles ?? []).map((p: { id: string; user_id: string; full_name: string; created_at: string }) => ({
-      id: p.user_id,
-      email: "--",
-      full_name: p.full_name || "Unknown",
-      role: roleMap.get(p.user_id) ?? null,
-      status: "active" as UserStatus,
-      hub: null,
-      last_sign_in_at: null,
-      created_at: p.created_at,
-    }));
+    return (profiles ?? []).map(
+      (p: {
+        id: string;
+        user_id: string;
+        full_name: string;
+        created_at: string;
+      }) => ({
+        id: p.user_id,
+        email: "--",
+        full_name: p.full_name || "Unknown",
+        role: roleMap.get(p.user_id) ?? null,
+        status: "active" as UserStatus,
+        hub: null,
+        last_sign_in_at: null,
+        created_at: p.created_at,
+      }),
+    );
   }, []);
 
   const fetchTeam = useCallback(async () => {
@@ -285,14 +296,16 @@ function TeamManagement() {
       }
 
       if (data.team) {
-        const mapped: TeamMember[] = (data.team as Array<{
-          id: string;
-          email: string;
-          full_name: string;
-          role: AppRole | null;
-          last_sign_in_at: string | null;
-          created_at: string;
-        }>).map((m) => ({
+        const mapped: TeamMember[] = (
+          data.team as Array<{
+            id: string;
+            email: string;
+            full_name: string;
+            role: AppRole | null;
+            last_sign_in_at: string | null;
+            created_at: string;
+          }>
+        ).map((m) => ({
           ...m,
           status: m.last_sign_in_at ? "active" : ("invited" as UserStatus),
           hub: null,
@@ -309,7 +322,8 @@ function TeamManagement() {
         if (fallbackTeam.length === 0) {
           toast({
             title: "Note",
-            description: "Team data loaded from local database (invite service offline)",
+            description:
+              "Team data loaded from local database (invite service offline)",
           });
         }
       } catch (fallbackErr) {
@@ -335,16 +349,18 @@ function TeamManagement() {
     email: string,
     password: string,
     fullName: string,
-    dbRole: AppRole
+    dbRole: AppRole,
   ) => {
     // Use supabase.auth.signUp which goes through the standard auth endpoint
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, force_password_change: true },
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
+      {
+        email,
+        password,
+        options: {
+          data: { full_name: fullName, force_password_change: true },
+        },
       },
-    });
+    );
 
     if (signUpError) throw new Error(signUpError.message);
     if (!signUpData.user) throw new Error("User creation failed");
@@ -352,17 +368,20 @@ function TeamManagement() {
     const newUserId = signUpData.user.id;
 
     // signUp may silently drop options.data -- patch metadata via RPC
-    await supabase.rpc("set_user_metadata" as never, {
-      p_user_id: newUserId,
-      p_metadata: { full_name: fullName, force_password_change: true },
-    } as never);
+    await supabase.rpc(
+      "set_user_metadata" as never,
+      {
+        p_user_id: newUserId,
+        p_metadata: { full_name: fullName, force_password_change: true },
+      } as never,
+    );
 
     // Assign role in both tables (profiles trigger may auto-create, so use upsert/update)
-    await supabase.from("user_roles").upsert(
-      { user_id: newUserId, role: dbRole },
-      { onConflict: "user_id" }
-    );
-    await supabase.from("profiles")
+    await supabase
+      .from("user_roles")
+      .upsert({ user_id: newUserId, role: dbRole }, { onConflict: "user_id" });
+    await supabase
+      .from("profiles")
       .update({ full_name: fullName, role: dbRole })
       .eq("user_id", newUserId);
 
@@ -393,14 +412,25 @@ function TeamManagement() {
         inviteSucceeded = true;
       } catch (edgeFnErr) {
         // Edge Function failed -- fall back to direct auth signUp
-        console.warn("Edge Function unavailable, using direct signUp:", edgeFnErr);
+        console.warn(
+          "Edge Function unavailable, using direct signUp:",
+          edgeFnErr,
+        );
         try {
-          await createUserDirect(form.email, userPassword, form.full_name, dbRole);
+          await createUserDirect(
+            form.email,
+            userPassword,
+            form.full_name,
+            dbRole,
+          );
           inviteSucceeded = true;
         } catch (directErr) {
           toast({
             title: "Error creating user",
-            description: directErr instanceof Error ? directErr.message : "Failed to create user.",
+            description:
+              directErr instanceof Error
+                ? directErr.message
+                : "Failed to create user.",
             variant: "destructive",
           });
         }
@@ -425,7 +455,11 @@ function TeamManagement() {
             if (driverErr) throw driverErr;
           } catch (driverErr) {
             toast.error("Driver created but failed to save to drivers table");
-            captureScopedError("team_management", { email: form.email, role: form.role }, driverErr);
+            captureScopedError(
+              "team_management",
+              { email: form.email, role: form.role },
+              driverErr,
+            );
           }
         }
 
@@ -472,25 +506,37 @@ function TeamManagement() {
           role: dbRole,
         });
         if (data.error) {
-          toast({ title: "Error", description: data.error as string, variant: "destructive" });
+          toast({
+            title: "Error",
+            description: data.error as string,
+            variant: "destructive",
+          });
         } else {
           updated = true;
         }
       } catch (_err) {
         toast({
           title: "Role update unavailable",
-          description: "The user management service is offline. Please try again later.",
+          description:
+            "The user management service is offline. Please try again later.",
           variant: "destructive",
         });
       }
 
       if (updated) {
-        toast({ title: "Role updated", description: `${editTarget.full_name} is now ${editRole}.` });
+        toast({
+          title: "Role updated",
+          description: `${editTarget.full_name} is now ${editRole}.`,
+        });
         setEditTarget(null);
         fetchTeam();
       }
     } catch (err) {
-      toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to update role",
+        variant: "destructive",
+      });
     }
     setEditLoading(false);
   };
@@ -508,8 +554,8 @@ function TeamManagement() {
       prev.map((m) =>
         m.id === member.id
           ? { ...m, status: m.status === "disabled" ? "active" : "disabled" }
-          : m
-      )
+          : m,
+      ),
     );
   };
 
@@ -517,9 +563,16 @@ function TeamManagement() {
 
   const handleResendInvite = async (member: TeamMember) => {
     try {
-      const data = await callInviteFn({ action: "reset_password", email: member.email });
+      const data = await callInviteFn({
+        action: "reset_password",
+        email: member.email,
+      });
       if (data.error) {
-        toast({ title: "Error", description: data.error as string, variant: "destructive" });
+        toast({
+          title: "Error",
+          description: data.error as string,
+          variant: "destructive",
+        });
       } else {
         toast({
           title: "Invite resent",
@@ -552,7 +605,8 @@ function TeamManagement() {
         <Shield className="h-12 w-12 opacity-30" />
         <p className="text-lg font-semibold">Access Denied</p>
         <p className="text-sm text-center max-w-xs">
-          You don&apos;t have permission to view this page. Contact your account owner.
+          You don&apos;t have permission to view this page. Contact your account
+          owner.
         </p>
       </div>
     );
@@ -583,7 +637,10 @@ function TeamManagement() {
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button onClick={() => setShowInvite(true)} className="gap-2 btn-gradient">
+          <Button
+            onClick={() => setShowInvite(true)}
+            className="gap-2 btn-gradient"
+          >
             <Plus className="h-4 w-4" /> Invite User
           </Button>
         </div>
@@ -596,7 +653,10 @@ function TeamManagement() {
             <Users className="h-4 w-4" />
             Team Members
             {team.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+              <Badge
+                variant="secondary"
+                className="ml-1 h-4 px-1.5 text-[10px]"
+              >
                 {team.length}
               </Badge>
             )}
@@ -636,128 +696,138 @@ function TeamManagement() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="w-12"></TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Hub</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {team.map((member) => {
-                      const displayRole = toDisplayRole(member.role);
-                      const initials = getInitials(member.full_name);
-                      const avatarColor = getAvatarColor(member.full_name);
-                      const isCurrentUser = member.id === user?.id;
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50 hover:bg-transparent">
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Hub</TableHead>
+                        <TableHead>Last Login</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {team.map((member) => {
+                        const displayRole = toDisplayRole(member.role);
+                        const initials = getInitials(member.full_name);
+                        const avatarColor = getAvatarColor(member.full_name);
+                        const isCurrentUser = member.id === user?.id;
 
-                      return (
-                        <TableRow
-                          key={member.id}
-                          className="border-border/50 hover:bg-muted/20 transition-colors"
-                        >
-                          {/* Avatar */}
-                          <TableCell>
-                            <div
-                              className={`h-9 w-9 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white text-xs font-semibold shrink-0`}
-                            >
-                              {initials}
-                            </div>
-                          </TableCell>
+                        return (
+                          <TableRow
+                            key={member.id}
+                            className="border-border/50 hover:bg-muted/20 transition-colors"
+                          >
+                            {/* Avatar */}
+                            <TableCell>
+                              <div
+                                className={`h-9 w-9 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white text-xs font-semibold shrink-0`}
+                              >
+                                {initials}
+                              </div>
+                            </TableCell>
 
-                          {/* Name */}
-                          <TableCell>
-                            <div className="font-medium text-sm">
-                              {member.full_name}
-                              {isCurrentUser && (
-                                <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                                  You
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
+                            {/* Name */}
+                            <TableCell>
+                              <div className="font-medium text-sm">
+                                {member.full_name}
+                                {isCurrentUser && (
+                                  <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
 
-                          {/* Email */}
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {member.email}
-                            </span>
-                          </TableCell>
+                            {/* Email */}
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {member.email}
+                              </span>
+                            </TableCell>
 
-                          {/* Role */}
-                          <TableCell>{getRoleBadge(displayRole)}</TableCell>
+                            {/* Role */}
+                            <TableCell>{getRoleBadge(displayRole)}</TableCell>
 
-                          {/* Status */}
-                          <TableCell>{getStatusBadge(member.status)}</TableCell>
+                            {/* Status */}
+                            <TableCell>
+                              {getStatusBadge(member.status)}
+                            </TableCell>
 
-                          {/* Hub */}
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {member.hub ?? "--"}
-                            </span>
-                          </TableCell>
+                            {/* Hub */}
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {member.hub ?? "--"}
+                              </span>
+                            </TableCell>
 
-                          {/* Last Login */}
-                          <TableCell>
-                            <span className="text-xs text-muted-foreground">
-                              {member.last_sign_in_at
-                                ? new Date(member.last_sign_in_at).toLocaleDateString(
-                                    "en-US",
-                                    { month: "short", day: "numeric", year: "numeric" }
-                                  )
-                                : "Never"}
-                            </span>
-                          </TableCell>
+                            {/* Last Login */}
+                            <TableCell>
+                              <span className="text-xs text-muted-foreground">
+                                {member.last_sign_in_at
+                                  ? new Date(
+                                      member.last_sign_in_at,
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })
+                                  : "Never"}
+                              </span>
+                            </TableCell>
 
-                          {/* Actions */}
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  disabled={isCurrentUser}
+                            {/* Actions */}
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    disabled={isCurrentUser}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-48"
                                 >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem
-                                  onClick={() => openEditRole(member)}
-                                  className="gap-2 cursor-pointer"
-                                >
-                                  <UserCog className="h-4 w-4" />
-                                  Edit Role
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleResendInvite(member)}
-                                  className="gap-2 cursor-pointer"
-                                >
-                                  <Mail className="h-4 w-4" />
-                                  Resend Invite
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleToggleDisable(member)}
-                                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                                >
-                                  <UserX className="h-4 w-4" />
-                                  {member.status === "disabled" ? "Enable User" : "Disable User"}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                                  <DropdownMenuItem
+                                    onClick={() => openEditRole(member)}
+                                    className="gap-2 cursor-pointer"
+                                  >
+                                    <UserCog className="h-4 w-4" />
+                                    Edit Role
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleResendInvite(member)}
+                                    className="gap-2 cursor-pointer"
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                    Resend Invite
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleToggleDisable(member)}
+                                    className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                    {member.status === "disabled"
+                                      ? "Enable User"
+                                      : "Disable User"}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
@@ -773,75 +843,76 @@ function TeamManagement() {
                 Role Permissions Matrix
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Read-only overview of what each role can access in Anika Control OS.
+                Read-only overview of what each role can access in Anika Control
+                OS.
               </p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="w-64">Feature</TableHead>
-                    <TableHead className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <Badge className="bg-purple-600/20 text-purple-400 border-purple-600/40 text-[10px]">
-                          <Shield className="h-2.5 w-2.5 mr-1" />
-                          Admin
-                        </Badge>
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/40 text-[10px]">
-                          <Users className="h-2.5 w-2.5 mr-1" />
-                          Dispatcher
-                        </Badge>
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <Badge className="bg-green-600/20 text-green-400 border-green-600/40 text-[10px]">
-                          <Truck className="h-2.5 w-2.5 mr-1" />
-                          Driver
-                        </Badge>
-                      </div>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {PERMISSIONS.map((perm) => (
-                    <TableRow
-                      key={perm.feature}
-                      className="border-border/50 hover:bg-muted/10 transition-colors"
-                    >
-                      <TableCell className="font-medium text-sm py-3">
-                        {perm.feature}
-                      </TableCell>
-                      <TableCell className="text-center py-3">
-                        {perm.admin ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center py-3">
-                        {perm.dispatcher ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center py-3">
-                        {perm.driver ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
-                        )}
-                      </TableCell>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="w-64">Feature</TableHead>
+                      <TableHead className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge className="bg-purple-600/20 text-purple-400 border-purple-600/40 text-[10px]">
+                            <Shield className="h-2.5 w-2.5 mr-1" />
+                            Admin
+                          </Badge>
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/40 text-[10px]">
+                            <Users className="h-2.5 w-2.5 mr-1" />
+                            Dispatcher
+                          </Badge>
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge className="bg-green-600/20 text-green-400 border-green-600/40 text-[10px]">
+                            <Truck className="h-2.5 w-2.5 mr-1" />
+                            Driver
+                          </Badge>
+                        </div>
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {PERMISSIONS.map((perm) => (
+                      <TableRow
+                        key={perm.feature}
+                        className="border-border/50 hover:bg-muted/10 transition-colors"
+                      >
+                        <TableCell className="font-medium text-sm py-3">
+                          {perm.feature}
+                        </TableCell>
+                        <TableCell className="text-center py-3">
+                          {perm.admin ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center py-3">
+                          {perm.dispatcher ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center py-3">
+                          {perm.driver ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -868,7 +939,9 @@ function TeamManagement() {
               <Input
                 id="invite-name"
                 value={form.full_name}
-                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, full_name: e.target.value }))
+                }
                 placeholder="Jane Smith"
                 required
               />
@@ -881,7 +954,9 @@ function TeamManagement() {
                 id="invite-email"
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
                 placeholder="jane@anika.com"
                 required
               />
@@ -894,7 +969,9 @@ function TeamManagement() {
                 id="invite-password"
                 type="text"
                 value={form.password}
-                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, password: e.target.value }))
+                }
                 placeholder="Temporary password (user must change on first login)"
                 required
                 minLength={6}
@@ -941,7 +1018,9 @@ function TeamManagement() {
                 <Label>Hub *</Label>
                 <Select
                   value={form.hub}
-                  onValueChange={(v) => setForm((f) => ({ ...f, hub: v as Hub }))}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, hub: v as Hub }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -992,7 +1071,10 @@ function TeamManagement() {
                     <Input
                       value={form.vehicle_make_model}
                       onChange={(e) =>
-                        setForm((f) => ({ ...f, vehicle_make_model: e.target.value }))
+                        setForm((f) => ({
+                          ...f,
+                          vehicle_make_model: e.target.value,
+                        }))
                       }
                       placeholder="Toyota Sienna"
                     />
@@ -1002,7 +1084,10 @@ function TeamManagement() {
                     <Input
                       value={form.license_plate}
                       onChange={(e) =>
-                        setForm((f) => ({ ...f, license_plate: e.target.value }))
+                        setForm((f) => ({
+                          ...f,
+                          license_plate: e.target.value,
+                        }))
                       }
                       placeholder="AZ - ABC123"
                     />
@@ -1035,7 +1120,11 @@ function TeamManagement() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={inviteLoading} className="btn-gradient gap-2">
+              <Button
+                type="submit"
+                disabled={inviteLoading}
+                className="btn-gradient gap-2"
+              >
                 {inviteLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1054,7 +1143,10 @@ function TeamManagement() {
       </Dialog>
 
       {/* -- Credentials Dialog (shown after user creation) --------------------- */}
-      <Dialog open={!!createdCreds} onOpenChange={(open) => !open && setCreatedCreds(null)}>
+      <Dialog
+        open={!!createdCreds}
+        onOpenChange={(open) => !open && setCreatedCreds(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1062,7 +1154,11 @@ function TeamManagement() {
               User Created Successfully
             </DialogTitle>
             <DialogDescription>
-              Share these credentials with <span className="font-medium text-foreground">{createdCreds?.full_name}</span>. They will be asked to set a new password on first login.
+              Share these credentials with{" "}
+              <span className="font-medium text-foreground">
+                {createdCreds?.full_name}
+              </span>
+              . They will be asked to set a new password on first login.
             </DialogDescription>
           </DialogHeader>
 
@@ -1070,34 +1166,67 @@ function TeamManagement() {
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Email</Label>
               <div className="flex items-center gap-2">
-                <Input readOnly value={createdCreds?.email ?? ""} className="font-mono text-sm" />
-                <Button size="icon" variant="outline" className="shrink-0" onClick={() => { navigator.clipboard.writeText(createdCreds?.email ?? ""); toast({ title: "Copied!" }); }}>
+                <Input
+                  readOnly
+                  value={createdCreds?.email ?? ""}
+                  className="font-mono text-sm"
+                />
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdCreds?.email ?? "");
+                    toast({ title: "Copied!" });
+                  }}
+                >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Temporary Password</Label>
+              <Label className="text-xs text-muted-foreground">
+                Temporary Password
+              </Label>
               <div className="flex items-center gap-2">
-                <Input readOnly value={createdCreds?.password ?? ""} className="font-mono text-sm" />
-                <Button size="icon" variant="outline" className="shrink-0" onClick={() => { navigator.clipboard.writeText(createdCreds?.password ?? ""); toast({ title: "Copied!" }); }}>
+                <Input
+                  readOnly
+                  value={createdCreds?.password ?? ""}
+                  className="font-mono text-sm"
+                />
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdCreds?.password ?? "");
+                    toast({ title: "Copied!" });
+                  }}
+                >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <Button variant="outline" className="flex-1 gap-2" onClick={() => {
-                const text = `Login credentials for ${createdCreds?.full_name}:\nEmail: ${createdCreds?.email}\nPassword: ${createdCreds?.password}\nLogin at: dispatch.anikalogistics.com\n\nYou will be asked to set a new password on your first login.`;
-                navigator.clipboard.writeText(text);
-                toast({ title: "All credentials copied!" });
-              }}>
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={() => {
+                  const text = `Login credentials for ${createdCreds?.full_name}:\nEmail: ${createdCreds?.email}\nPassword: ${createdCreds?.password}\nLogin at: dispatch.anikalogistics.com\n\nYou will be asked to set a new password on your first login.`;
+                  navigator.clipboard.writeText(text);
+                  toast({ title: "All credentials copied!" });
+                }}
+              >
                 <Copy className="h-3.5 w-3.5" /> Copy All
               </Button>
             </div>
           </div>
 
           <DialogFooter>
-            <Button onClick={() => setCreatedCreds(null)} className="btn-gradient">
+            <Button
+              onClick={() => setCreatedCreds(null)}
+              className="btn-gradient"
+            >
               Done
             </Button>
           </DialogFooter>

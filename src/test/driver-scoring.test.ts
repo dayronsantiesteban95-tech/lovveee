@@ -172,7 +172,14 @@ describe("scoreDrivers", () => {
 
     it("awards 18 points (default) when no GPS data", () => {
       const drivers = [makeDriver({ id: "d1", status: "idle" })];
-      const results = scoreDrivers(drivers, [], pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        [],
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       // No location for d1, so distancePts=18
       // 30 + 18 + 25 = 73
       expect(results[0].score).toBe(73);
@@ -183,7 +190,14 @@ describe("scoreDrivers", () => {
       const drivers = [makeDriver({ id: "d1", status: "idle" })];
       // Very close to pickup (offset by ~0.01 degrees ~ <1 mile)
       const locs = [makeLocation("d1", pickupLat + 0.01, pickupLng)];
-      const results = scoreDrivers(drivers, locs, pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        locs,
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       // 30 + 45 + 25 = 100
       expect(results[0].score).toBe(100);
       expect(results[0].distanceMi).toBeLessThan(5);
@@ -193,7 +207,14 @@ describe("scoreDrivers", () => {
       const drivers = [makeDriver({ id: "d1", status: "idle" })];
       // ~7 miles away (0.1 degrees latitude is about 6.9 miles)
       const locs = [makeLocation("d1", pickupLat + 0.1, pickupLng)];
-      const results = scoreDrivers(drivers, locs, pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        locs,
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       // 30 + 34 + 25 = 89
       expect(results[0].score).toBe(89);
     });
@@ -202,7 +223,14 @@ describe("scoreDrivers", () => {
       const drivers = [makeDriver({ id: "d1", status: "idle" })];
       // ~15 miles away (0.22 degrees ~ 15 mi)
       const locs = [makeLocation("d1", pickupLat + 0.22, pickupLng)];
-      const results = scoreDrivers(drivers, locs, pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        locs,
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       const dist = results[0].distanceMi!;
       expect(dist).toBeGreaterThanOrEqual(10);
       expect(dist).toBeLessThan(20);
@@ -214,7 +242,14 @@ describe("scoreDrivers", () => {
       const drivers = [makeDriver({ id: "d1", status: "idle" })];
       // ~25 miles away (0.36 degrees ~ 25 mi)
       const locs = [makeLocation("d1", pickupLat + 0.36, pickupLng)];
-      const results = scoreDrivers(drivers, locs, pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        locs,
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       const dist = results[0].distanceMi!;
       expect(dist).toBeGreaterThanOrEqual(20);
       expect(dist).toBeLessThan(30);
@@ -226,7 +261,14 @@ describe("scoreDrivers", () => {
       const drivers = [makeDriver({ id: "d1", status: "idle" })];
       // ~50 miles away
       const locs = [makeLocation("d1", pickupLat + 0.72, pickupLng)];
-      const results = scoreDrivers(drivers, locs, pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        locs,
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       expect(results[0].distanceMi!).toBeGreaterThanOrEqual(30);
       // 30 + 5 + 25 = 60
       expect(results[0].score).toBe(60);
@@ -317,9 +359,13 @@ describe("scoreDrivers", () => {
   describe("ranking order", () => {
     it("returns drivers sorted by score descending", () => {
       const drivers = [
-        makeDriver({ id: "d1", status: "off", full_name: "Off Driver" }),        // 0+18+25=43
-        makeDriver({ id: "d2", status: "idle", full_name: "Idle Driver" }),       // 30+18+25=73
-        makeDriver({ id: "d3", status: "finishing_soon", full_name: "Finishing" }), // 20+18+25=63
+        makeDriver({ id: "d1", status: "off", full_name: "Off Driver" }), // 0+18+25=43
+        makeDriver({ id: "d2", status: "idle", full_name: "Idle Driver" }), // 30+18+25=73
+        makeDriver({
+          id: "d3",
+          status: "finishing_soon",
+          full_name: "Finishing",
+        }), // 20+18+25=63
       ];
       const results = scoreDrivers(drivers, [], null, null, "phx", []);
       expect(results[0].driver.id).toBe("d2"); // score 73
@@ -337,13 +383,20 @@ describe("scoreDrivers", () => {
       ];
 
       const locs = [
-        makeLocation("far", pickupLat + 0.72, pickupLng),   // ~50 mi => 5 pts
+        makeLocation("far", pickupLat + 0.72, pickupLng), // ~50 mi => 5 pts
         makeLocation("close", pickupLat + 0.01, pickupLng), // <1 mi  => 45 pts
       ];
 
-      const results = scoreDrivers(drivers, locs, pickupLat, pickupLng, "phx", []);
+      const results = scoreDrivers(
+        drivers,
+        locs,
+        pickupLat,
+        pickupLng,
+        "phx",
+        [],
+      );
       expect(results[0].driver.id).toBe("close"); // 30+45+25=100
-      expect(results[1].driver.id).toBe("far");   // 30+5+25=60
+      expect(results[1].driver.id).toBe("far"); // 30+5+25=60
     });
 
     it("ranks lower-workload drivers higher when status and distance are equal", () => {
@@ -499,7 +552,14 @@ describe("scoreDrivers", () => {
       const loads = Array.from({ length: 3 }, (_, i) =>
         makeLoad({ id: `l${i}`, driver_id: "d2" }),
       );
-      const results2 = scoreDrivers(drivers2, locs2, 33.4484, -112.074, "phx", loads);
+      const results2 = scoreDrivers(
+        drivers2,
+        locs2,
+        33.4484,
+        -112.074,
+        "phx",
+        loads,
+      );
       // 0 + 5 + 5 = 10
       expect(results2[0].score).toBe(10);
     });

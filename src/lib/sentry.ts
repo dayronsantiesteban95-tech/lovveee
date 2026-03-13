@@ -23,7 +23,7 @@ import * as Sentry from "@sentry/react";
 export function captureLoadError(
   loadId: string,
   error: unknown,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): void {
   Sentry.withScope((scope) => {
     scope.setTag("feature", "loads");
@@ -92,7 +92,7 @@ export function captureAuthError(action: string, error: unknown): void {
 export function captureFleetError(
   driverId: string,
   error: unknown,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): void {
   Sentry.withScope((scope) => {
     scope.setTag("feature", "fleet");
@@ -113,7 +113,7 @@ export function captureFleetError(
 export function captureScopedError(
   feature: string,
   context: Record<string, unknown>,
-  error: unknown
+  error: unknown,
 ): void {
   Sentry.withScope((scope) => {
     scope.setTag("feature", feature);
@@ -134,13 +134,13 @@ export function captureScopedError(
 export async function withSpan<T>(
   name: string,
   attributes: Record<string, string | number | boolean>,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   return Sentry.startSpan(
     {
       name,
       attributes,
     },
-    fn
+    fn,
   );
 }

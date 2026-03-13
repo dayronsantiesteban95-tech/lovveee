@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -125,8 +125,8 @@
 
     --cos-glow-primary: 222 84% 55% / 0.12;
     --cos-glow-success: 142 72% 42% / 0.12;
-    --cos-glow-warning: 38 92% 50% / 0.10;
-    --cos-glow-danger: 0 72% 51% / 0.10;
+    --cos-glow-warning: 38 92% 50% / 0.1;
+    --cos-glow-danger: 0 72% 51% / 0.1;
   }
 }
 
@@ -137,8 +137,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    font-family:
+      "Inter",
+      system-ui,
+      -apple-system,
+      sans-serif;
+    font-feature-settings: "cv11", "ss01", "ss03";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -165,7 +169,8 @@
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid hsl(var(--cos-glass-border));
-    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transition:
+      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       border-color 0.3s ease;
   }
@@ -184,18 +189,22 @@
      TYPOGRAPHY
      ═══════════════════════════════════════════════════════════ */
   .font-mono {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-feature-settings: 'liga', 'calt';
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-feature-settings: "liga", "calt";
   }
 
   .text-data {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: "JetBrains Mono", monospace;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--cos-info)));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--cos-info))
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -245,22 +254,26 @@
      GLOW EFFECTS — For at-risk items, live indicators
      ═══════════════════════════════════════════════════════════ */
   .glow-success {
-    box-shadow: 0 0 20px hsl(var(--cos-glow-success)),
+    box-shadow:
+      0 0 20px hsl(var(--cos-glow-success)),
       0 0 60px hsl(var(--cos-success) / 0.05);
   }
 
   .glow-warning {
-    box-shadow: 0 0 20px hsl(var(--cos-glow-warning)),
+    box-shadow:
+      0 0 20px hsl(var(--cos-glow-warning)),
       0 0 60px hsl(var(--cos-warning) / 0.05);
   }
 
   .glow-danger {
-    box-shadow: 0 0 20px hsl(var(--cos-glow-danger)),
+    box-shadow:
+      0 0 20px hsl(var(--cos-glow-danger)),
       0 0 60px hsl(var(--cos-danger) / 0.05);
   }
 
   .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--cos-glow-primary)),
+    box-shadow:
+      0 0 20px hsl(var(--cos-glow-primary)),
       0 0 60px hsl(var(--primary) / 0.05);
   }
 
@@ -277,13 +290,17 @@
   }
 
   .metric-card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--cos-info)));
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--cos-info))
+    );
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -340,7 +357,7 @@
     pointer-events: none;
   }
 
-  .cc-metrics-bar>* {
+  .cc-metrics-bar > * {
     pointer-events: auto;
   }
 
@@ -370,7 +387,8 @@
      HOVER / INTERACTION EFFECTS
      ═══════════════════════════════════════════════════════════ */
   .hover-lift {
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transition:
+      transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -394,13 +412,17 @@
 
   /* Accent gradient for special CTAs */
   .accent-bar::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--cos-info)));
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)),
+      hsl(var(--cos-info))
+    );
     border-radius: var(--radius) var(--radius) 0 0;
   }
 
@@ -428,10 +450,12 @@
      LOADING — Premium shimmer
      ═══════════════════════════════════════════════════════════ */
   .shimmer {
-    background: linear-gradient(90deg,
-        hsl(var(--cos-surface-1)) 0%,
-        hsl(var(--cos-surface-2)) 50%,
-        hsl(var(--cos-surface-1)) 100%);
+    background: linear-gradient(
+      90deg,
+      hsl(var(--cos-surface-1)) 0%,
+      hsl(var(--cos-surface-2)) 50%,
+      hsl(var(--cos-surface-1)) 100%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.8s ease-in-out infinite;
   }
@@ -500,7 +524,6 @@
 
 /* Live pulse for real-time indicators */
 @keyframes livePulse {
-
   0%,
   100% {
     opacity: 1;
@@ -515,34 +538,33 @@
 
 /* Glow pulse for at-risk items */
 @keyframes glowPulse {
-
   0%,
   100% {
     box-shadow: 0 0 8px hsl(var(--cos-warning) / 0.2);
   }
 
   50% {
-    box-shadow: 0 0 24px hsl(var(--cos-warning) / 0.35),
+    box-shadow:
+      0 0 24px hsl(var(--cos-warning) / 0.35),
       0 0 48px hsl(var(--cos-warning) / 0.1);
   }
 }
 
 @keyframes glowPulseDanger {
-
   0%,
   100% {
     box-shadow: 0 0 8px hsl(var(--cos-danger) / 0.2);
   }
 
   50% {
-    box-shadow: 0 0 24px hsl(var(--cos-danger) / 0.35),
+    box-shadow:
+      0 0 24px hsl(var(--cos-danger) / 0.35),
       0 0 48px hsl(var(--cos-danger) / 0.1);
   }
 }
 
 /* Breathing glow for primary CTA */
 @keyframes breatheGlow {
-
   0%,
   100% {
     box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2);
@@ -573,7 +595,6 @@
 
 /* Subtle float */
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0);
@@ -710,7 +731,7 @@
 
   /* Monospace data display */
   .text-data {
-    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
     letter-spacing: -0.02em;
   }
 

@@ -15,7 +15,11 @@ import NotFound from "./pages/NotFound";
 
 // Chunk retry helper -- retries dynamic imports up to 3x with exponential back-off.
 // Prevents "This section failed to load" on transient network blips after a redeploy.
-function retryImport<T>(factory: () => Promise<T>, retries = 3, delay = 800): Promise<T> {
+function retryImport<T>(
+  factory: () => Promise<T>,
+  retries = 3,
+  delay = 800,
+): Promise<T> {
   return factory().catch(async (err) => {
     if (retries <= 0) throw err;
     await new Promise((r) => setTimeout(r, delay));
@@ -24,7 +28,7 @@ function retryImport<T>(factory: () => Promise<T>, retries = 3, delay = 800): Pr
 }
 
 function lazyWithRetry<T extends React.ComponentType<unknown>>(
-  factory: () => Promise<{ default: T }>
+  factory: () => Promise<{ default: T }>,
 ): React.LazyExoticComponent<T> {
   return lazy(() => retryImport(factory));
 }
@@ -45,9 +49,13 @@ const CommandCenter = lazyWithRetry(() => import("@/pages/CommandCenter"));
 const TrackDelivery = lazyWithRetry(() => import("@/pages/TrackDelivery"));
 const ClientPortal = lazyWithRetry(() => import("@/pages/ClientPortal"));
 const TimeClock = lazyWithRetry(() => import("@/pages/TimeClock"));
-const DriverPerformance = lazyWithRetry(() => import("@/pages/DriverPerformance"));
+const DriverPerformance = lazyWithRetry(
+  () => import("@/pages/DriverPerformance"),
+);
 const Billing = lazyWithRetry(() => import("@/pages/Billing"));
-const RevenueAnalytics = lazyWithRetry(() => import("@/pages/RevenueAnalytics"));
+const RevenueAnalytics = lazyWithRetry(
+  () => import("@/pages/RevenueAnalytics"),
+);
 const PdfCombiner = lazyWithRetry(() => import("@/pages/PdfCombiner"));
 import CommandBar from "@/components/CommandBar";
 
@@ -122,7 +130,8 @@ function ProtectedRoutes() {
   if (!user) return <Navigate to="/auth" replace />;
 
   // Force new users to set their password before accessing the app
-  if (user.user_metadata?.force_password_change) return <Navigate to="/auth" replace />;
+  if (user.user_metadata?.force_password_change)
+    return <Navigate to="/auth" replace />;
 
   // Drivers belong in the mobile app -- show the wrong-app screen immediately,
   // before any dispatcher page or Supabase query fires.
@@ -149,14 +158,19 @@ const App = () => (
         <CommandBar />
         {/* Route-level error boundary: catches errors in any child route */}
         <Sentry.ErrorBoundary fallback={<RouteFallback />}>
-          <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-background">
-              <div className="h-8 w-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-            </div>
-          }>
+          <Suspense
+            fallback={
+              <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="h-8 w-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+              </div>
+            }
+          >
             <Routes>
               <Route path="/auth" element={<AuthRoute />} />
-              <Route path="/auth/quickbooks/callback" element={<QuickBooksCallback />} />
+              <Route
+                path="/auth/quickbooks/callback"
+                element={<QuickBooksCallback />}
+              />
               <Route path="/track" element={<TrackDelivery />} />
               <Route path="/track/:token" element={<TrackDelivery />} />
               <Route path="/portal/:token" element={<ClientPortal />} />
@@ -215,7 +229,10 @@ const App = () => (
                 <Route path="/time-clock" element={<TimeClock />} />
                 <Route path="/performance" element={<DriverPerformance />} />
                 <Route path="/pdf-combiner" element={<PdfCombiner />} />
-                <Route path="/" element={<Navigate to="/command-center" replace />} />
+                <Route
+                  path="/"
+                  element={<Navigate to="/command-center" replace />}
+                />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

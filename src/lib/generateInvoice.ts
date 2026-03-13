@@ -72,7 +72,10 @@ function truncate(str: string | null | undefined, maxLen: number): string {
   return str.slice(0, maxLen - 3) + "...";
 }
 
-function breakdownRevenue(revenue: number, miles: number): {
+function breakdownRevenue(
+  revenue: number,
+  miles: number,
+): {
   base: number;
   additionalMiles: number;
   fuel: number;
@@ -105,8 +108,8 @@ function breakdownRevenue(revenue: number, miles: number): {
 
 // --- Color palette ----------------------------------------
 const COLORS = {
-  primary: [15, 23, 42] as [number, number, number],       // slate-900
-  accent: [37, 99, 235] as [number, number, number],        // blue-600
+  primary: [15, 23, 42] as [number, number, number], // slate-900
+  accent: [37, 99, 235] as [number, number, number], // blue-600
   accentLight: [219, 234, 254] as [number, number, number], // blue-100
   white: [255, 255, 255] as [number, number, number],
   gray100: [243, 244, 246] as [number, number, number],
@@ -122,9 +125,13 @@ const COLORS = {
 // -----------------------------------------------------------
 
 export function generateInvoice(load: InvoiceLoad, driverName: string): void {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "letter",
+  });
 
-  const W = doc.internal.pageSize.getWidth();  // 215.9 mm
+  const W = doc.internal.pageSize.getWidth(); // 215.9 mm
   const pageH = doc.internal.pageSize.getHeight();
   const FOOTER_ZONE = 24; // reserved space at bottom for footer strip + margin
 
@@ -150,14 +157,15 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   const invoiceNum = `INV-${refNum}`;
 
   // Determine address based on hub
-  const companyAddress =
-    load.hub?.toLowerCase().includes("phx")
-      ? "4722 E Mcdowell Rd, Phoenix, AZ 85008"
-      : "11431 NW 107th St, Ste 24, Medley, FL 33178";
+  const companyAddress = load.hub?.toLowerCase().includes("phx")
+    ? "4722 E Mcdowell Rd, Phoenix, AZ 85008"
+    : "11431 NW 107th St, Ste 24, Medley, FL 33178";
 
   // -- Breakdown ------------------------------------------
   const breakdown = breakdownRevenue(
-    load.revenue != null && Number(load.revenue) > 0 ? Number(load.revenue) : 131.25,
+    load.revenue != null && Number(load.revenue) > 0
+      ? Number(load.revenue)
+      : 131.25,
     Number(load.miles) || 0,
   );
 
@@ -281,8 +289,8 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
   const weightDisplay = load.weight_kg
     ? `${load.weight_kg} KG`
     : load.weight_lbs
-    ? `${(load.weight_lbs / 2.205).toFixed(1)} KG`
-    : "--";
+      ? `${(load.weight_lbs / 2.205).toFixed(1)} KG`
+      : "--";
 
   const pkgDisplay = `${load.packages || 1} ${load.package_type || "PKG"}`;
   const svcDisplay = `${load.service_type || "AOG"} -- AOG Cartage`;
@@ -295,8 +303,16 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
     ["Delivery Location", truncate(load.delivery_address, 80)],
     ["Delivery Company", truncate(load.delivery_company, 60)],
     ["Driver", truncate(driverName, 40)],
-    ["Pickup Date/Time", load.actual_pickup ? fmtDate(load.actual_pickup) : fmtDateOnly(load.load_date)],
-    ["Delivery Date/Time", load.actual_delivery ? fmtDate(load.actual_delivery) : "--"],
+    [
+      "Pickup Date/Time",
+      load.actual_pickup
+        ? fmtDate(load.actual_pickup)
+        : fmtDateOnly(load.load_date),
+    ],
+    [
+      "Delivery Date/Time",
+      load.actual_delivery ? fmtDate(load.actual_delivery) : "--",
+    ],
     ["Weight", weightDisplay],
     ["Packages", pkgDisplay],
   ];
@@ -324,7 +340,11 @@ export function generateInvoice(load: InvoiceLoad, driverName: string): void {
       fillColor: COLORS.gray100,
     },
     columnStyles: {
-      0: { fontStyle: "bold", cellWidth: 50, textColor: COLORS.gray600 as [number, number, number] },
+      0: {
+        fontStyle: "bold",
+        cellWidth: 50,
+        textColor: COLORS.gray600 as [number, number, number],
+      },
       1: { cellWidth: "auto" },
     },
     theme: "grid",

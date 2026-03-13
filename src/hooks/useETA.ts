@@ -10,8 +10,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const ROUTES_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
-const ROUTES_API_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
+const ROUTES_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY as string;
+const ROUTES_API_URL =
+  "https://routes.googleapis.com/directions/v2:computeRoutes";
 const FIELD_MASK = "routes.duration,routes.distanceMeters";
 const REFRESH_INTERVAL_MS = 60 * 1000; // 60 seconds
 
@@ -117,7 +118,9 @@ export function useETA(
       if (!mountedRef.current) return;
       setEta(arrivalDate);
       setDurationMinutes(Math.round(cached.durationSeconds / 60));
-      setDistanceMiles(parseFloat((cached.distanceMeters / 1609.34).toFixed(1)));
+      setDistanceMiles(
+        parseFloat((cached.distanceMeters / 1609.34).toFixed(1)),
+      );
       setLastUpdated(new Date(cached.fetchedAt));
       setError(null);
       return;
@@ -125,8 +128,15 @@ export function useETA(
 
     setLoading(true);
     try {
-      const { durationSeconds, distanceMeters } = await fetchRouteData(origin, destination);
-      const entry: CacheEntry = { durationSeconds, distanceMeters, fetchedAt: Date.now() };
+      const { durationSeconds, distanceMeters } = await fetchRouteData(
+        origin,
+        destination,
+      );
+      const entry: CacheEntry = {
+        durationSeconds,
+        distanceMeters,
+        fetchedAt: Date.now(),
+      };
       etaCache.set(key, entry);
 
       const arrivalDate = new Date(Date.now() + durationSeconds * 1000);
@@ -167,7 +177,15 @@ export function useETA(
     };
   }, [doFetch, enabled, origin, destination]);
 
-  return { eta, durationMinutes, distanceMiles, loading, error, lastUpdated, refresh: doFetch };
+  return {
+    eta,
+    durationMinutes,
+    distanceMiles,
+    loading,
+    error,
+    lastUpdated,
+    refresh: doFetch,
+  };
 }
 
 // -- Utility: ETA status color ------------------------------------------------
@@ -183,18 +201,24 @@ export function etaStatusColor(
   if (!eta) return "gray";
   if (!slaDeadline) return "green"; // no deadline = assume on time
   const slaMsLeft = new Date(slaDeadline).getTime() - eta.getTime();
-  if (slaMsLeft >= 15 * 60 * 1000) return "green";   // >15 min buffer
-  if (slaMsLeft >= 0) return "yellow";                 // tight but on time
-  return "red";                                        // past deadline
+  if (slaMsLeft >= 15 * 60 * 1000) return "green"; // >15 min buffer
+  if (slaMsLeft >= 0) return "yellow"; // tight but on time
+  return "red"; // past deadline
 }
 
 /**
  * Format ETA date to human-readable "2:45 PM" or "~18 min"
  */
-export function fmtETA(eta: Date | null, durationMinutes: number | null): string {
+export function fmtETA(
+  eta: Date | null,
+  durationMinutes: number | null,
+): string {
   if (!eta) return "ETA unavailable";
   if (durationMinutes !== null && durationMinutes < 60) {
     return `~${durationMinutes} min`;
   }
-  return eta.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return eta.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }

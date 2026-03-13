@@ -8,26 +8,58 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
-  Plus, Search, Pencil, Trash2, Building2, Phone,
-  Globe, MapPin, Package, DollarSign, Users, X, ExternalLink,
-  TrendingUp, Clock,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Building2,
+  Phone,
+  Globe,
+  MapPin,
+  Package,
+  DollarSign,
+  Users,
+  X,
+  ExternalLink,
+  TrendingUp,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -70,7 +102,11 @@ type LoadSummary = { count: number; revenue: number };
 
 // --- Helpers --------------------------------------------
 const fmtRevenue = (v: number) =>
-  v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  v.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
 
 const STATUS_COLORS: Record<string, string> = {
   delivered: "bg-emerald-500/15 text-emerald-400",
@@ -110,35 +146,64 @@ function CompanyForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
         <Label>Company Name *</Label>
-        <Input name="name" defaultValue={initial?.name ?? ""} required placeholder="Acme Corp" />
+        <Input
+          name="name"
+          defaultValue={initial?.name ?? ""}
+          required
+          placeholder="Acme Corp"
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Industry</Label>
-          <Input name="industry" defaultValue={initial?.industry ?? ""} placeholder="Logistics" />
+          <Input
+            name="industry"
+            defaultValue={initial?.industry ?? ""}
+            placeholder="Logistics"
+          />
         </div>
         <div>
           <Label>Phone</Label>
-          <Input name="phone" defaultValue={initial?.phone ?? ""} placeholder="+1 (555) 000-0000" />
+          <Input
+            name="phone"
+            defaultValue={initial?.phone ?? ""}
+            placeholder="+1 (555) 000-0000"
+          />
         </div>
       </div>
       <div>
         <Label>Address</Label>
-        <Input name="address" defaultValue={initial?.address ?? ""} placeholder="123 Main St" />
+        <Input
+          name="address"
+          defaultValue={initial?.address ?? ""}
+          placeholder="123 Main St"
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>City</Label>
-          <Input name="city" defaultValue={initial?.city ?? ""} placeholder="Phoenix" />
+          <Input
+            name="city"
+            defaultValue={initial?.city ?? ""}
+            placeholder="Phoenix"
+          />
         </div>
         <div>
           <Label>State</Label>
-          <Input name="state" defaultValue={initial?.state ?? ""} placeholder="AZ" />
+          <Input
+            name="state"
+            defaultValue={initial?.state ?? ""}
+            placeholder="AZ"
+          />
         </div>
       </div>
       <div>
         <Label>Website</Label>
-        <Input name="website" defaultValue={initial?.website ?? ""} placeholder="https://" />
+        <Input
+          name="website"
+          defaultValue={initial?.website ?? ""}
+          placeholder="https://"
+        />
       </div>
       <div>
         <Label>Notes</Label>
@@ -175,7 +240,9 @@ function CompanyDetail({
     Promise.all([
       supabase
         .from("daily_loads")
-        .select("id,load_date,reference_number,status,revenue,miles,client_name")
+        .select(
+          "id,load_date,reference_number,status,revenue,miles,client_name",
+        )
         .eq("client_name", company.name)
         .order("load_date", { ascending: false })
         .limit(50),
@@ -195,12 +262,15 @@ function CompanyDetail({
   const totalRevenue = loads.reduce((s, l) => s + (l.revenue ?? 0), 0);
   const lastLoadDate = loads[0]?.load_date ?? null;
   const activeLoads = loads.filter((l) =>
-    ["pending", "in-transit", "assigned"].includes(l.status)
+    ["pending", "in-transit", "assigned"].includes(l.status),
   ).length;
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-0" side="right">
+      <SheetContent
+        className="w-full sm:max-w-2xl overflow-y-auto p-0"
+        side="right"
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card border-b px-6 py-4 flex items-start justify-between">
           <div>
@@ -210,7 +280,8 @@ function CompanyDetail({
                 {company.name}
               </SheetTitle>
               <SheetDescription>
-                {[company.city, company.state].filter(Boolean).join(", ") || "No location set"}
+                {[company.city, company.state].filter(Boolean).join(", ") ||
+                  "No location set"}
               </SheetDescription>
             </SheetHeader>
           </div>
@@ -234,15 +305,21 @@ function CompanyDetail({
             <Card className="bg-muted/30">
               <CardContent className="p-3 text-center">
                 <DollarSign className="h-4 w-4 mx-auto mb-1 text-emerald-400" />
-                <div className="text-2xl font-bold">{fmtRevenue(totalRevenue)}</div>
-                <div className="text-xs text-muted-foreground">Total Revenue</div>
+                <div className="text-2xl font-bold">
+                  {fmtRevenue(totalRevenue)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Total Revenue
+                </div>
               </CardContent>
             </Card>
             <Card className="bg-muted/30">
               <CardContent className="p-3 text-center">
                 <TrendingUp className="h-4 w-4 mx-auto mb-1 text-blue-400" />
                 <div className="text-2xl font-bold">{activeLoads}</div>
-                <div className="text-xs text-muted-foreground">Active Loads</div>
+                <div className="text-xs text-muted-foreground">
+                  Active Loads
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -264,19 +341,31 @@ function CompanyDetail({
               {company.phone && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="h-3.5 w-3.5" />
-                  <a href={`tel:${company.phone}`} className="hover:text-foreground">{company.phone}</a>
+                  <a
+                    href={`tel:${company.phone}`}
+                    className="hover:text-foreground"
+                  >
+                    {company.phone}
+                  </a>
                 </div>
               )}
               {company.address && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5" />
-                  {[company.address, company.city, company.state].filter(Boolean).join(", ")}
+                  {[company.address, company.city, company.state]
+                    .filter(Boolean)
+                    .join(", ")}
                 </div>
               )}
               {company.website && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Globe className="h-3.5 w-3.5" />
-                  <a href={company.website} target="_blank" rel="noreferrer" className="hover:text-accent flex items-center gap-1">
+                  <a
+                    href={company.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-accent flex items-center gap-1"
+                  >
                     {company.website} <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
@@ -306,14 +395,25 @@ function CompanyDetail({
               {loadingDetail ? (
                 <Skeleton className="h-8 w-full" />
               ) : contacts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No contacts linked to this company.</p>
+                <p className="text-sm text-muted-foreground">
+                  No contacts linked to this company.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {contacts.map((ct) => (
-                    <div key={ct.id} className="flex items-center justify-between p-2 rounded bg-muted/30 text-sm">
+                    <div
+                      key={ct.id}
+                      className="flex items-center justify-between p-2 rounded bg-muted/30 text-sm"
+                    >
                       <div>
-                        <div className="font-medium">{ct.first_name} {ct.last_name}</div>
-                        {ct.job_title && <div className="text-xs text-muted-foreground">{ct.job_title}</div>}
+                        <div className="font-medium">
+                          {ct.first_name} {ct.last_name}
+                        </div>
+                        {ct.job_title && (
+                          <div className="text-xs text-muted-foreground">
+                            {ct.job_title}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right text-xs text-muted-foreground">
                         {ct.phone && <div>{ct.phone}</div>}
@@ -330,16 +430,21 @@ function CompanyDetail({
           <Card>
             <CardHeader className="pb-2 pt-3 px-4">
               <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <Package className="h-3.5 w-3.5" /> Load History ({loads.length})
+                <Package className="h-3.5 w-3.5" /> Load History ({loads.length}
+                )
               </CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-0">
               {loadingDetail ? (
                 <div className="px-4 pb-4 space-y-2">
-                  {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))}
                 </div>
               ) : loads.length === 0 ? (
-                <p className="px-4 pb-4 text-sm text-muted-foreground">No loads found for this client.</p>
+                <p className="px-4 pb-4 text-sm text-muted-foreground">
+                  No loads found for this client.
+                </p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -347,7 +452,9 @@ function CompanyDetail({
                       <TableHead className="text-xs">Date</TableHead>
                       <TableHead className="text-xs">Ref #</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs text-right">Revenue</TableHead>
+                      <TableHead className="text-xs text-right">
+                        Revenue
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -360,7 +467,9 @@ function CompanyDetail({
                           {l.reference_number ?? "--"}
                         </TableCell>
                         <TableCell className="py-2">
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[l.status] ?? "bg-muted text-muted-foreground"}`}>
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[l.status] ?? "bg-muted text-muted-foreground"}`}
+                          >
                             {l.status}
                           </span>
                         </TableCell>
@@ -413,7 +522,8 @@ function Companies() {
           const stats: Record<string, LoadSummary> = {};
           for (const l of loads) {
             if (!l.client_name) continue;
-            if (!stats[l.client_name]) stats[l.client_name] = { count: 0, revenue: 0 };
+            if (!stats[l.client_name])
+              stats[l.client_name] = { count: 0, revenue: 0 };
             stats[l.client_name].count++;
             stats[l.client_name].revenue += l.revenue ?? 0;
           }
@@ -424,21 +534,37 @@ function Companies() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchCompanies(); }, [fetchCompanies]);
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   useEffect(() => {
     const ch = supabase
       .channel("companies-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "companies" }, fetchCompanies)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "companies" },
+        fetchCompanies,
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [fetchCompanies]);
 
   const handleSubmit = async (payload: Partial<Company>) => {
     if (!user) return;
     if (editCompany) {
-      const { error } = await supabase.from("companies").update(payload).eq("id", editCompany.id);
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      const { error } = await supabase
+        .from("companies")
+        .update(payload)
+        .eq("id", editCompany.id);
+      if (error)
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       else {
         toast({ title: "Company updated" });
         setEditCompany(null);
@@ -446,8 +572,15 @@ function Companies() {
         fetchCompanies();
       }
     } else {
-      const { error } = await supabase.from("companies").insert({ ...payload, created_by: user.id });
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      const { error } = await supabase
+        .from("companies")
+        .insert({ ...payload, created_by: user.id });
+      if (error)
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       else {
         toast({ title: "Company added" });
         setShowForm(false);
@@ -458,8 +591,16 @@ function Companies() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.from("companies").delete().eq("id", deleteId);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    const { error } = await supabase
+      .from("companies")
+      .delete()
+      .eq("id", deleteId);
+    if (error)
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     else toast({ title: "Company deleted" });
     setDeleteId(null);
     fetchCompanies();
@@ -471,7 +612,7 @@ function Companies() {
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       (c.city ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (c.state ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (c.industry ?? "").toLowerCase().includes(search.toLowerCase())
+      (c.industry ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
   const isFormOpen = showForm || !!editCompany;
@@ -481,13 +622,19 @@ function Companies() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight gradient-text">Companies</h1>
+          <h1 className="text-2xl font-bold tracking-tight gradient-text">
+            Companies
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {companies.length} client{companies.length !== 1 ? "s" : ""} ? Manage your client database
+            {companies.length} client{companies.length !== 1 ? "s" : ""} ?
+            Manage your client database
           </p>
         </div>
         <Button
-          onClick={() => { setEditCompany(null); setShowForm(true); }}
+          onClick={() => {
+            setEditCompany(null);
+            setShowForm(true);
+          }}
           className="gap-2 btn-gradient"
         >
           <Plus className="h-4 w-4" /> Add Company
@@ -551,7 +698,9 @@ function Companies() {
                           <div>
                             <div>{c.name}</div>
                             {c.industry && (
-                              <div className="text-xs text-muted-foreground">{c.industry}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {c.industry}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -575,7 +724,10 @@ function Companies() {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            onClick={() => { setEditCompany(c); setShowForm(true); }}
+                            onClick={() => {
+                              setEditCompany(c);
+                              setShowForm(true);
+                            }}
                             className="p-1.5 rounded hover:bg-muted"
                             title="Edit"
                           >
@@ -595,8 +747,13 @@ function Companies() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
-                      {search ? `No companies matching "${search}"` : "No companies yet. Add your first client!"}
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-muted-foreground py-10"
+                    >
+                      {search
+                        ? `No companies matching "${search}"`
+                        : "No companies yet. Add your first client!"}
                     </TableCell>
                   </TableRow>
                 )}
@@ -607,15 +764,29 @@ function Companies() {
       </Card>
 
       {/* Add / Edit Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={() => { setShowForm(false); setEditCompany(null); }}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={() => {
+          setShowForm(false);
+          setEditCompany(null);
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editCompany ? "Edit Company" : "Add Company"}</DialogTitle>
+            <DialogTitle>
+              {editCompany ? "Edit Company" : "Add Company"}
+            </DialogTitle>
             <DialogDescription>
-              {editCompany ? "Update the company information below." : "Fill in the details to add a new client."}
+              {editCompany
+                ? "Update the company information below."
+                : "Fill in the details to add a new client."}
             </DialogDescription>
           </DialogHeader>
-          <CompanyForm key={editCompany?.id ?? "new"} initial={editCompany} onSubmit={handleSubmit} />
+          <CompanyForm
+            key={editCompany?.id ?? "new"}
+            initial={editCompany}
+            onSubmit={handleSubmit}
+          />
         </DialogContent>
       </Dialog>
 
@@ -625,12 +796,16 @@ function Companies() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete company?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this company. Existing loads will not be affected.
+              This will permanently remove this company. Existing loads will not
+              be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

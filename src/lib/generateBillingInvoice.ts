@@ -34,17 +34,17 @@ export interface BillingInvoiceData {
 
 // --- Color Palette ----------------------------------------
 const C = {
-  primary:    [15, 23, 42] as [number, number, number],
-  accent:     [37, 99, 235] as [number, number, number],
-  accentLight:[219, 234, 254] as [number, number, number],
-  white:      [255, 255, 255] as [number, number, number],
-  gray100:    [243, 244, 246] as [number, number, number],
-  gray200:    [229, 231, 235] as [number, number, number],
-  gray400:    [156, 163, 175] as [number, number, number],
-  gray600:    [75, 85, 99] as [number, number, number],
-  green:      [21, 128, 61] as [number, number, number],
+  primary: [15, 23, 42] as [number, number, number],
+  accent: [37, 99, 235] as [number, number, number],
+  accentLight: [219, 234, 254] as [number, number, number],
+  white: [255, 255, 255] as [number, number, number],
+  gray100: [243, 244, 246] as [number, number, number],
+  gray200: [229, 231, 235] as [number, number, number],
+  gray400: [156, 163, 175] as [number, number, number],
+  gray600: [75, 85, 99] as [number, number, number],
+  green: [21, 128, 61] as [number, number, number],
   greenLight: [220, 252, 231] as [number, number, number],
-  red:        [185, 28, 28] as [number, number, number],
+  red: [185, 28, 28] as [number, number, number],
 };
 
 // --- Helpers ---------------------------------------------
@@ -52,7 +52,9 @@ function fmtDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "--";
   try {
     return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "long", day: "numeric", year: "numeric",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     });
   } catch {
     return dateStr;
@@ -74,7 +76,11 @@ function truncate(str: string | null | undefined, maxLen: number): string {
 // MAIN EXPORT
 // -----------------------------------------------------------
 export function generateBillingInvoice(invoice: BillingInvoiceData): void {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter" });
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "letter",
+  });
   const W = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const FOOTER_ZONE = 24; // reserved space at bottom for footer strip + margin
@@ -197,7 +203,12 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   y += 4;
 
   const tableRows = invoice.line_items.map((item) => [
-    item.service_date ? new Date(item.service_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "--",
+    item.service_date
+      ? new Date(item.service_date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : "--",
     truncate(item.reference_number, 20),
     truncate(item.description, 60),
     item.quantity.toString(),
@@ -245,7 +256,12 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   const totalsX = W - 16 - 65;
   const valX = W - 16;
 
-  const drawTotalRow = (label: string, value: string, bold = false, color?: [number, number, number]) => {
+  const drawTotalRow = (
+    label: string,
+    value: string,
+    bold = false,
+    color?: [number, number, number],
+  ) => {
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(bold ? 10 : 9);
     doc.setTextColor(...(color ?? C.gray600));
@@ -270,7 +286,12 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   if (invoice.amount_paid > 0) {
     drawTotalRow("Amount Paid:", fmt$(invoice.amount_paid), false, C.green);
     const balance = invoice.total_amount - invoice.amount_paid;
-    drawTotalRow("Balance Due:", fmt$(balance), true, balance > 0 ? C.red : C.green);
+    drawTotalRow(
+      "Balance Due:",
+      fmt$(balance),
+      true,
+      balance > 0 ? C.red : C.green,
+    );
   }
 
   y += 6;
@@ -278,7 +299,10 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   // -- Notes ---------------------------------------------
   if (invoice.notes) {
     // Limit notes to a reasonable length to prevent multi-page overflow
-    const safeNotes = invoice.notes.length > 500 ? invoice.notes.slice(0, 497) + "..." : invoice.notes;
+    const safeNotes =
+      invoice.notes.length > 500
+        ? invoice.notes.slice(0, 497) + "..."
+        : invoice.notes;
     y = ensureSpace(y, 20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
@@ -306,8 +330,16 @@ export function generateBillingInvoice(invoice: BillingInvoiceData): void {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...C.gray600);
-  doc.text("Payment due within 30 days. Thank you for your business.", leftX + 6, y + 13);
-  doc.text("Checks payable to: Anika Logistics Group  |  Questions: billing@anikalogistics.com", leftX + 6, y + 18.5);
+  doc.text(
+    "Payment due within 30 days. Thank you for your business.",
+    leftX + 6,
+    y + 13,
+  );
+  doc.text(
+    "Checks payable to: Anika Logistics Group  |  Questions: billing@anikalogistics.com",
+    leftX + 6,
+    y + 18.5,
+  );
 
   y += 30;
 

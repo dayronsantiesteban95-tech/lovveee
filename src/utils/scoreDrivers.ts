@@ -24,7 +24,7 @@ export function distanceMiles(
 
 export interface DriverScore {
   driver: Driver;
-  score: number;        // 0-100
+  score: number; // 0-100
   distanceMi: number | null;
   reasoning: string;
   isAvailable: boolean;
@@ -45,18 +45,26 @@ export function scoreDrivers(
     const loc = driverLocations.find((l) => l.driver_id === driver.id);
     let distanceMi: number | null = null;
     if (loc && pickupLat != null && pickupLng != null) {
-      distanceMi = distanceMiles(pickupLat, pickupLng, loc.latitude, loc.longitude);
+      distanceMi = distanceMiles(
+        pickupLat,
+        pickupLng,
+        loc.latitude,
+        loc.longitude,
+      );
     }
 
     // -- Load count today ----------------------------------------------------
-    const loadsToday = todayLoads.filter((l) => l.driver_id === driver.id).length;
+    const loadsToday = todayLoads.filter(
+      (l) => l.driver_id === driver.id,
+    ).length;
 
     // -- Status (30 pts) -----------------------------------------------------
     const statusLower = driver.status.toLowerCase();
     let statusPts = 0;
     if (statusLower === "idle" || statusLower === "active") statusPts = 30;
     else if (statusLower === "finishing_soon") statusPts = 20;
-    else if (statusLower === "on_load" || statusLower === "in_progress") statusPts = 5;
+    else if (statusLower === "on_load" || statusLower === "in_progress")
+      statusPts = 5;
     // off / inactive = 0
 
     // -- Distance (45 pts) ---------------------------------------------------

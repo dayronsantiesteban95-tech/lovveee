@@ -116,7 +116,8 @@ describe("Fuel Surcharge", () => {
 describe("Subtotal", () => {
   it("equals base + mileage + fuel surcharge", () => {
     const result = calculateRate("cargo_van", 30, 0, mods());
-    const expected = result.baseRate + result.mileageCharge + result.fuelSurcharge;
+    const expected =
+      result.baseRate + result.mileageCharge + result.fuelSurcharge;
     expect(result.subtotal).toBeCloseTo(expected, 2);
   });
 
@@ -204,17 +205,32 @@ describe("Accessorial & Modifier Charges", () => {
   });
 
   it("tendering fee adds $15", () => {
-    const result = calculateRate("cargo_van", 0, 0, mods({ tenderingFee: true }));
+    const result = calculateRate(
+      "cargo_van",
+      0,
+      0,
+      mods({ tenderingFee: true }),
+    );
     expect(result.modifiersTotal).toBe(15);
   });
 
   it("attempt charge adds the base rate (cargo_van=$105)", () => {
-    const result = calculateRate("cargo_van", 0, 0, mods({ attemptCharge: true }));
+    const result = calculateRate(
+      "cargo_van",
+      0,
+      0,
+      mods({ attemptCharge: true }),
+    );
     expect(result.modifiersTotal).toBe(105);
   });
 
   it("attempt charge adds the base rate (box_truck=$170)", () => {
-    const result = calculateRate("box_truck", 0, 0, mods({ attemptCharge: true }));
+    const result = calculateRate(
+      "box_truck",
+      0,
+      0,
+      mods({ attemptCharge: true }),
+    );
     expect(result.modifiersTotal).toBe(170);
   });
 
@@ -232,7 +248,12 @@ describe("Accessorial & Modifier Charges", () => {
   });
 
   it("special handling adds $20", () => {
-    const result = calculateRate("cargo_van", 0, 0, mods({ specialHandling: true }));
+    const result = calculateRate(
+      "cargo_van",
+      0,
+      0,
+      mods({ specialHandling: true }),
+    );
     expect(result.modifiersTotal).toBe(20);
   });
 
@@ -252,7 +273,12 @@ describe("Accessorial & Modifier Charges", () => {
   });
 
   it("second person adds $100", () => {
-    const result = calculateRate("cargo_van", 0, 0, mods({ secondPerson: true }));
+    const result = calculateRate(
+      "cargo_van",
+      0,
+      0,
+      mods({ secondPerson: true }),
+    );
     expect(result.modifiersTotal).toBe(100);
   });
 
@@ -267,14 +293,19 @@ describe("Accessorial & Modifier Charges", () => {
   });
 
   it("stacks multiple modifiers correctly", () => {
-    const result = calculateRate("cargo_van", 0, 0, mods({
-      afterHours: true,    // +25
-      weekend: true,       // +25
-      holiday: true,       // +50
-      additionalStops: 2,  // +100
-      whiteGlove: true,    // +50
-      hazmat: true,        // +50
-    }));
+    const result = calculateRate(
+      "cargo_van",
+      0,
+      0,
+      mods({
+        afterHours: true, // +25
+        weekend: true, // +25
+        holiday: true, // +50
+        additionalStops: 2, // +100
+        whiteGlove: true, // +50
+        hazmat: true, // +50
+      }),
+    );
     expect(result.modifiersTotal).toBe(25 + 25 + 50 + 100 + 50 + 50);
     expect(result.modifiersTotal).toBe(300);
   });
@@ -285,23 +316,29 @@ describe("Accessorial & Modifier Charges", () => {
   });
 
   it("stacks all boolean and numeric modifiers together", () => {
-    const result = calculateRate("cargo_van", 0, 0, mods({
-      afterHours: true,       // +25
-      weekend: true,          // +25
-      holiday: true,          // +50
-      tenderingFee: true,     // +15
-      attemptCharge: true,    // +105 (base rate)
-      additionalStops: 1,    // +50
-      extraPieces: 2,        // +30
-      specialHandling: true, // +20
-      documents: true,       // +20
-      holding: 1,            // +50
-      waitTime: 1,           // +30
-      secondPerson: true,    // +100
-      whiteGlove: true,      // +50
-      hazmat: true,          // +50
-    }));
-    const expected = 25 + 25 + 50 + 15 + 105 + 50 + 30 + 20 + 20 + 50 + 30 + 100 + 50 + 50;
+    const result = calculateRate(
+      "cargo_van",
+      0,
+      0,
+      mods({
+        afterHours: true, // +25
+        weekend: true, // +25
+        holiday: true, // +50
+        tenderingFee: true, // +15
+        attemptCharge: true, // +105 (base rate)
+        additionalStops: 1, // +50
+        extraPieces: 2, // +30
+        specialHandling: true, // +20
+        documents: true, // +20
+        holding: 1, // +50
+        waitTime: 1, // +30
+        secondPerson: true, // +100
+        whiteGlove: true, // +50
+        hazmat: true, // +50
+      }),
+    );
+    const expected =
+      25 + 25 + 50 + 15 + 105 + 50 + 30 + 20 + 20 + 50 + 30 + 100 + 50 + 50;
     expect(result.modifiersTotal).toBe(expected);
     expect(result.modifiersTotal).toBe(620);
   });
@@ -312,8 +349,14 @@ describe("Accessorial & Modifier Charges", () => {
 // ============================================================
 describe("Final Quote Accuracy", () => {
   it("final = subtotal + weight surcharge + modifiers", () => {
-    const result = calculateRate("cargo_van", 50, 200, mods({ afterHours: true, additionalStops: 2 }));
-    const expected = result.subtotal + result.weightSurcharge + result.modifiersTotal;
+    const result = calculateRate(
+      "cargo_van",
+      50,
+      200,
+      mods({ afterHours: true, additionalStops: 2 }),
+    );
+    const expected =
+      result.subtotal + result.weightSurcharge + result.modifiersTotal;
     expect(result.finalQuote).toBeCloseTo(expected, 2);
   });
 
@@ -326,7 +369,12 @@ describe("Final Quote Accuracy", () => {
   });
 
   it("box_truck: 100 miles, 1000 lbs, after hours + holiday", () => {
-    const result = calculateRate("box_truck", 100, 1000, mods({ afterHours: true, holiday: true }));
+    const result = calculateRate(
+      "box_truck",
+      100,
+      1000,
+      mods({ afterHours: true, holiday: true }),
+    );
     // base=170, mileage=(100-20)*2.5=200, fuel=(170+200)*0.25=92.50
     // subtotal=170+200+92.50=462.50
     // weight=(1000-600)*0.15=60
@@ -336,7 +384,12 @@ describe("Final Quote Accuracy", () => {
   });
 
   it("cargo_van: real-world scenario - 31 miles, 50 lbs, weekend, 1 extra stop", () => {
-    const result = calculateRate("cargo_van", 31, 50, mods({ weekend: true, additionalStops: 1 }));
+    const result = calculateRate(
+      "cargo_van",
+      31,
+      50,
+      mods({ weekend: true, additionalStops: 1 }),
+    );
     // base=105, mileage=(31-20)*2.0=22, fuel=(105+22)*0.25=31.75
     // subtotal=105+22+31.75=158.75
     // weight: 50 < 100, surcharge=0
@@ -354,14 +407,20 @@ describe("Final Quote Accuracy", () => {
   });
 
   it("breakdown components sum to finalQuote", () => {
-    const result = calculateRate("box_truck", 75, 900, mods({
-      afterHours: true,
-      whiteGlove: true,
-      additionalStops: 3,
-      extraPieces: 5,
-      waitTime: 2,
-    }));
-    const computedFinal = result.subtotal + result.weightSurcharge + result.modifiersTotal;
+    const result = calculateRate(
+      "box_truck",
+      75,
+      900,
+      mods({
+        afterHours: true,
+        whiteGlove: true,
+        additionalStops: 3,
+        extraPieces: 5,
+        waitTime: 2,
+      }),
+    );
+    const computedFinal =
+      result.subtotal + result.weightSurcharge + result.modifiersTotal;
     expect(result.finalQuote).toBeCloseTo(computedFinal, 10);
   });
 });
@@ -371,7 +430,12 @@ describe("Final Quote Accuracy", () => {
 // ============================================================
 describe("Breakdown Object Shape", () => {
   it("returns all expected fields", () => {
-    const result = calculateRate("cargo_van", 30, 150, mods({ afterHours: true }));
+    const result = calculateRate(
+      "cargo_van",
+      30,
+      150,
+      mods({ afterHours: true }),
+    );
     expect(result).toHaveProperty("baseRate");
     expect(result).toHaveProperty("mileageCharge");
     expect(result).toHaveProperty("fuelSurcharge");

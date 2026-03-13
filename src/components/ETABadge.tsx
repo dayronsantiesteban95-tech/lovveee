@@ -67,17 +67,21 @@ export default function ETABadge({
   const color = etaStatusColor(eta, slaDeadline);
 
   const colorClasses: Record<string, string> = {
-    green:  "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30",
-    yellow: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30",
-    red:    "bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30",
-    gray:   "bg-muted/50 text-muted-foreground border border-border/30",
+    green:
+      "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/30",
+    yellow:
+      "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30",
+    red: "bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30",
+    gray: "bg-muted/50 text-muted-foreground border border-border/30",
   };
 
   const label = fmtETA(eta, durationMinutes);
 
   if (compact) {
     return (
-      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${colorClasses[color]}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${colorClasses[color]}`}
+      >
         {label}
       </span>
     );
@@ -86,8 +90,13 @@ export default function ETABadge({
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer ${colorClasses[color]}`}
-      title={lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : undefined}
-      onClick={(e) => { e.stopPropagation(); refresh(); }}
+      title={
+        lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : undefined
+      }
+      onClick={(e) => {
+        e.stopPropagation();
+        refresh();
+      }}
     >
       {label}
       {loading && <RefreshCw className="h-2.5 w-2.5 animate-spin opacity-60" />}

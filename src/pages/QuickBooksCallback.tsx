@@ -7,70 +7,75 @@
 // qb-token-exchange Supabase Edge Function. The client secret
 // never touches the browser.
 // -----------------------------------------------------------
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 function QuickBooksCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'processing' | 'success' | 'error'>(
-    'processing'
+  const [status, setStatus] = useState<"processing" | "success" | "error">(
+    "processing",
   );
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    const realmId = searchParams.get('realmId');
+    const code = searchParams.get("code");
+    const realmId = searchParams.get("realmId");
 
     if (!code || !realmId) {
-      setStatus('error');
-      setError('Missing authorization code or realm ID from QuickBooks.');
+      setStatus("error");
+      setError("Missing authorization code or realm ID from QuickBooks.");
       return;
     }
 
     // -- CSRF State Validation ----------------------------------------------
     // Verify the state param returned by QB matches what we stored when
     // initiating the OAuth flow. This prevents CSRF / open-redirect attacks.
-    const returnedState = searchParams.get('state');
-    const expectedState = sessionStorage.getItem('qb_oauth_state');
+    const returnedState = searchParams.get("state");
+    const expectedState = sessionStorage.getItem("qb_oauth_state");
     if (!returnedState || !expectedState || returnedState !== expectedState) {
-      setStatus('error');
-      setError('Security validation failed. Please try connecting QuickBooks again.');
+      setStatus("error");
+      setError(
+        "Security validation failed. Please try connecting QuickBooks again.",
+      );
       return;
     }
-    sessionStorage.removeItem('qb_oauth_state');
+    sessionStorage.removeItem("qb_oauth_state");
     // ---------------------------------------------------------------------
 
     const handleCallback = async () => {
       try {
         // Delegate token exchange to the server-side Edge Function.
         // The client secret lives in Supabase secrets -- never in the bundle.
-        const response = await supabase.functions.invoke('qb-token-exchange', {
+        const response = await supabase.functions.invoke("qb-token-exchange", {
           body: { code, realmId },
         });
 
         if (response.error) {
-          throw new Error(response.error.message ?? 'Token exchange failed');
+          throw new Error(response.error.message ?? "Token exchange failed");
         }
 
-        const data = response.data as { success?: boolean; error?: string } | null;
+        const data = response.data as {
+          success?: boolean;
+          error?: string;
+        } | null;
 
         if (data?.error) {
           throw new Error(data.error);
         }
 
         if (!data?.success) {
-          throw new Error('Unexpected response from token exchange function.');
+          throw new Error("Unexpected response from token exchange function.");
         }
 
-        setStatus('success');
+        setStatus("success");
         // Redirect back to Billing after 2s
-        setTimeout(() => navigate('/billing'), 2000);
+        setTimeout(() => navigate("/billing"), 2000);
       } catch (e: unknown) {
-        setStatus('error');
-        setError(e instanceof Error ? e.message : 'Unknown error occurred');
+        setStatus("error");
+        setError(e instanceof Error ? e.message : "Unknown error occurred");
       }
     };
 
@@ -81,7 +86,7 @@ function QuickBooksCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4 max-w-sm px-4">
-        {status === 'processing' && (
+        {status === "processing" && (
           <>
             <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-lg font-semibold">Connecting QuickBooks...</p>
@@ -90,7 +95,7 @@ function QuickBooksCallback() {
             </p>
           </>
         )}
-        {status === 'success' && (
+        {status === "success" && (
           <>
             <div className="text-5xl">?</div>
             <p className="text-lg font-semibold text-green-700">
@@ -101,7 +106,7 @@ function QuickBooksCallback() {
             </p>
           </>
         )}
-        {status === 'error' && (
+        {status === "error" && (
           <>
             <div className="text-5xl">?</div>
             <p className="text-lg font-semibold text-destructive">
@@ -109,7 +114,7 @@ function QuickBooksCallback() {
             </p>
             <p className="text-muted-foreground text-sm">{error}</p>
             <button
-              onClick={() => navigate('/billing')}
+              onClick={() => navigate("/billing")}
               className="text-primary underline text-sm mt-2 block mx-auto"
             >
               &larr; Go back to Billing

@@ -9,7 +9,16 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, User, MapPin, Package, Clock, X, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  Zap,
+  User,
+  MapPin,
+  Package,
+  Clock,
+  X,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
 import { useDriverSuggestion } from "@/hooks/useDriverSuggestion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -111,7 +120,8 @@ export default function DriverSuggestionBadge({
   };
 
   const isOnDelivery = suggestion.driver_status === "on_delivery";
-  const hasCutoff = suggestion.cutoff_margin_min !== null && load.cutoff_time != null;
+  const hasCutoff =
+    suggestion.cutoff_margin_min !== null && load.cutoff_time != null;
 
   return (
     <Card className="border border-amber-500/30 bg-amber-500/5 shadow-sm">
@@ -148,7 +158,9 @@ export default function DriverSuggestionBadge({
             <div className="min-w-0 flex-1">
               {/* Name + status badge */}
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-semibold truncate">{suggestion.driver_name}</p>
+                <p className="text-sm font-semibold truncate">
+                  {suggestion.driver_name}
+                </p>
                 <Badge
                   className={
                     isOnDelivery
@@ -170,7 +182,8 @@ export default function DriverSuggestionBadge({
                   </span>
                   <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
                     <Package className="h-3 w-3" />
-                    {suggestion.active_loads_count} active load{suggestion.active_loads_count !== 1 ? "s" : ""}
+                    {suggestion.active_loads_count} active load
+                    {suggestion.active_loads_count !== 1 ? "s" : ""}
                   </span>
                 </div>
 
@@ -181,7 +194,8 @@ export default function DriverSuggestionBadge({
                     ETA pickup: {fmtEta(suggestion.eta_to_pickup_min)}
                   </span>
                   <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                    Est. delivery: {fmtTime(suggestion.estimated_arrival_at_delivery)}
+                    Est. delivery:{" "}
+                    {fmtTime(suggestion.estimated_arrival_at_delivery)}
                   </span>
                 </div>
 
@@ -194,7 +208,8 @@ export default function DriverSuggestionBadge({
                       <AlertTriangle className="h-3 w-3 shrink-0" />
                     )}
                     <span className={cutoffColor(suggestion.cutoff_margin_min)}>
-                      Cutoff: {fmtTime(load.cutoff_time)} ? {Math.round(suggestion.cutoff_margin_min)} min margin
+                      Cutoff: {fmtTime(load.cutoff_time)} ?{" "}
+                      {Math.round(suggestion.cutoff_margin_min)} min margin
                     </span>
                   </div>
                 )}

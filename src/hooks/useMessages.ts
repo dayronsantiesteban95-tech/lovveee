@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface LoadMessage {
   id: string;
   load_id: string;
   sender_id: string;
   sender_name: string;
-  sender_role: 'dispatcher' | 'driver';
+  sender_role: "dispatcher" | "driver";
   message: string;
   read_by: string[];
   created_at: string;
@@ -28,10 +28,10 @@ export function useMessages(loadId: string | null, userId: string | null) {
 
     const fetchMessages = async () => {
       const { data } = await supabase
-        .from('load_messages')
-        .select('*')
-        .eq('load_id', loadId)
-        .order('created_at', { ascending: true });
+        .from("load_messages")
+        .select("*")
+        .eq("load_id", loadId)
+        .order("created_at", { ascending: true });
       if (data) setMessages(data as LoadMessage[]);
       setLoading(false);
     };
@@ -40,16 +40,16 @@ export function useMessages(loadId: string | null, userId: string | null) {
     const channel = supabase
       .channel(`messages-web:${loadId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'load_messages',
+          event: "INSERT",
+          schema: "public",
+          table: "load_messages",
           filter: `load_id=eq.${loadId}`,
         },
         (payload: { new: LoadMessage }) => {
-          setMessages(prev => [...prev, payload.new]);
-        }
+          setMessages((prev) => [...prev, payload.new]);
+        },
       )
       .subscribe();
 
@@ -62,10 +62,10 @@ export function useMessages(loadId: string | null, userId: string | null) {
     async (
       message: string,
       senderName: string,
-      senderRole: 'dispatcher' | 'driver'
+      senderRole: "dispatcher" | "driver",
     ) => {
       if (!loadId || !userId || !message.trim()) return;
-      const { error: msgErr } = await supabase.from('load_messages').insert({
+      const { error: msgErr } = await supabase.from("load_messages").insert({
         load_id: loadId,
         sender_id: userId,
         sender_name: senderName,
@@ -75,12 +75,12 @@ export function useMessages(loadId: string | null, userId: string | null) {
       });
       if (msgErr) throw new Error(msgErr.message);
     },
-    [loadId, userId]
+    [loadId, userId],
   );
 
   const markAsRead = useCallback(async () => {
     if (!loadId || !userId) return;
-    await supabase.rpc('mark_messages_read', {
+    await supabase.rpc("mark_messages_read", {
       p_load_id: loadId,
       p_user_id: userId,
     });
@@ -95,7 +95,7 @@ export function useUnreadMessageCounts(userId: string | null) {
 
   const refresh = useCallback(async () => {
     if (!userId) return;
-    const { data } = await supabase.rpc('get_unread_message_counts', {
+    const { data } = await supabase.rpc("get_unread_message_counts", {
       p_user_id: userId,
     });
     if (data) {
@@ -113,28 +113,28 @@ export function useUnreadMessageCounts(userId: string | null) {
 
     // Subscribe to new messages to update unread counts
     const channel = supabase
-      .channel('unread-counts-watch')
+      .channel("unread-counts-watch")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'load_messages',
+          event: "INSERT",
+          schema: "public",
+          table: "load_messages",
         },
         () => {
           refresh();
-        }
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'load_messages',
+          event: "UPDATE",
+          schema: "public",
+          table: "load_messages",
         },
         () => {
           refresh();
-        }
+        },
       )
       .subscribe();
 

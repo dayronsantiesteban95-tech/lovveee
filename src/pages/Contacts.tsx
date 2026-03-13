@@ -7,20 +7,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Pencil, Trash2, Mail, Phone, X } from "lucide-react";
@@ -76,27 +96,49 @@ function ContactForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>First Name *</Label>
-          <Input name="first_name" defaultValue={initial?.first_name ?? ""} required placeholder="Jane" />
+          <Input
+            name="first_name"
+            defaultValue={initial?.first_name ?? ""}
+            required
+            placeholder="Jane"
+          />
         </div>
         <div>
           <Label>Last Name</Label>
-          <Input name="last_name" defaultValue={initial?.last_name ?? ""} placeholder="Smith" />
+          <Input
+            name="last_name"
+            defaultValue={initial?.last_name ?? ""}
+            placeholder="Smith"
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Email</Label>
-          <Input name="email" type="email" defaultValue={initial?.email ?? ""} placeholder="jane@example.com" />
+          <Input
+            name="email"
+            type="email"
+            defaultValue={initial?.email ?? ""}
+            placeholder="jane@example.com"
+          />
         </div>
         <div>
           <Label>Phone</Label>
-          <Input name="phone" defaultValue={initial?.phone ?? ""} placeholder="+1 (555) 000-0000" />
+          <Input
+            name="phone"
+            defaultValue={initial?.phone ?? ""}
+            placeholder="+1 (555) 000-0000"
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label>Job Title</Label>
-          <Input name="job_title" defaultValue={initial?.job_title ?? ""} placeholder="Logistics Manager" />
+          <Input
+            name="job_title"
+            defaultValue={initial?.job_title ?? ""}
+            placeholder="Logistics Manager"
+          />
         </div>
         <div>
           <Label>Company</Label>
@@ -107,7 +149,9 @@ function ContactForm({
             <SelectContent>
               <SelectItem value="">-- None --</SelectItem>
               {companies.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -149,7 +193,10 @@ function Contacts() {
   }, []);
 
   const fetchCompanies = useCallback(async () => {
-    const { data } = await supabase.from("companies").select("id, name").order("name");
+    const { data } = await supabase
+      .from("companies")
+      .select("id, name")
+      .order("name");
     if (data) setCompanies(data as Company[]);
   }, []);
 
@@ -161,9 +208,15 @@ function Contacts() {
   useEffect(() => {
     const ch = supabase
       .channel("contacts-crm-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "contacts" }, fetchContacts)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contacts" },
+        fetchContacts,
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [fetchContacts]);
 
   const handleSubmit = async (payload: Partial<Contact>) => {
@@ -173,7 +226,12 @@ function Contacts() {
         .from("contacts")
         .update(payload)
         .eq("id", editContact.id);
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (error)
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       else {
         toast({ title: "Contact updated" });
         setEditContact(null);
@@ -184,7 +242,12 @@ function Contacts() {
       const { error } = await supabase
         .from("contacts")
         .insert({ ...payload, created_by: user.id });
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (error)
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
       else {
         toast({ title: "Contact added" });
         setShowForm(false);
@@ -195,8 +258,16 @@ function Contacts() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.from("contacts").delete().eq("id", deleteId);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    const { error } = await supabase
+      .from("contacts")
+      .delete()
+      .eq("id", deleteId);
+    if (error)
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     else toast({ title: "Contact deleted" });
     setDeleteId(null);
     fetchContacts();
@@ -226,13 +297,19 @@ function Contacts() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight gradient-text">Contacts</h1>
+          <h1 className="text-2xl font-bold tracking-tight gradient-text">
+            Contacts
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {contacts.length} contact{contacts.length !== 1 ? "s" : ""} ? Manage your contact database
+            {contacts.length} contact{contacts.length !== 1 ? "s" : ""} ? Manage
+            your contact database
           </p>
         </div>
         <Button
-          onClick={() => { setEditContact(null); setShowForm(true); }}
+          onClick={() => {
+            setEditContact(null);
+            setShowForm(true);
+          }}
           className="gap-2 btn-gradient"
         >
           <Plus className="h-4 w-4" /> Add Contact
@@ -281,18 +358,24 @@ function Contacts() {
               </TableHeader>
               <TableBody>
                 {filtered.map((c) => (
-                  <TableRow key={c.id} className="group hover:bg-muted/30 transition-colors">
+                  <TableRow
+                    key={c.id}
+                    className="group hover:bg-muted/30 transition-colors"
+                  >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary uppercase">
-                          {c.first_name[0]}{(c.last_name ?? " ")[0]}
+                          {c.first_name[0]}
+                          {(c.last_name ?? " ")[0]}
                         </div>
                         {c.first_name} {c.last_name}
                       </div>
                     </TableCell>
                     <TableCell>{c.job_title ?? "--"}</TableCell>
                     <TableCell>
-                      <span className="text-accent">{getCompanyName(c.company_id)}</span>
+                      <span className="text-accent">
+                        {getCompanyName(c.company_id)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {c.phone ? (
@@ -302,7 +385,9 @@ function Contacts() {
                         >
                           <Phone className="h-3 w-3" /> {c.phone}
                         </a>
-                      ) : "--"}
+                      ) : (
+                        "--"
+                      )}
                     </TableCell>
                     <TableCell>
                       {c.email ? (
@@ -312,12 +397,17 @@ function Contacts() {
                         >
                           <Mail className="h-3 w-3" /> {c.email}
                         </a>
-                      ) : "--"}
+                      ) : (
+                        "--"
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => { setEditContact(c); setShowForm(true); }}
+                          onClick={() => {
+                            setEditContact(c);
+                            setShowForm(true);
+                          }}
                           className="p-1.5 rounded hover:bg-muted"
                           title="Edit"
                         >
@@ -336,7 +426,10 @@ function Contacts() {
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-muted-foreground py-10"
+                    >
                       {search
                         ? `No contacts matching "${search}"`
                         : "No contacts yet. Add your first contact!"}
@@ -350,12 +443,22 @@ function Contacts() {
       </Card>
 
       {/* Add / Edit Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={() => { setShowForm(false); setEditContact(null); }}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={() => {
+          setShowForm(false);
+          setEditContact(null);
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editContact ? "Edit Contact" : "Add Contact"}</DialogTitle>
+            <DialogTitle>
+              {editContact ? "Edit Contact" : "Add Contact"}
+            </DialogTitle>
             <DialogDescription>
-              {editContact ? "Update the contact information below." : "Fill in the details to add a new contact."}
+              {editContact
+                ? "Update the contact information below."
+                : "Fill in the details to add a new contact."}
             </DialogDescription>
           </DialogHeader>
           <ContactForm
@@ -372,7 +475,9 @@ function Contacts() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete contact?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

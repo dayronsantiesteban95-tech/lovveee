@@ -17,7 +17,17 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "check:encoding": "node scripts/check-encoding.js",
-    "check:all": "npm run typecheck && npm run lint && npm run test"
+    "check:all": "npm run typecheck && npm run lint && npm run test",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,css,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -93,7 +103,9 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "husky": "^9.1.7",
     "jsdom": "^20.0.3",
+    "lint-staged": "^16.3.3",
     "lovable-tagger": "^1.1.13",
     "pg": "^8.18.0",
     "postcss": "^8.5.6",

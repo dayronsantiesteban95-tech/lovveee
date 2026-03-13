@@ -96,7 +96,8 @@ function ErrorFallback() {
         Something went wrong
       </h2>
       <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>
-        The app encountered an error. Check the browser console (F12) for details.
+        The app encountered an error. Check the browser console (F12) for
+        details.
       </p>
       <p style={{ color: "#64748b", fontSize: "0.75rem" }}>
         Error ID has been reported to our team.
@@ -126,5 +127,5 @@ root.render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
-  </Sentry.ErrorBoundary>
+  </Sentry.ErrorBoundary>,
 );

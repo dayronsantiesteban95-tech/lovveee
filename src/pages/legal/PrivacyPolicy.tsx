@@ -37,7 +37,9 @@ function PrivacyPolicy() {
             <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center">
               <Truck className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-900 text-sm">{COMPANY}</span>
+            <span className="font-semibold text-gray-900 text-sm">
+              {COMPANY}
+            </span>
           </div>
         </div>
       </header>
@@ -64,27 +66,29 @@ function PrivacyPolicy() {
             Last updated: <strong>{EFFECTIVE_DATE}</strong>
           </p>
           <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
-            This Privacy Policy describes how <strong>{COMPANY}</strong> ("we," "us," or "our")
-            collects, uses, and protects your personal information when you use the Anika Control OS
-            logistics dispatch platform ("Service"). By using the Service, you agree to the terms
+            This Privacy Policy describes how <strong>{COMPANY}</strong> ("we,"
+            "us," or "our") collects, uses, and protects your personal
+            information when you use the Anika Control OS logistics dispatch
+            platform ("Service"). By using the Service, you agree to the terms
             described in this policy.
           </div>
         </div>
 
         {/* Sections */}
         <div className="space-y-10 text-gray-700 leading-relaxed">
-
           {/* 1 */}
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">
               1. Information We Collect
             </h2>
             <p className="mb-4">
-              We collect the following categories of personal information in connection with the
-              operation of our logistics dispatch software:
+              We collect the following categories of personal information in
+              connection with the operation of our logistics dispatch software:
             </p>
 
-            <h3 className="font-semibold text-gray-900 mb-2">1.1 Account &amp; Identity Information</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              1.1 Account &amp; Identity Information
+            </h3>
             <ul className="list-disc list-inside space-y-1 ml-2 mb-4 text-gray-600">
               <li>Full name</li>
               <li>Email address</li>
@@ -93,16 +97,25 @@ function PrivacyPolicy() {
               <li>Username and encrypted password credentials</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 mb-2">1.2 Driver &amp; Operational Data</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              1.2 Driver &amp; Operational Data
+            </h3>
             <ul className="list-disc list-inside space-y-1 ml-2 mb-4 text-gray-600">
-              <li>Real-time and historical GPS location data for drivers and vehicles</li>
-              <li>Delivery status updates and proof of delivery (POD) records</li>
+              <li>
+                Real-time and historical GPS location data for drivers and
+                vehicles
+              </li>
+              <li>
+                Delivery status updates and proof of delivery (POD) records
+              </li>
               <li>Route history and estimated arrival times</li>
               <li>Time clock records (clock-in/out timestamps)</li>
               <li>Driver performance metrics and task completion data</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 mb-2">1.3 Business &amp; Billing Data</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              1.3 Business &amp; Billing Data
+            </h3>
             <ul className="list-disc list-inside space-y-1 ml-2 mb-4 text-gray-600">
               <li>Company name and business address</li>
               <li>Service rate information and load details</li>
@@ -110,7 +123,9 @@ function PrivacyPolicy() {
               <li>QuickBooks Online integration data (when connected)</li>
             </ul>
 
-            <h3 className="font-semibold text-gray-900 mb-2">1.4 Technical &amp; Usage Data</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              1.4 Technical &amp; Usage Data
+            </h3>
             <ul className="list-disc list-inside space-y-1 ml-2 mb-4 text-gray-600">
               <li>IP address and browser/device type</li>
               <li>Pages visited and features used within the platform</li>
@@ -170,39 +185,45 @@ function PrivacyPolicy() {
               3. Data Storage &amp; Security
             </h2>
             <p className="mb-4">
-              All data collected through the Service is stored securely using industry-standard
-              cloud infrastructure:
+              All data collected through the Service is stored securely using
+              industry-standard cloud infrastructure:
             </p>
             <ul className="space-y-3">
               <li className="flex gap-3">
                 <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
                 <span>
-                  <strong className="text-gray-900">Supabase (PostgreSQL):</strong> Our primary
-                  data store runs on Supabase, a SOC 2-compliant cloud database platform hosted
-                  on AWS. All data is encrypted at rest (AES-256) and in transit (TLS 1.2+).
+                  <strong className="text-gray-900">
+                    Supabase (PostgreSQL):
+                  </strong>{" "}
+                  Our primary data store runs on Supabase, a SOC 2-compliant
+                  cloud database platform hosted on AWS. All data is encrypted
+                  at rest (AES-256) and in transit (TLS 1.2+).
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
                 <span>
-                  <strong className="text-gray-900">Access Controls:</strong> Access to personal
-                  data is restricted to authorized personnel on a need-to-know basis. Row-level
-                  security policies are enforced at the database level.
+                  <strong className="text-gray-900">Access Controls:</strong>{" "}
+                  Access to personal data is restricted to authorized personnel
+                  on a need-to-know basis. Row-level security policies are
+                  enforced at the database level.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
                 <span>
-                  <strong className="text-gray-900">Authentication:</strong> User accounts are
-                  protected by secure authentication managed through Supabase Auth, supporting
-                  password policies and session management.
+                  <strong className="text-gray-900">Authentication:</strong>{" "}
+                  User accounts are protected by secure authentication managed
+                  through Supabase Auth, supporting password policies and
+                  session management.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
                 <span>
-                  <strong className="text-gray-900">No Sale of Data:</strong> We do not sell,
-                  rent, or trade your personal information to third parties for marketing purposes.
+                  <strong className="text-gray-900">No Sale of Data:</strong> We
+                  do not sell, rent, or trade your personal information to third
+                  parties for marketing purposes.
                 </span>
               </li>
             </ul>
@@ -214,7 +235,8 @@ function PrivacyPolicy() {
               4. Information Sharing &amp; Third Parties
             </h2>
             <p className="mb-4">
-              We may share your information only in the following limited circumstances:
+              We may share your information only in the following limited
+              circumstances:
             </p>
             <ul className="space-y-3">
               {[
@@ -251,14 +273,27 @@ function PrivacyPolicy() {
               5. Location Data
             </h2>
             <p className="mb-2">
-              The Service uses real-time GPS location data from driver mobile devices to enable
-              dispatch coordination, route tracking, and delivery verification. Specifically:
+              The Service uses real-time GPS location data from driver mobile
+              devices to enable dispatch coordination, route tracking, and
+              delivery verification. Specifically:
             </p>
             <ul className="list-disc list-inside space-y-1 ml-2 text-gray-600">
-              <li>Location tracking is active only during active work sessions or when drivers opt in.</li>
-              <li>Location data is stored with delivery records and retained for operational and audit purposes.</li>
-              <li>Drivers are informed of location tracking as part of their onboarding and platform use.</li>
-              <li>Customers may view approximate driver location on public-facing delivery tracking pages.</li>
+              <li>
+                Location tracking is active only during active work sessions or
+                when drivers opt in.
+              </li>
+              <li>
+                Location data is stored with delivery records and retained for
+                operational and audit purposes.
+              </li>
+              <li>
+                Drivers are informed of location tracking as part of their
+                onboarding and platform use.
+              </li>
+              <li>
+                Customers may view approximate driver location on public-facing
+                delivery tracking pages.
+              </li>
             </ul>
           </section>
 
@@ -268,11 +303,12 @@ function PrivacyPolicy() {
               6. Data Retention
             </h2>
             <p>
-              We retain personal information for as long as necessary to provide the Service,
-              comply with legal obligations, resolve disputes, and enforce our agreements.
-              Operational records (deliveries, invoices, time records) may be retained for up to
-              7 years in accordance with standard business and tax record requirements. You may
-              request deletion of your personal data by contacting us at{" "}
+              We retain personal information for as long as necessary to provide
+              the Service, comply with legal obligations, resolve disputes, and
+              enforce our agreements. Operational records (deliveries, invoices,
+              time records) may be retained for up to 7 years in accordance with
+              standard business and tax record requirements. You may request
+              deletion of your personal data by contacting us at{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-blue-600 hover:underline"
@@ -289,19 +325,25 @@ function PrivacyPolicy() {
               7. Your Rights
             </h2>
             <p className="mb-4">
-              Depending on your location, you may have certain rights with respect to your
-              personal information, including:
+              Depending on your location, you may have certain rights with
+              respect to your personal information, including:
             </p>
             <ul className="list-disc list-inside space-y-1 ml-2 text-gray-600">
               <li>The right to access personal data we hold about you</li>
               <li>The right to request correction of inaccurate data</li>
-              <li>The right to request deletion of your data (subject to legal retention requirements)</li>
+              <li>
+                The right to request deletion of your data (subject to legal
+                retention requirements)
+              </li>
               <li>The right to object to certain processing activities</li>
               <li>The right to data portability where technically feasible</li>
             </ul>
             <p className="mt-4">
               To exercise any of these rights, please contact us at{" "}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="text-blue-600 hover:underline"
+              >
                 {CONTACT_EMAIL}
               </a>
               .
@@ -314,9 +356,10 @@ function PrivacyPolicy() {
               8. Cookies &amp; Tracking Technologies
             </h2>
             <p>
-              The Service uses browser session storage and authentication tokens to maintain user
-              sessions. We do not use third-party advertising cookies or cross-site trackers. Basic
-              analytics may be collected for operational monitoring purposes only.
+              The Service uses browser session storage and authentication tokens
+              to maintain user sessions. We do not use third-party advertising
+              cookies or cross-site trackers. Basic analytics may be collected
+              for operational monitoring purposes only.
             </p>
           </section>
 
@@ -326,11 +369,15 @@ function PrivacyPolicy() {
               9. Children's Privacy
             </h2>
             <p>
-              The Service is intended for use by business professionals and is not directed at
-              individuals under the age of 18. We do not knowingly collect personal information
-              from minors. If you believe a minor has provided us with personal data, please
-              contact us immediately at{" "}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">
+              The Service is intended for use by business professionals and is
+              not directed at individuals under the age of 18. We do not
+              knowingly collect personal information from minors. If you believe
+              a minor has provided us with personal data, please contact us
+              immediately at{" "}
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="text-blue-600 hover:underline"
+              >
                 {CONTACT_EMAIL}
               </a>
               .
@@ -343,10 +390,11 @@ function PrivacyPolicy() {
               10. Changes to This Policy
             </h2>
             <p>
-              We may update this Privacy Policy from time to time. When we do, we will revise the
-              "Last updated" date at the top of this page. Continued use of the Service after any
-              changes constitutes your acceptance of the revised policy. We encourage you to review
-              this page periodically.
+              We may update this Privacy Policy from time to time. When we do,
+              we will revise the "Last updated" date at the top of this page.
+              Continued use of the Service after any changes constitutes your
+              acceptance of the revised policy. We encourage you to review this
+              page periodically.
             </p>
           </section>
 
@@ -356,14 +404,17 @@ function PrivacyPolicy() {
               11. Contact Us
             </h2>
             <p className="mb-3">
-              If you have any questions, concerns, or requests regarding this Privacy Policy or
-              our data practices, please contact us:
+              If you have any questions, concerns, or requests regarding this
+              Privacy Policy or our data practices, please contact us:
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 text-sm space-y-1">
               <p className="font-semibold text-gray-900">{COMPANY}</p>
               <p className="text-gray-600">
                 Email:{" "}
-                <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">
+                <a
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className="text-blue-600 hover:underline"
+                >
                   {CONTACT_EMAIL}
                 </a>
               </p>
@@ -383,11 +434,16 @@ function PrivacyPolicy() {
             Go Back
           </Button>
           <div className="flex gap-4 text-sm text-gray-500">
-            <a href="/legal/terms" className="hover:text-blue-600 hover:underline">
+            <a
+              href="/legal/terms"
+              className="hover:text-blue-600 hover:underline"
+            >
               Terms of Service
             </a>
             <span>?</span>
-            <span>? {new Date().getFullYear()} {COMPANY}</span>
+            <span>
+              ? {new Date().getFullYear()} {COMPANY}
+            </span>
           </div>
         </div>
       </main>
