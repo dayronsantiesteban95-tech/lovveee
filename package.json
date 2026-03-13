@@ -8,10 +8,16 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:encoding": "node scripts/check-encoding.js"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "check:encoding": "node scripts/check-encoding.js",
+    "check:all": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
